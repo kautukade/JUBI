@@ -1,0 +1,14 @@
+services:
+  sara:
+    build: .
+    container_name: sara-ai-assistant
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    volumes:
+      - sara_data:/app/data
+
+volumes:
+  sara_data:
