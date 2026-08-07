@@ -1,0 +1,11 @@
+[
+  {"key":"hermes","repo":"NousResearch/hermes-agent","sha":"1fe53bd1ab3bfce098a2161cad0622d436738476","wrapper":"hermes-agent-main(3)","inner":"hermes-agent-main"},
+  {"key":"ecc","repo":"affaan-m/ECC","sha":"9aac8585ab887d9c51252730240b25d9cca180da","wrapper":"ECC-main(20260807-042951)","inner":"ECC-main"},
+  {"key":"agency_agents","repo":"msitarzewski/agency-agents","sha":"ebe9c99acb5c96f9468de368d8bead775387d1a7","wrapper":"agency-agents-main(3)","inner":"agency-agents-main"},
+  {"key":"awesome_llm_apps","repo":"Shubhamsaboo/awesome-llm-apps","sha":"779e9f9bcf87fa8cd95870a438b70b84e47d3173","wrapper":"awesome-llm-apps-main(2)","inner":"awesome-llm-apps-main"},
+  {"key":"second_brain","repo":"coleam00/second-brain-skills","sha":"75e1e9cd60ef46bffbd294fdfe4d0320cee2f563","wrapper":"second-brain-skills-main(3)","inner":"second-brain-skills-main"},
+  {"key":"superpowers","repo":"obra/superpowers","sha":"44c9b2d6e889982ac18c27d05a19fefe335194e1","wrapper":"superpowers-main(3)","inner":"superpowers-main"},
+  {"key":"fable_os","repo":"robiot/fable-os","sha":"1cfe17c4baa77fac128008621721823913a1335c","wrapper":"fable-os-main(3)","inner":"fable-os-main"},
+  {"key":"cai","repo":"aliasrobotics/cai","sha":"62871b6f5a4b8951b2f4dd94dbb301ac306b3a65","wrapper":"cai-main(3)","inner":"cai-main"},
+  {"key":"autoresearch","repo":"karpathy/autoresearch","sha":"228791fb499afffb54b46200aca536f79142f117","wrapper":"autoresearch-master(3)","inner":"autoresearch-master"}
+]
