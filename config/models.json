@@ -1,0 +1,8 @@
+{
+  "general": ["qwen2.5:7b", "glm4:latest", "mistral:latest", "llama3:latest"],
+  "coding": ["qwen2.5-coder:7b", "deepseek-coder:latest"],
+  "vision": ["qwen2.5vl:3b"],
+  "embedding": ["nomic-embed-text-v2-moe:latest"],
+  "fast": ["qwen2:1.5b", "gemma:2b"],
+  "cloud_disabled": ["kimi-k2.6:cloud", "deepseek-v3.1:671b-cloud", "gpt-oss:120b-cloud"]
+}
