@@ -1,0 +1,26 @@
+{
+  "name": "SARUS",
+  "version": "0.1.0",
+  "created": "2026-08-07",
+  "source_repositories": 10,
+  "indexed_original_files": 17356,
+  "discovered_capability_like_files": 4803,
+  "integration_tests": "6/6 passed",
+  "api_smoke_test": "passed",
+  "notes": [
+    "Ollama runtime not available inside build container; Windows target must validate installed local models.",
+    "Hardware/UI/credential-dependent source features require target-machine acceptance tests before they can truthfully be marked WORKING."
+  ],
+  "files": [
+    {"path":"README.md","sha256":"de75bb795184e58bc4b79cfa501ed24ac7cc1b105a1b9cf6020b1389fe06fe55","size":1515},
+    {"path":"config/sources.json","sha256":"698f84062a76002c94501be8a1fbda05aeaf7debc02918524d108266ba8a6831","size":638},
+    {"path":"config/models.json","sha256":"0bd0bb124710fffb943e7775841879f2585545ad15b7bf7c9ec77bc581a48d9a","size":426},
+    {"path":"config/policy.json","sha256":"73ad3347b79321ddac54e99f9fb830dce59b02289c7e6aac5b2dc8fe251217f9","size":684},
+    {"path":"sarus/server.py","sha256":"208d15b4885ce83fb361c26e5eb4d5daa505cbfbc9691e23636b457f0bdde8ed","size":1772},
+    {"path":"sarus/core/app.py","sha256":"faf3eeec892f7db99963f4ee2c2a4af53864f4faf928b58cabeae87c5d19c8d1","size":945},
+    {"path":"sarus/core/orchestrator.py","sha256":"8ede547acfa7e6c0c0c33046ed6c9436998af5468747a3d8c794a96b2eb481a2","size":2186},
+    {"path":"sarus/web/index.html","sha256":"936072da929b5bb48faba024777b390a29b7e58eb68e318df2047fe1a310eba4","size":4964},
+    {"path":"tests/integration_test.py","sha256":"e8c6681a6c5ca101a46bb209433772482dd061cbe9b773d6497b05b5de1898ad","size":1578},
+    {"path":"data/feature_coverage.csv","sha256":"983d30463d576a77e3dc7578a8ff536f7ace8afd5c7d1f0b6f8d386b7b9a74f5","size":608653}
+  ]
+}
