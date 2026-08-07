@@ -1,0 +1,27 @@
+[submodule "sources/hermes"]
+	path = sources/hermes-agent-main(3)/hermes-agent-main
+	url = https://github.com/NousResearch/hermes-agent.git
+[submodule "sources/ecc"]
+	path = sources/ECC-main(20260807-042951)/ECC-main
+	url = https://github.com/affaan-m/ECC.git
+[submodule "sources/agency-agents"]
+	path = sources/agency-agents-main(3)/agency-agents-main
+	url = https://github.com/msitarzewski/agency-agents.git
+[submodule "sources/awesome-llm-apps"]
+	path = sources/awesome-llm-apps-main(2)/awesome-llm-apps-main
+	url = https://github.com/Shubhamsaboo/awesome-llm-apps.git
+[submodule "sources/second-brain-skills"]
+	path = sources/second-brain-skills-main(3)/second-brain-skills-main
+	url = https://github.com/coleam00/second-brain-skills.git
+[submodule "sources/superpowers"]
+	path = sources/superpowers-main(3)/superpowers-main
+	url = https://github.com/obra/superpowers.git
+[submodule "sources/fable-os"]
+	path = sources/fable-os-main(3)/fable-os-main
+	url = https://github.com/robiot/fable-os.git
+[submodule "sources/cai"]
+	path = sources/cai-main(3)/cai-main
+	url = https://github.com/aliasrobotics/cai.git
+[submodule "sources/autoresearch"]
+	path = sources/autoresearch-master(3)/autoresearch-master
+	url = https://github.com/karpathy/autoresearch.git
