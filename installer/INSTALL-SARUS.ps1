@@ -15,26 +15,35 @@ if(-not (IsAdmin)){
 }
 try {
   Log 'SARUS GitHub installer started.'
-  $partsDir=Join-Path $Root 'vendor\sara\parts'
-  $hashFile=Join-Path $Root 'vendor\sara\SHA256.txt'
-  if(-not (Test-Path $partsDir)){ throw 'SARA source parts are missing from vendor\sara\parts.' }
+  $partsDir=Join-Path $Root 'vendor\sara\xzparts'
+  $hashFile=Join-Path $Root 'vendor\sara\SHA256-XZ.txt'
+  if(-not (Test-Path $partsDir)){ throw 'SARA source parts are missing from vendor\sara\xzparts.' }
   $parts=Get-ChildItem -LiteralPath $partsDir -Filter 'part-*.b64' -File | Sort-Object Name
   if($parts.Count -lt 1){ throw 'No SARA source parts found.' }
   $sb=New-Object Text.StringBuilder
   foreach($p in $parts){ [void]$sb.Append((Get-Content -LiteralPath $p.FullName -Raw).Trim()) }
-  $saraZip=Join-Path $env:TEMP 'SARUS-SARA-PUBLIC-SOURCE.zip'
-  [IO.File]::WriteAllBytes($saraZip,[Convert]::FromBase64String($sb.ToString()))
+  $saraArchive=Join-Path $env:TEMP 'SARUS-SARA-PUBLIC-SOURCE.tar.xz'
+  [IO.File]::WriteAllBytes($saraArchive,[Convert]::FromBase64String($sb.ToString()))
   $expected=((Get-Content $hashFile -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
-  $actual=(Get-FileHash -Algorithm SHA256 $saraZip).Hash.ToLowerInvariant()
+  $actual=(Get-FileHash -Algorithm SHA256 $saraArchive).Hash.ToLowerInvariant()
   if($actual -ne $expected){ throw "SARA source checksum mismatch. Expected $expected got $actual" }
   Log "SARA source verified: $actual"
-  Expand-Archive -LiteralPath $saraZip -DestinationPath $Root -Force
-  Remove-Item $saraZip -Force -ErrorAction SilentlyContinue
+  $tar=Join-Path $env:SystemRoot 'System32\tar.exe'
+  if(-not (Test-Path $tar)){ throw 'Windows tar.exe is required to extract the bundled SARA source.' }
+  & $tar -xf $saraArchive -C $Root
+  if($LASTEXITCODE -ne 0){ throw "SARA source extraction failed with exit code $LASTEXITCODE" }
+  Remove-Item $saraArchive -Force -ErrorAction SilentlyContinue
   $launcherB64=Join-Path $Root 'vendor\launcher\SARUS.exe.b64'
   if(Test-Path $launcherB64){
     $launcher=Join-Path $Root 'SARUS.exe'
     [IO.File]::WriteAllBytes($launcher,[Convert]::FromBase64String((Get-Content $launcherB64 -Raw).Trim()))
-    Log 'SARUS.exe reconstructed.'
+    $launcherHashFile=Join-Path $Root 'vendor\launcher\SHA256.txt'
+    if(Test-Path $launcherHashFile){
+      $launcherExpected=((Get-Content $launcherHashFile -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+      $launcherActual=(Get-FileHash -Algorithm SHA256 $launcher).Hash.ToLowerInvariant()
+      if($launcherActual -ne $launcherExpected){ throw "SARUS.exe checksum mismatch. Expected $launcherExpected got $launcherActual" }
+    }
+    Log 'SARUS.exe reconstructed and verified.'
   }
   $manifest=Join-Path $Root 'config\online_sources.json'
   $specs=Get-Content $manifest -Raw | ConvertFrom-Json
