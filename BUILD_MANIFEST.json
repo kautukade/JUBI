@@ -1,0 +1,16 @@
+{
+  "name": "SARUS",
+  "version": "1.0.0-rc1",
+  "created": "2026-08-07",
+  "source_repositories": 10,
+  "indexed_original_files": 17356,
+  "discovered_capability_like_files": 4803,
+  "integration_tests": "17/17 passed in build environment",
+  "sara_bundled_tests": "33/33 passed",
+  "api_smoke_test": "passed",
+  "notes": [
+    "GitHub upload uses exact pinned upstream submodules for 9 public sources.",
+    "Custom SARA source is uploaded separately with generated support-report archives excluded from the public repository.",
+    "Windows hardware/UI/credential-dependent features still require target-machine acceptance before final certification."
+  ]
+}
