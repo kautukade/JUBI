@@ -1,27 +1,21 @@
 # SARUS
 
-SARUS is a local-first multi-agent operating platform that unifies the 10 supplied source repositories behind one dashboard, one Ollama model router, a shared execution/event pipeline, local memory, approvals and trusted execution receipts.
+SARUS is a local Windows multi-agent AI workspace that unifies the project core with pinned external source integrations and a custom SARA Windows assistant source.
 
-## Source repositories
+## Install
 
-SARA, Hermes Agent, ECC, Agency Agents, Awesome LLM Apps, Second Brain Skills, Superpowers, Fable OS, CAI and Autoresearch are preserved under `sources/` and indexed in the capability registry.
+1. Download or clone this repository.
+2. If cloning with Git, use submodules: `git clone --recurse-submodules https://github.com/kautukade/SARUS.git`
+3. On Windows, run `INSTALL-SARUS.bat`.
+4. After installation, use `START_SARUS.bat` or the generated SARUS launcher.
 
-## Runtime
+## Source layout
 
-- Dashboard/API: `127.0.0.1:8877`
-- Local inference: Ollama `127.0.0.1:11434`
-- Windows action bridge: SARA v7 local API (normally `127.0.0.1:8765`)
-- Database: local SQLite under `data/`
-- Audit: hash-chained SARUS receipts
-- Cloud models: excluded from automatic role routing
+- `sarus/` — SARUS runtime/core
+- `sources/` — SARA direct source plus pinned external source integrations
+- `installer/` — Windows installer engine
+- `config/` — model/source/policy configuration
+- `tests/` — integration tests
+- `docs/` — architecture and test documentation
 
-## Start after installation
-
-Double-click `SARUS.exe` or the desktop shortcut.
-
-## Developer checks
-
-- `python -m unittest -v tests.integration_test`
-- `python -m sarus.acceptance --full` on the target Windows laptop
-
-See `docs/INSTALLATION.md`, `docs/TEST_REPORT.md`, and `docs/ALL_SOURCE_FEATURES.md`.
+Public diagnostic exclusions are limited to SARA support-report ZIPs and a local installer log that can contain machine-specific data.
