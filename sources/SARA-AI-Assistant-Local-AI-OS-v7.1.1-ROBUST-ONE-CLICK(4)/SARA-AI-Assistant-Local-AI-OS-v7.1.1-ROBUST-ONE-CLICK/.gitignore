@@ -1,0 +1,18 @@
+/node_modules
+/.next
+/out
+*.log
+.env
+.env.local
+.env.*.local
+.DS_Store
+/data/*.json
+!/data/.gitkeep
+
+*.tsbuildinfo
+
+# SARA local agent runtime
+local-agent/.venv/
+local-agent/.env.agent
+local-agent/data/**
+!local-agent/data/.gitkeep
