@@ -1,0 +1,40 @@
+SARA v7.1.1 ROBUST ONE-CLICK — READ THIS FIRST
+
+1. ZIP ko completely Extract All karo. ZIP ke andar se BAT run mat karo.
+2. Recommended location: C:\SARA-v7.1.1
+3. Sirf RUN-SARA-ONE-CLICK.bat par Right-click -> Run as administrator karo.
+4. First run par minimum 12-character local password banao.
+5. Installer window ko process complete hone tak close mat karo.
+
+FIRST INSTALL + DAILY START:
+RUN-SARA-ONE-CLICK.bat
+
+STOP:
+STOP-SARA.bat
+
+FULL RUNTIME VERIFY:
+VERIFY-SARA.bat
+
+ERROR REPORT:
+COLLECT-SARA-ERROR-REPORT.bat
+
+DASHBOARD:
+http://127.0.0.1:3000/dashboard/command
+
+OWNER SETUP:
+http://127.0.0.1:3000/dashboard/identity
+
+LOGIN EMAIL:
+admin@sara.local
+
+IMPORTANT:
+- Ollama ko installer intentionally stop nahi karta.
+- Agent -> Dashboard -> optional Voice -> Watchdog verified order mein start hote hain.
+- Camera, microphone ya Windows Hello setup pending ho to core dashboard ko fake failure nahi diya jata.
+- Installation/startup error par project folder mein redacted SARA-SUPPORT-REPORT-<date>.zip automatically banega.
+- Secrets, passwords aur tokens support ZIP mein include nahi hote.
+
+LOGS:
+install-logs\installer-v7.1.1.log
+logs\runtime-v7.1.1.log
+logs\feature-audit-v7.1.1.txt
