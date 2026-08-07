@@ -1,0 +1,19 @@
+SARA v7.1.1 ROBUST ONE-CLICK
+
+1. ZIP ko Extract All karo.
+2. Extracted folder ko C:\SARA-v7.1.1 jaise short path par rakho.
+3. RUN-SARA-ONE-CLICK.bat par right-click karke Run as administrator karo.
+
+Pehli baar ye install + build + start karega.
+Baad mein wahi BAT direct SARA start karega.
+
+Main dashboard:
+http://127.0.0.1:3000/dashboard/command
+
+Owner setup:
+http://127.0.0.1:3000/dashboard/identity
+
+Logs:
+install-logs\installer-v7.1.1.log
+logs\runtime-v7.1.1.log
+logs\feature-audit-v7.1.1.txt
