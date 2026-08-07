@@ -26,8 +26,8 @@ jobs:
           import base64, hashlib
           root = Path('vendor/sara/sourcebundle-v5')
           parts = sorted(root.glob('part-*.b64'))
-          if len(parts) != 31:
-              raise SystemExit(f'Expected 31 parts, found {len(parts)}')
+          if len(parts) != 18:
+              raise SystemExit(f'Expected 18 transfer parts, found {len(parts)}')
           encoded = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
           data = base64.b64decode(encoded, validate=True)
           expected = (root / 'SHA256.txt').read_text().split()[0].lower()
