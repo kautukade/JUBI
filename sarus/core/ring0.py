@@ -86,6 +86,9 @@ class Ring0Bridge:
         FILE_SHARE_WRITE = 0x00000002
         OPEN_EXISTING = 3
         INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+        ERROR_FILE_NOT_FOUND = 2
+        ERROR_PATH_NOT_FOUND = 3
+        ERROR_ACCESS_DENIED = 5
 
         handle = k32.CreateFileW(
             self.DEVICE_PATH,
@@ -98,9 +101,11 @@ class Ring0Bridge:
         )
         if handle == INVALID_HANDLE_VALUE:
             err = ctypes.get_last_error()
+            missing = err in {ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND}
             return {
                 'ok': False,
-                'driver_present': False,
+                'driver_present': not missing,
+                'permission_denied': err == ERROR_ACCESS_DENIED,
                 'winerror': err,
                 'error': ctypes.FormatError(err).strip(),
             }
@@ -123,6 +128,7 @@ class Ring0Bridge:
                 return {
                     'ok': False,
                     'driver_present': True,
+                    'permission_denied': err == ERROR_ACCESS_DENIED,
                     'winerror': err,
                     'error': ctypes.FormatError(err).strip(),
                 }
@@ -133,6 +139,7 @@ class Ring0Bridge:
             return {
                 'ok': protocol_ok,
                 'driver_present': True,
+                'permission_denied': False,
                 'protocol_version': int(status.protocol_version),
                 'protocol_expected': self.PROTOCOL_VERSION,
                 'capability_flags': int(status.capability_flags),
