@@ -8,7 +8,8 @@ on:
     paths:
       - 'sarus/**'
       - 'config/broker_allowlist.json'
-      - 'tests/integration_test.py'
+      - 'config/policy.json'
+      - 'tests/broker_security_test.py'
       - '.github/workflows/privileged-broker-security.yml'
 
 permissions:
@@ -31,7 +32,7 @@ jobs:
       - name: Validate broker policy JSON
         run: python -m json.tool config/broker_allowlist.json > /dev/null
 
-      - name: Run SARUS integration and broker security tests
+      - name: Run isolated privileged broker security tests
         env:
           SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
-        run: python tests/integration_test.py
+        run: python tests/broker_security_test.py
