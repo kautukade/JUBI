@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import webbrowser
@@ -18,14 +19,27 @@ class WindowsBroker:
 
     def __init__(self, root: Path):
         self.root = root.resolve()
+        self.file_roots = self._load_file_roots()
+
+    def _load_file_roots(self) -> tuple[Path, ...]:
+        cfg_path = self.root / 'config' / 'broker_allowlist.json'
+        try:
+            cfg = json.loads(cfg_path.read_text(encoding='utf-8'))
+            roots = cfg.get('path_scopes', {}).get('user_workspace', [])
+        except (OSError, ValueError, TypeError):
+            roots = []
+        # Fail closed if configuration is absent or malformed.
+        return tuple((self.root / str(p)).resolve() for p in roots if str(p).strip())
 
     def available(self):
         return os.name == 'nt'
 
     def _ensure_workspace(self, p):
         path = Path(p).expanduser().resolve()
-        if self.root not in path.parents and path != self.root:
-            raise PermissionError('Path is outside SARUS workspace')
+        if not self.file_roots:
+            raise PermissionError('No SARUS broker workspace roots are configured')
+        if not any(path == base or base in path.parents for base in self.file_roots):
+            raise PermissionError('Path is outside approved SARUS broker workspaces')
         return path
 
     @staticmethod
