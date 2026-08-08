@@ -1,0 +1,37 @@
+name: Privileged Broker Security
+
+on:
+  push:
+    branches:
+      - agent/privileged-broker-v1
+  pull_request:
+    paths:
+      - 'sarus/**'
+      - 'config/broker_allowlist.json'
+      - 'tests/integration_test.py'
+      - '.github/workflows/privileged-broker-security.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile SARUS Python
+        run: python -m compileall -q sarus tests
+
+      - name: Validate broker policy JSON
+        run: python -m json.tool config/broker_allowlist.json > /dev/null
+
+      - name: Run SARUS integration and broker security tests
+        env:
+          SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
+        run: python tests/integration_test.py
