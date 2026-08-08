@@ -8,6 +8,8 @@ on:
     paths:
       - 'sarus/**'
       - 'scripts/create_broker_approval.py'
+      - 'installer/SETUP-BROKER.ps1'
+      - 'INSTALL-SARUS*.bat'
       - 'config/broker_allowlist.json'
       - 'config/policy.json'
       - 'tests/broker_security_test.py'
@@ -17,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  linux-security:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -36,4 +38,27 @@ jobs:
       - name: Run isolated privileged broker security tests
         env:
           SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
+        run: python tests/broker_security_test.py
+
+  windows-broker-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Provision protected broker storage
+        shell: powershell
+        run: .\installer\SETUP-BROKER.ps1
+
+      - name: Compile SARUS and broker helper
+        run: python -m compileall -q sarus tests scripts/create_broker_approval.py
+
+      - name: Validate broker policy JSON
+        run: python -m json.tool config/broker_allowlist.json > NUL
+
+      - name: Run broker tests with LocalAppData key storage
         run: python tests/broker_security_test.py
