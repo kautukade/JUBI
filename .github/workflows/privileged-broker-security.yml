@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'sarus/**'
+      - 'scripts/create_broker_approval.py'
       - 'config/broker_allowlist.json'
       - 'config/policy.json'
       - 'tests/broker_security_test.py'
@@ -27,7 +28,7 @@ jobs:
           python-version: '3.11'
 
       - name: Compile SARUS Python
-        run: python -m compileall -q sarus tests
+        run: python -m compileall -q sarus tests scripts/create_broker_approval.py
 
       - name: Validate broker policy JSON
         run: python -m json.tool config/broker_allowlist.json > /dev/null
