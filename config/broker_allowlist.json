@@ -3,6 +3,9 @@
   "default": "deny",
   "max_request_bytes": 65536,
   "replay_window_seconds": 300,
+  "path_scopes": {
+    "user_workspace": ["workspace", "outputs", "projects"]
+  },
   "forbidden_actions": [
     "powershell",
     "cmd",
@@ -41,6 +44,7 @@
       "enabled": true,
       "risk": 0,
       "requires_approval": false,
+      "path_scope": "user_workspace",
       "parameters": {
         "path": {"type": "string", "required": true, "max_length": 4096}
       }
@@ -49,6 +53,7 @@
       "enabled": true,
       "risk": 2,
       "requires_approval": false,
+      "path_scope": "user_workspace",
       "parameters": {
         "path": {"type": "string", "required": true, "max_length": 4096},
         "content": {"type": "string", "required": true, "max_length": 200000}
