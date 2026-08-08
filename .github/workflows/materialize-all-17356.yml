@@ -1,0 +1,206 @@
+name: Materialize All 17,356 Original Source Files
+
+on:
+  push:
+    paths:
+      - 'vendor/full-source-transfer-v1/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout SARUS with pinned submodules
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure Git
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Reconstruct complete SARA snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import base64, hashlib
+          root = Path('vendor/sara/sourcebundle-v6')
+          parts = sorted(root.glob('part-*.b64'))
+          if len(parts) != 31:
+              raise SystemExit(f'Expected 31 SARA transfer parts, found {len(parts)}')
+          encoded = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+          data = base64.b64decode(encoded, validate=True)
+          expected = (root / 'SHA256.txt').read_text(encoding='utf-8').split()[0].lower()
+          actual = hashlib.sha256(data).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'SARA archive SHA256 mismatch: expected {expected}, got {actual}')
+          Path('/tmp/SARA-private-complete-final.tar.xz').write_bytes(data)
+          print('Verified SARA transfer archive:', actual)
+          PY
+          tar -xJf /tmp/SARA-private-complete-final.tar.xz
+
+      - name: Verify all 10 snapshots before materialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, os
+
+          projects = {
+            'sara': ('sources/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK(4)/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK', 213, '1ba87ef282f3ddb014cd914fd08d49823d9305ce2d85d9b5e804e43f47ff4e85'),
+            'hermes': ('sources/hermes-agent-main(3)/hermes-agent-main', 8541, 'c348f2175e9cb4831e0e705ad79aaef540d1adbd1021782374ff15ea9c882ebd'),
+            'ecc': ('sources/ECC-main(20260807-042951)/ECC-main', 3438, '443d96284a4287cc811e30472f5d35a6b5fee62b108b51305ddaa56fb8bc0beb'),
+            'agency_agents': ('sources/agency-agents-main(3)/agency-agents-main', 343, '32a2251162f6013cb8ebfe463728852b8ab7588b91f6416fbb95109391ba2747'),
+            'awesome_llm_apps': ('sources/awesome-llm-apps-main(2)/awesome-llm-apps-main', 1803, '7ed77f752dff4dda2aa23960b942f642e07e214d49d4e8a64961db1b94375fcb'),
+            'second_brain': ('sources/second-brain-skills-main(3)/second-brain-skills-main', 97, 'c58b915152123c4f55f0d35a0d92cb82a3afb483b3b617666d74dd2de27e70d2'),
+            'superpowers': ('sources/superpowers-main(3)/superpowers-main', 180, 'cdfb8b6ffbcd517e02c2932681e1240f9738c5ed23a3391ea573d8460266477a'),
+            'fable_os': ('sources/fable-os-main(3)/fable-os-main', 1194, '461c6af6523358995da471646ced030cc052c14d959f6a74292d056b33535633'),
+            'cai': ('sources/cai-main(3)/cai-main', 1537, '8085e0cdbe79d2e446304991b99d6e9ae85434bc64f598b1787eac53699bf583'),
+            'autoresearch': ('sources/autoresearch-master(3)/autoresearch-master', 10, '712c492fabc127eed9a6727b493eb906211f8368b5b48d7eeafaf64b556e0ffb'),
+          }
+
+          def file_bytes(p: Path):
+              if p.is_symlink():
+                  return os.readlink(p).encode('utf-8')
+              return p.read_bytes()
+
+          def snapshot(root: Path):
+              items=[]
+              for p in root.rglob('*'):
+                  rel = p.relative_to(root).as_posix()
+                  if '.git' in p.parts or rel == '.git':
+                      continue
+                  if p.is_file() or p.is_symlink():
+                      items.append((rel, hashlib.sha256(file_bytes(p)).hexdigest()))
+              h=hashlib.sha256()
+              for rel,digest in sorted(items):
+                  h.update(rel.encode('utf-8')); h.update(b'\0'); h.update(digest.encode('ascii')); h.update(b'\n')
+              return len(items), h.hexdigest()
+
+          total=0
+          for name,(path,expected_count,expected_digest) in projects.items():
+              count,digest=snapshot(Path(path))
+              print(f'{name}: count={count}, fingerprint={digest}')
+              if count != expected_count:
+                  raise SystemExit(f'{name}: expected {expected_count} files, got {count}')
+              if digest != expected_digest:
+                  raise SystemExit(f'{name}: original ZIP fingerprint mismatch')
+              total += count
+          if total != 17356:
+              raise SystemExit(f'Expected total 17356, got {total}')
+          print('PRE-MATERIALIZATION VERIFIED: 17,356/17,356 exact original source files')
+          PY
+
+      - name: Vendor each public submodule as physical files
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            'sources/hermes-agent-main(3)/hermes-agent-main'
+            'sources/ECC-main(20260807-042951)/ECC-main'
+            'sources/agency-agents-main(3)/agency-agents-main'
+            'sources/awesome-llm-apps-main(2)/awesome-llm-apps-main'
+            'sources/second-brain-skills-main(3)/second-brain-skills-main'
+            'sources/superpowers-main(3)/superpowers-main'
+            'sources/fable-os-main(3)/fable-os-main'
+            'sources/cai-main(3)/cai-main'
+            'sources/autoresearch-master(3)/autoresearch-master'
+          )
+          names=(Hermes ECC Agency-Agents Awesome-LLM-Apps Second-Brain Superpowers Fable-OS CAI Autoresearch)
+
+          for i in "${!paths[@]}"; do
+            p="${paths[$i]}"
+            n="${names[$i]}"
+            tmp="$(mktemp -d)"
+            rsync -a --exclude='.git' "$p/" "$tmp/"
+            git rm -f "$p"
+            mkdir -p "$p"
+            rsync -a "$tmp/" "$p/"
+            rm -rf "$tmp"
+            rm -rf "$p/.git" || true
+            git add "$p"
+            git commit -m "Vendor $n original source files"
+            git push origin HEAD:main
+          done
+
+      - name: Remove submodule metadata and temporary transfer bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f .gitmodules || true
+          rm -rf vendor/sara/sourcebundle-v6
+          rm -rf vendor/sara/sourcebundle-v5 || true
+          rm -rf vendor/sara/sourcebundle-v4 || true
+          rm -rf vendor/sara/sourcebundle-v3 || true
+          rm -rf vendor/sara/sourcebundle-v2 || true
+          rm -rf vendor/sara/finalparts || true
+          rm -rf vendor/sara/xz2parts || true
+          rm -rf vendor/sara/xzparts || true
+          rm -rf vendor/sara/parts || true
+          rm -rf vendor/full-source-transfer-v1 || true
+
+      - name: Final exact 17,356 verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, os
+          projects = {
+            'SARA': ('sources/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK(4)/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK', 213, '1ba87ef282f3ddb014cd914fd08d49823d9305ce2d85d9b5e804e43f47ff4e85'),
+            'Hermes': ('sources/hermes-agent-main(3)/hermes-agent-main', 8541, 'c348f2175e9cb4831e0e705ad79aaef540d1adbd1021782374ff15ea9c882ebd'),
+            'ECC': ('sources/ECC-main(20260807-042951)/ECC-main', 3438, '443d96284a4287cc811e30472f5d35a6b5fee62b108b51305ddaa56fb8bc0beb'),
+            'Agency Agents': ('sources/agency-agents-main(3)/agency-agents-main', 343, '32a2251162f6013cb8ebfe463728852b8ab7588b91f6416fbb95109391ba2747'),
+            'Awesome LLM Apps': ('sources/awesome-llm-apps-main(2)/awesome-llm-apps-main', 1803, '7ed77f752dff4dda2aa23960b942f642e07e214d49d4e8a64961db1b94375fcb'),
+            'Second Brain': ('sources/second-brain-skills-main(3)/second-brain-skills-main', 97, 'c58b915152123c4f55f0d35a0d92cb82a3afb483b3b617666d74dd2de27e70d2'),
+            'Superpowers': ('sources/superpowers-main(3)/superpowers-main', 180, 'cdfb8b6ffbcd517e02c2932681e1240f9738c5ed23a3391ea573d8460266477a'),
+            'Fable OS': ('sources/fable-os-main(3)/fable-os-main', 1194, '461c6af6523358995da471646ced030cc052c14d959f6a74292d056b33535633'),
+            'CAI': ('sources/cai-main(3)/cai-main', 1537, '8085e0cdbe79d2e446304991b99d6e9ae85434bc64f598b1787eac53699bf583'),
+            'Autoresearch': ('sources/autoresearch-master(3)/autoresearch-master', 10, '712c492fabc127eed9a6727b493eb906211f8368b5b48d7eeafaf64b556e0ffb'),
+          }
+          def data(p):
+              return os.readlink(p).encode() if p.is_symlink() else p.read_bytes()
+          def snap(root):
+              items=[]
+              for p in Path(root).rglob('*'):
+                  if '.git' in p.parts: continue
+                  if p.is_file() or p.is_symlink():
+                      rel=p.relative_to(root).as_posix()
+                      items.append((rel,hashlib.sha256(data(p)).hexdigest()))
+              h=hashlib.sha256()
+              for rel,d in sorted(items):
+                  h.update(rel.encode()); h.update(b'\0'); h.update(d.encode()); h.update(b'\n')
+              return len(items),h.hexdigest()
+          total=0
+          lines=['# SARUS Original Source Verification','', '| Project | Files | Fingerprint |','|---|---:|---|']
+          for name,(path,expected,digest0) in projects.items():
+              count,digest=snap(path)
+              if count != expected or digest != digest0:
+                  raise SystemExit(f'{name} verification failed: {count=} {digest=}')
+              total += count
+              lines.append(f'| {name} | {count} | `{digest}` |')
+          if total != 17356: raise SystemExit(f'Final total is {total}, not 17356')
+          lines += ['', '**VERIFIED: 17,356 / 17,356 original source files are physically present in this repository.**', '']
+          Path('SOURCE_COUNT_VERIFIED.md').write_text('\n'.join(lines), encoding='utf-8')
+          print('FINAL VERIFIED:', total)
+          PY
+
+      - name: Commit verification and cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git commit -m 'Verify 17,356 original source files physically present'
+          git push origin HEAD:main
