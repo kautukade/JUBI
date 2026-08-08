@@ -40,6 +40,20 @@ Permanently forbidden examples include:
 
 The legacy Windows executor names `powershell`, `service_control`, `stop_process`, and `open_app` are blocked even if a caller supplies `approved=true`.
 
+## Approved file workspaces
+
+Broker file actions do not expose the SARUS repository root. `workspace.file.read` and `workspace.file.write` are limited to the configured user-workspace roots:
+
+```text
+SARUS\workspace\
+SARUS\outputs\
+SARUS\projects\
+```
+
+Paths are canonicalized before the boundary check, so `..` traversal and symlink/junction-style path escape attempts do not grant access outside the approved roots.
+
+This intentionally prevents the LLM from using broker file actions to overwrite SARUS security policy, broker code, installers, source adapters, or repository metadata. Changes to `config/`, `sarus/`, `installer/`, and other application source remain outside the normal LLM file-control surface.
+
 ## Approval model
 
 High-risk actions require a short-lived, request-bound approval proof supplied in:
@@ -65,7 +79,7 @@ The maximum proof lifetime is 300 seconds. A proof for `process.stop` cannot aut
 %LOCALAPPDATA%\SARUS\broker\approval.secret
 ```
 
-The broker directory has inherited ACLs removed and explicitly grants access to the installing Windows identity and `SYSTEM`. The SARUS runtime loads this file automatically. The approval key therefore does not need to be placed in source code, `.env`, prompts, browser storage, or automation payloads.
+The broker directory has inherited ACLs removed and explicitly grants access to the installing Windows user's SID and `SYSTEM`. The SARUS runtime loads this file automatically. The approval key therefore does not need to be placed in source code, `.env`, prompts, browser storage, or automation payloads.
 
 For CI or controlled overrides, `SARUS_BROKER_APPROVAL_SECRET` and `SARUS_BROKER_SECRET_FILE` remain supported. Environment values take precedence.
 
@@ -147,7 +161,7 @@ Example allowlisted workspace read:
 {
   "action_id": "workspace.file.read",
   "parameters": {
-    "path": "C:\\path\\to\\SARUS\\README.md"
+    "path": "C:\\path\\to\\SARUS\\workspace\\notes.txt"
   }
 }
 ```
