@@ -4,15 +4,18 @@ on:
   push:
     branches:
       - agent/privileged-broker-v1
+      - agent/ring0-bridge-v1
   pull_request:
     paths:
       - 'sarus/**'
+      - 'driver/**'
       - 'scripts/create_broker_approval.py'
       - 'installer/SETUP-BROKER.ps1'
       - 'INSTALL-SARUS*.bat'
       - 'config/broker_allowlist.json'
       - 'config/policy.json'
       - 'tests/broker_security_test.py'
+      - 'tests/ring0_bridge_test.py'
       - '.github/workflows/privileged-broker-security.yml'
 
 permissions:
@@ -39,6 +42,11 @@ jobs:
         env:
           SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
         run: python tests/broker_security_test.py
+
+      - name: Run Ring0 bridge policy tests
+        env:
+          SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
+        run: python tests/ring0_bridge_test.py
 
   windows-broker-smoke:
     runs-on: windows-latest
@@ -68,3 +76,6 @@ jobs:
 
       - name: Run broker tests with LocalAppData key storage
         run: python tests/broker_security_test.py
+
+      - name: Run Ring0 bridge Windows smoke
+        run: python tests/ring0_bridge_test.py
