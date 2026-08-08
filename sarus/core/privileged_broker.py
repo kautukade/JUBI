@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import os
 import secrets
@@ -19,6 +20,9 @@ class PrivilegedBroker:
     It never accepts shell text, executable paths, raw driver handles, IOCTLs,
     or kernel-memory parameters from the caller.
     """
+
+    APPROVAL_VERSION = 'v1'
+    MAX_APPROVAL_TTL = 300
 
     def __init__(self, root: Path, config_path: Path, policy, windows, receipts):
         self.root = root.resolve()
@@ -40,6 +44,8 @@ class PrivilegedBroker:
             'configured_actions': sorted(k for k, v in actions.items() if v.get('enabled', False)),
             'forbidden_actions': sorted(self.cfg.get('forbidden_actions', [])),
             'approval_secret_configured': len(self._approval_secret) >= 24,
+            'approval_proof': 'request-bound-hmac-sha256',
+            'approval_max_ttl_seconds': self.MAX_APPROVAL_TTL,
             'receipt_signing': self.receipts.SIGNATURE_ALGORITHM,
             'kernel_direct_access': False,
             'arbitrary_shell': False,
@@ -55,7 +61,10 @@ class PrivilegedBroker:
         text = str(value).strip()
         if text.endswith('Z'):
             text = text[:-1] + '+00:00'
-        return datetime.fromisoformat(text).astimezone(timezone.utc).timestamp()
+        parsed = datetime.fromisoformat(text)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).timestamp()
 
     def _check_freshness(self, ts: float):
         if abs(time.time() - ts) > self.replay_window:
@@ -121,10 +130,50 @@ class PrivilegedBroker:
             raise PermissionError(f'resource is not allowlisted in {group}')
         return {'resource_id': resource_id, **resources[resource_id]}
 
-    def _approval_ok(self, proof: str | None) -> bool:
+    @staticmethod
+    def _parameters_hash(parameters: dict) -> str:
+        raw = json.dumps(parameters, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
+        return hashlib.sha256(raw).hexdigest()
+
+    def _approval_message(self, request_id: str, action_id: str, parameters: dict, expires: int) -> bytes:
+        phash = self._parameters_hash(parameters)
+        return f'{self.APPROVAL_VERSION}|{request_id}|{action_id}|{phash}|{expires}'.encode('utf-8')
+
+    def create_approval_proof(self, request_id: str, action_id: str, parameters: dict, ttl_seconds: int = 120) -> str:
+        """Create a short-lived proof for an external trusted approval tool.
+
+        This method is intentionally not exposed by the HTTP API. In the native
+        service phase the equivalent operation belongs in a separate elevated
+        approval UI/service identity.
+        """
+        if len(self._approval_secret) < 24:
+            raise RuntimeError('SARUS_BROKER_APPROVAL_SECRET is not configured securely')
+        ttl = max(1, min(int(ttl_seconds), self.MAX_APPROVAL_TTL))
+        expires = int(time.time()) + ttl
+        mac = hmac.new(
+            self._approval_secret.encode('utf-8'),
+            self._approval_message(request_id, action_id, parameters, expires),
+            hashlib.sha256,
+        ).hexdigest()
+        return f'{self.APPROVAL_VERSION}:{expires}:{mac}'
+
+    def _approval_ok(self, proof: str | None, request_id: str, action_id: str, parameters: dict) -> bool:
         if len(self._approval_secret) < 24 or not proof:
             return False
-        return secrets.compare_digest(self._approval_secret, str(proof))
+        try:
+            version, expires_text, supplied = str(proof).split(':', 2)
+            expires = int(expires_text)
+        except (ValueError, TypeError):
+            return False
+        now = int(time.time())
+        if version != self.APPROVAL_VERSION or expires < now or expires > now + self.MAX_APPROVAL_TTL:
+            return False
+        expected = hmac.new(
+            self._approval_secret.encode('utf-8'),
+            self._approval_message(request_id, action_id, parameters, expires),
+            hashlib.sha256,
+        ).hexdigest()
+        return secrets.compare_digest(expected, supplied)
 
     @staticmethod
     def _redacted_value(value):
@@ -219,11 +268,12 @@ class PrivilegedBroker:
                 return {'ok': False, 'status': 'denied', 'policy': decision, 'receipt': receipt}
 
             requires_approval = bool(spec.get('requires_approval')) or decision.get('decision') == 'approval'
-            if requires_approval and not self._approval_ok(approval_proof):
+            if requires_approval and not self._approval_ok(approval_proof, request_id, action_id, parameters):
                 receipt = self._receipt(request_id, action_id, 'approval_required', {
                     'status': 'approval_required', 'risk': risk, 'parameters': audit_parameters,
                     'resource_id': resolved.get('resource_id'),
                     'approval_secret_configured': len(self._approval_secret) >= 24,
+                    'approval_binding': 'request_id+action_id+parameters_hash+expiry',
                 })
                 return {
                     'ok': False,
@@ -234,7 +284,7 @@ class PrivilegedBroker:
                 }
 
             # Mark only immediately before execution. Approval-required requests
-            # can therefore be resubmitted once with an out-of-band proof.
+            # can therefore be resubmitted once with a valid request-bound proof.
             self._mark_once(request_id, nonce)
             result = self.windows.execute_typed(action_id, parameters, resolved)
             status = 'completed' if result.get('ok') else 'failed'
