@@ -34,7 +34,31 @@ class PrivilegedBroker:
         self.replay_window = int(self.cfg.get('replay_window_seconds', 300))
         self._seen: dict[str, float] = {}
         self._lock = threading.Lock()
-        self._approval_secret = os.environ.get('SARUS_BROKER_APPROVAL_SECRET', '')
+        self._approval_secret, self._approval_secret_source = self._load_approval_secret()
+
+    @staticmethod
+    def _approval_secret_path() -> Path | None:
+        override = os.environ.get('SARUS_BROKER_SECRET_FILE', '').strip()
+        if override:
+            return Path(override).expanduser()
+        local = os.environ.get('LOCALAPPDATA', '').strip()
+        if not local:
+            return None
+        return Path(local) / 'SARUS' / 'broker' / 'approval.secret'
+
+    def _load_approval_secret(self) -> tuple[str, str]:
+        value = os.environ.get('SARUS_BROKER_APPROVAL_SECRET', '')
+        if len(value) >= 24:
+            return value, 'environment'
+        path = self._approval_secret_path()
+        if path and path.is_file():
+            try:
+                value = path.read_text(encoding='utf-8').strip()
+            except OSError:
+                value = ''
+            if len(value) >= 24:
+                return value, 'protected-local-file'
+        return '', 'not-configured'
 
     def status(self):
         actions = self.cfg.get('actions', {})
@@ -44,6 +68,7 @@ class PrivilegedBroker:
             'configured_actions': sorted(k for k, v in actions.items() if v.get('enabled', False)),
             'forbidden_actions': sorted(self.cfg.get('forbidden_actions', [])),
             'approval_secret_configured': len(self._approval_secret) >= 24,
+            'approval_secret_source': self._approval_secret_source,
             'approval_proof': 'request-bound-hmac-sha256',
             'approval_max_ttl_seconds': self.MAX_APPROVAL_TTL,
             'receipt_signing': self.receipts.SIGNATURE_ALGORITHM,
@@ -147,7 +172,7 @@ class PrivilegedBroker:
         approval UI/service identity.
         """
         if len(self._approval_secret) < 24:
-            raise RuntimeError('SARUS_BROKER_APPROVAL_SECRET is not configured securely')
+            raise RuntimeError('SARUS broker approval key is not configured securely')
         ttl = max(1, min(int(ttl_seconds), self.MAX_APPROVAL_TTL))
         expires = int(time.time()) + ttl
         mac = hmac.new(
