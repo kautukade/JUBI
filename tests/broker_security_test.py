@@ -32,8 +32,14 @@ class BrokerSecurityTest(unittest.TestCase):
             self.windows,
             self.receipts,
         )
+        self.workspace = ROOT / 'workspace'
+        self.workspace.mkdir(parents=True, exist_ok=True)
+        self.allowed_file = self.workspace / '.broker-security-read.txt'
+        self.allowed_file.write_text('SARUS broker workspace test', encoding='utf-8')
 
     def tearDown(self):
+        self.allowed_file.unlink(missing_ok=True)
+        (self.workspace / '.broker-audit-test.txt').unlink(missing_ok=True)
         self.tmp.cleanup()
 
     def test_default_deny_and_signed_denial_receipt(self):
@@ -135,41 +141,52 @@ class BrokerSecurityTest(unittest.TestCase):
     def test_parameter_schema_rejects_extra_fields(self):
         r = self.broker.handle({
             'action_id': 'workspace.file.read',
-            'parameters': {'path': str(ROOT / 'README.md'), 'extra': 'nope'},
+            'parameters': {'path': str(self.allowed_file), 'extra': 'nope'},
         })
         self.assertEqual(r['status'], 'invalid')
 
     def test_allowlisted_workspace_read(self):
         r = self.broker.handle({
             'action_id': 'workspace.file.read',
-            'parameters': {'path': str(ROOT / 'README.md')},
+            'parameters': {'path': str(self.allowed_file)},
         })
         self.assertTrue(r['ok'])
         self.assertIn('SARUS', r['result']['content'])
         receipt_json = json.dumps(r['receipt'], ensure_ascii=False)
-        self.assertNotIn(r['result']['content'][:50], receipt_json)
+        self.assertNotIn(r['result']['content'], receipt_json)
         self.assertTrue(r['receipt']['payload']['result']['content']['redacted'])
 
     def test_sensitive_write_content_is_redacted_from_receipt(self):
-        target = ROOT / 'data' / '.broker-audit-test.txt'
+        target = self.workspace / '.broker-audit-test.txt'
         marker = 'TOP-SECRET-MARKER-' + uuid.uuid4().hex
-        try:
+        r = self.broker.handle({
+            'action_id': 'workspace.file.write',
+            'parameters': {'path': str(target), 'content': marker},
+        })
+        self.assertTrue(r['ok'])
+        self.assertNotIn(marker, json.dumps(r['receipt'], ensure_ascii=False))
+        redacted = r['receipt']['payload']['parameters']['content']
+        self.assertTrue(redacted['redacted'])
+        self.assertEqual(redacted['bytes'], len(marker.encode('utf-8')))
+
+    def test_sarus_source_and_security_config_are_not_workspace_writable(self):
+        targets = [
+            ROOT / 'config' / 'broker_allowlist.json',
+            ROOT / 'sarus' / 'core' / 'windows.py',
+            ROOT / 'README.md',
+        ]
+        for target in targets:
             r = self.broker.handle({
                 'action_id': 'workspace.file.write',
-                'parameters': {'path': str(target), 'content': marker},
+                'parameters': {'path': str(target), 'content': 'SHOULD-NOT-WRITE'},
             })
-            self.assertTrue(r['ok'])
-            self.assertNotIn(marker, json.dumps(r['receipt'], ensure_ascii=False))
-            redacted = r['receipt']['payload']['parameters']['content']
-            self.assertTrue(redacted['redacted'])
-            self.assertEqual(redacted['bytes'], len(marker.encode('utf-8')))
-        finally:
-            target.unlink(missing_ok=True)
+            self.assertFalse(r['ok'], target)
+            self.assertEqual(r['status'], 'denied', target)
 
-    def test_workspace_escape_is_denied(self):
+    def test_path_outside_approved_workspace_is_denied_for_read(self):
         r = self.broker.handle({
             'action_id': 'workspace.file.read',
-            'parameters': {'path': str(ROOT.parent / 'outside.txt')},
+            'parameters': {'path': str(ROOT / 'README.md')},
         })
         self.assertFalse(r['ok'])
         self.assertEqual(r['status'], 'denied')
@@ -188,7 +205,7 @@ class BrokerSecurityTest(unittest.TestCase):
             'nonce': 'n-' + uuid.uuid4().hex,
             'timestamp': time.time(),
             'action_id': 'workspace.file.read',
-            'parameters': {'path': str(ROOT / 'README.md')},
+            'parameters': {'path': str(self.allowed_file)},
         }
         first = self.broker.handle(req)
         second = self.broker.handle(req)
@@ -197,7 +214,7 @@ class BrokerSecurityTest(unittest.TestCase):
         self.assertEqual(second['status'], 'denied')
 
     def test_receipt_chain_detects_signed_rows(self):
-        self.broker.handle({'action_id': 'workspace.file.read', 'parameters': {'path': str(ROOT / 'README.md')}})
+        self.broker.handle({'action_id': 'workspace.file.read', 'parameters': {'path': str(self.allowed_file)}})
         v = self.receipts.verify_chain()
         self.assertTrue(v['ok'])
         self.assertGreater(v['signed_count'], 0)
