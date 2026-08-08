@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import time
@@ -73,6 +74,52 @@ class BrokerSecurityTest(unittest.TestCase):
         self.assertFalse(self.broker._approval_ok(proof, str(uuid.uuid4()), 'process.stop', params))
         self.assertFalse(self.broker._approval_ok(proof, rid, 'service.stop', params))
         self.assertFalse(self.broker._approval_ok(proof, rid, 'process.stop', {'resource_id': 'ollama', 'force': True}))
+
+    def test_protected_secret_file_can_be_loaded_without_environment_secret(self):
+        secret_path = Path(self.tmp.name) / 'approval.secret'
+        secret_path.write_text('A' * 64, encoding='utf-8')
+        old_secret = os.environ.pop('SARUS_BROKER_APPROVAL_SECRET', None)
+        old_file = os.environ.get('SARUS_BROKER_SECRET_FILE')
+        os.environ['SARUS_BROKER_SECRET_FILE'] = str(secret_path)
+        try:
+            broker = PrivilegedBroker(
+                ROOT,
+                ROOT / 'config/broker_allowlist.json',
+                self.policy,
+                self.windows,
+                self.receipts,
+            )
+            self.assertTrue(broker.status()['approval_secret_configured'])
+            self.assertEqual(broker.status()['approval_secret_source'], 'protected-local-file')
+        finally:
+            if old_secret is not None:
+                os.environ['SARUS_BROKER_APPROVAL_SECRET'] = old_secret
+            if old_file is None:
+                os.environ.pop('SARUS_BROKER_SECRET_FILE', None)
+            else:
+                os.environ['SARUS_BROKER_SECRET_FILE'] = old_file
+
+    def test_receipt_key_migrates_outside_workspace(self):
+        workspace = Path(self.tmp.name) / 'workspace-data'
+        workspace.mkdir()
+        legacy = workspace / 'receipt-signing.key'
+        original_key = os.urandom(32)
+        legacy.write_bytes(original_key)
+        external = Path(self.tmp.name) / 'protected' / 'receipt-signing.key'
+        old = os.environ.get('SARUS_RECEIPT_SIGNING_KEY_FILE')
+        os.environ['SARUS_RECEIPT_SIGNING_KEY_FILE'] = str(external)
+        try:
+            store = ReceiptStore(workspace / 'receipts.db')
+            self.assertTrue(external.is_file())
+            self.assertEqual(external.read_bytes(), original_key)
+            self.assertFalse(legacy.exists())
+            store.create('t', 's', 'test', 'completed', {'ok': True})
+            self.assertTrue(store.verify_chain()['ok'])
+        finally:
+            if old is None:
+                os.environ.pop('SARUS_RECEIPT_SIGNING_KEY_FILE', None)
+            else:
+                os.environ['SARUS_RECEIPT_SIGNING_KEY_FILE'] = old
 
     def test_kernel_memory_action_permanently_denied(self):
         r = self.broker.handle({'action_id': 'kernel.read_memory', 'parameters': {}})
@@ -155,6 +202,15 @@ class BrokerSecurityTest(unittest.TestCase):
         self.assertTrue(v['ok'])
         self.assertGreater(v['signed_count'], 0)
         self.assertEqual(v['algorithm'], 'HMAC-SHA256')
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows-only broker smoke')
+    def test_windows_readonly_system_actions(self):
+        processes = self.broker.handle({'action_id': 'system.processes.list', 'parameters': {}})
+        services = self.broker.handle({'action_id': 'system.services.list', 'parameters': {}})
+        self.assertTrue(processes['ok'])
+        self.assertTrue(services['ok'])
+        self.assertNotIn(processes['result'].get('stdout', '')[:50], json.dumps(processes['receipt']))
+        self.assertTrue(processes['receipt']['payload']['result']['stdout']['redacted'])
 
 
 if __name__ == '__main__':
