@@ -1,0 +1,108 @@
+{
+  "schema": "sarus.controlbridge.policy.v1",
+  "default": "deny",
+  "max_request_bytes": 65536,
+  "replay_window_seconds": 300,
+  "path_scopes": {
+    "user_workspace": ["workspace", "outputs", "projects"]
+  },
+  "forbidden_actions": [
+    "powershell",
+    "cmd",
+    "shell",
+    "arbitrary_exec",
+    "driver.load",
+    "driver.raw_ioctl",
+    "kernel.read_memory",
+    "kernel.write_memory",
+    "kernel.map_physical_memory",
+    "security.disable_controls",
+    "audit.disable"
+  ],
+  "resources": {
+    "services": {
+      "ollama": {"service_name": "Ollama"}
+    },
+    "processes": {
+      "ollama": {"image_name": "ollama.exe"}
+    }
+  },
+  "actions": {
+    "system.processes.list": {
+      "enabled": true,
+      "risk": 0,
+      "requires_approval": false,
+      "parameters": {}
+    },
+    "system.services.list": {
+      "enabled": true,
+      "risk": 0,
+      "requires_approval": false,
+      "parameters": {}
+    },
+    "workspace.file.read": {
+      "enabled": true,
+      "risk": 0,
+      "requires_approval": false,
+      "path_scope": "user_workspace",
+      "parameters": {
+        "path": {"type": "string", "required": true, "max_length": 4096}
+      }
+    },
+    "workspace.file.write": {
+      "enabled": true,
+      "risk": 2,
+      "requires_approval": false,
+      "path_scope": "user_workspace",
+      "parameters": {
+        "path": {"type": "string", "required": true, "max_length": 4096},
+        "content": {"type": "string", "required": true, "max_length": 200000}
+      }
+    },
+    "url.open": {
+      "enabled": true,
+      "risk": 1,
+      "requires_approval": false,
+      "parameters": {
+        "url": {"type": "url", "required": true, "max_length": 4096}
+      }
+    },
+    "service.query": {
+      "enabled": true,
+      "risk": 1,
+      "requires_approval": false,
+      "resource_group": "services",
+      "parameters": {
+        "resource_id": {"type": "resource_id", "required": true, "max_length": 128}
+      }
+    },
+    "service.start": {
+      "enabled": true,
+      "risk": 3,
+      "requires_approval": true,
+      "resource_group": "services",
+      "parameters": {
+        "resource_id": {"type": "resource_id", "required": true, "max_length": 128}
+      }
+    },
+    "service.stop": {
+      "enabled": true,
+      "risk": 4,
+      "requires_approval": true,
+      "resource_group": "services",
+      "parameters": {
+        "resource_id": {"type": "resource_id", "required": true, "max_length": 128}
+      }
+    },
+    "process.stop": {
+      "enabled": true,
+      "risk": 4,
+      "requires_approval": true,
+      "resource_group": "processes",
+      "parameters": {
+        "resource_id": {"type": "resource_id", "required": true, "max_length": 128},
+        "force": {"type": "boolean", "required": false}
+      }
+    }
+  }
+}

@@ -3,62 +3,155 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
 import json, os, sys, traceback, secrets
-ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT))
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 from sarus.core.app import Sarus
-APP=Sarus(ROOT); SESSION_TOKEN=secrets.token_urlsafe(32)
+
+APP = Sarus(ROOT)
+SESSION_TOKEN = secrets.token_urlsafe(32)
+MAX_HTTP_BODY = 65536
+
+
 class H(SimpleHTTPRequestHandler):
-    def __init__(self,*a,**kw): super().__init__(*a,directory=str(ROOT/'sarus/web'),**kw)
-    def log_message(self,fmt,*args):
-        if os.environ.get('SARUS_HTTP_LOG','0')=='1': super().log_message(fmt,*args)
-    def _json(self,obj,code=200):
-        b=json.dumps(obj,ensure_ascii=False,default=str).encode('utf-8'); self.send_response(code); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Cache-Control','no-store'); self.send_header('X-Content-Type-Options','nosniff'); self.send_header('X-Frame-Options','DENY'); self.send_header('Referrer-Policy','no-referrer'); self.send_header('Content-Security-Policy',"default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'"); self.send_header('Content-Length',str(len(b))); self.end_headers(); self.wfile.write(b)
+    def __init__(self, *a, **kw):
+        super().__init__(*a, directory=str(ROOT / 'sarus/web'), **kw)
+
+    def log_message(self, fmt, *args):
+        if os.environ.get('SARUS_HTTP_LOG', '0') == '1':
+            super().log_message(fmt, *args)
+
+    def _json(self, obj, code=200):
+        b = json.dumps(obj, ensure_ascii=False, default=str).encode('utf-8')
+        self.send_response(code)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('Referrer-Policy', 'no-referrer')
+        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'")
+        self.send_header('Content-Length', str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+
     def _body(self):
-        try: n=int(self.headers.get('Content-Length','0')); return json.loads(self.rfile.read(n) or b'{}')
-        except Exception: return {}
+        n = int(self.headers.get('Content-Length', '0'))
+        if n < 0 or n > MAX_HTTP_BODY:
+            raise ValueError('request body exceeds 64 KiB limit')
+        try:
+            return json.loads(self.rfile.read(n) or b'{}')
+        except json.JSONDecodeError as exc:
+            raise ValueError('invalid JSON body') from exc
+
     def do_GET(self):
-        u=urlparse(self.path); p=u.path; q=parse_qs(u.query, keep_blank_values=True)
+        u = urlparse(self.path)
+        p = u.path
+        q = parse_qs(u.query, keep_blank_values=True)
         try:
-            if p=='/api/session': return self._json({'token':SESSION_TOKEN})
-            if p=='/api/status': return self._json(APP.status())
-            if p=='/api/doctor': return self._json(APP.doctor.run())
-            if p=='/api/events': return self._json(APP.bus.recent(int(q.get('limit',['100'])[0])))
-            if p=='/api/models': return self._json(APP.models.list_models())
-            if p=='/api/capabilities':
-                if 'limit' in q or q.get('q',[''])[0] or q.get('source',[''])[0] or q.get('kind',[''])[0]:
-                    kinds=[x for x in q.get('kind',[]) if x] or None; return self._json(APP.registry.search(q.get('q',[''])[0],q.get('source',[None])[0],kinds,int(q.get('limit',['50'])[0])))
+            if p == '/api/session':
+                return self._json({'token': SESSION_TOKEN})
+            if p == '/api/status':
+                return self._json(APP.status())
+            if p == '/api/broker':
+                return self._json(APP.privileged.status())
+            if p == '/api/doctor':
+                return self._json(APP.doctor.run())
+            if p == '/api/events':
+                return self._json(APP.bus.recent(int(q.get('limit', ['100'])[0])))
+            if p == '/api/models':
+                return self._json(APP.models.list_models())
+            if p == '/api/capabilities':
+                if 'limit' in q or q.get('q', [''])[0] or q.get('source', [''])[0] or q.get('kind', [''])[0]:
+                    kinds = [x for x in q.get('kind', []) if x] or None
+                    return self._json(APP.registry.search(q.get('q', [''])[0], q.get('source', [None])[0], kinds, int(q.get('limit', ['50'])[0])))
                 return self._json(APP.registry.summary())
-            if p=='/api/capability': return self._json(APP.registry.read(q.get('id',[''])[0]) or {'error':'not found'},200 if APP.registry.get(q.get('id',[''])[0]) else 404)
-            if p=='/api/tasks': return self._json(APP.execution.recent_tasks(int(q.get('limit',['50'])[0])))
-            if p=='/api/approvals': return self._json(APP.execution.approvals(q.get('status',['pending'])[0]))
-            if p=='/api/receipts': return self._json({'chain':APP.receipts.verify_chain(),'items':APP.receipts.recent(int(q.get('limit',['100'])[0]))})
-            if p=='/api/memory': return self._json(APP.memory.search(q.get('q',[''])[0],q.get('namespace',[None])[0],int(q.get('limit',['25'])[0])))
-            if p=='/api/automations': return self._json(APP.scheduler.list())
+            if p == '/api/capability':
+                cid = q.get('id', [''])[0]
+                return self._json(APP.registry.read(cid) or {'error': 'not found'}, 200 if APP.registry.get(cid) else 404)
+            if p == '/api/tasks':
+                return self._json(APP.execution.recent_tasks(int(q.get('limit', ['50'])[0])))
+            if p == '/api/approvals':
+                return self._json(APP.execution.approvals(q.get('status', ['pending'])[0]))
+            if p == '/api/receipts':
+                return self._json({'chain': APP.receipts.verify_chain(), 'items': APP.receipts.recent(int(q.get('limit', ['100'])[0]))})
+            if p == '/api/memory':
+                return self._json(APP.memory.search(q.get('q', [''])[0], q.get('namespace', [None])[0], int(q.get('limit', ['25'])[0])))
+            if p == '/api/automations':
+                return self._json(APP.scheduler.list())
             return super().do_GET()
-        except Exception as e: return self._json({'error':str(e),'trace':traceback.format_exc(limit=2)},500)
+        except Exception as e:
+            return self._json({'error': str(e), 'trace': traceback.format_exc(limit=2)}, 500)
+
     def do_POST(self):
-        p=urlparse(self.path).path
-        if self.headers.get('X-SARUS-Token','') != SESSION_TOKEN: return self._json({'error':'invalid SARUS session token'},403)
-        origin=self.headers.get('Origin',''); host=self.headers.get('Host','')
-        if origin and origin not in {f'http://{host}',f'https://{host}'}: return self._json({'error':'cross-origin request blocked'},403)
-        data=self._body()
+        p = urlparse(self.path).path
+        if self.headers.get('X-SARUS-Token', '') != SESSION_TOKEN:
+            return self._json({'error': 'invalid SARUS session token'}, 403)
+        origin = self.headers.get('Origin', '')
+        host = self.headers.get('Host', '')
+        if origin and origin not in {f'http://{host}', f'https://{host}'}:
+            return self._json({'error': 'cross-origin request blocked'}, 403)
         try:
-            if p=='/api/plan': return self._json({'steps':APP.orchestrator.execute_dry(str(data.get('text','')))})
-            if p=='/api/task': return self._json(APP.execution.run(str(data.get('text','')),str(data.get('source','user')),data.get('capability_id')))
-            if p=='/api/chat': return self._json(APP.models.generate(str(data.get('text','')),str(data.get('task_type','general')),model=data.get('model')))
-            if p=='/api/capability/run':
-                cid=str(data.get('id','')); cap=APP.registry.get(cid)
-                if not cap: return self._json({'error':'capability not found'},404)
-                adapter=APP.adapters.get(cap['source']); out=adapter.execute(str(data.get('text','Use this capability for its intended purpose.')),APP,capability_id=cid); receipt=APP.receipts.create('direct-capability',cid,cap['source'],'completed' if out.get('ok') else 'failed',out); return self._json({'capability':cap,'result':out,'receipt':receipt})
-            if p=='/api/memory': return self._json(APP.memory.add(str(data.get('content','')),str(data.get('title','')),str(data.get('namespace','general')),data.get('metadata') or {}))
-            if p=='/api/approval': return self._json(APP.execution.set_approval(str(data.get('id','')),str(data.get('status','rejected'))))
-            if p=='/api/system/action':
-                name=str(data.get('name','')); risk=4 if name in {'powershell','stop_process','service_control'} else 1; decision=APP.policy.evaluate('privileged_system_action' if risk>=4 else name,risk,'core'); approved=bool(data.get('approved'))
-                if decision['decision']=='approval' and not approved: return self._json({'ok':False,'status':'approval_required','policy':decision},423)
-                out=APP.windows.action(name,data.get('args') or {},approved=approved); receipt=APP.receipts.create('system-action',name,'windows', 'completed' if out.get('ok') else 'failed',out); return self._json({'result':out,'receipt':receipt})
-            if p=='/api/automation': return self._json(APP.scheduler.add(str(data.get('name','Automation')),str(data.get('prompt','')),int(data.get('interval_seconds',3600)),bool(data.get('enabled',True))))
-            if p=='/api/automation/toggle': APP.scheduler.set_enabled(str(data.get('id','')),bool(data.get('enabled'))); return self._json({'ok':True})
-            return self._json({'error':'not found'},404)
-        except Exception as e: return self._json({'error':str(e),'trace':traceback.format_exc(limit=3)},500)
+            data = self._body()
+            if p == '/api/plan':
+                return self._json({'steps': APP.orchestrator.execute_dry(str(data.get('text', '')))})
+            if p == '/api/task':
+                return self._json(APP.execution.run(str(data.get('text', '')), str(data.get('source', 'user')), data.get('capability_id')))
+            if p == '/api/chat':
+                return self._json(APP.models.generate(str(data.get('text', '')), str(data.get('task_type', 'general')), model=data.get('model')))
+            if p == '/api/capability/run':
+                cid = str(data.get('id', ''))
+                cap = APP.registry.get(cid)
+                if not cap:
+                    return self._json({'error': 'capability not found'}, 404)
+                adapter = APP.adapters.get(cap['source'])
+                out = adapter.execute(str(data.get('text', 'Use this capability for its intended purpose.')), APP, capability_id=cid)
+                receipt = APP.receipts.create('direct-capability', cid, cap['source'], 'completed' if out.get('ok') else 'failed', out)
+                return self._json({'capability': cap, 'result': out, 'receipt': receipt})
+            if p == '/api/memory':
+                return self._json(APP.memory.add(str(data.get('content', '')), str(data.get('title', '')), str(data.get('namespace', 'general')), data.get('metadata') or {}))
+            if p == '/api/approval':
+                return self._json(APP.execution.set_approval(str(data.get('id', '')), str(data.get('status', 'rejected'))))
+            if p == '/api/system/action':
+                # Keep only old read-only dashboard aliases for compatibility.
+                # Privileged legacy names (powershell/service_control/etc.) are
+                # intentionally not translated and will fail schema validation.
+                if 'action_id' not in data:
+                    safe_legacy = {
+                        'list_processes': 'system.processes.list',
+                        'list_services': 'system.services.list',
+                        'read_file': 'workspace.file.read',
+                        'write_file': 'workspace.file.write',
+                        'open_url': 'url.open',
+                    }
+                    old_name = str(data.get('name', ''))
+                    if old_name in safe_legacy:
+                        data = {'action_id': safe_legacy[old_name], 'parameters': data.get('args') or {}}
+                # Privileged approval is deliberately out-of-band. A JSON
+                # "approved": true flag is not accepted as authorization.
+                proof = self.headers.get('X-SARUS-Approval')
+                out = APP.privileged.handle(data, source='local-api', approval_proof=proof)
+                code = 423 if out.get('status') == 'approval_required' else (403 if out.get('status') == 'denied' else (400 if out.get('status') == 'invalid' else 200))
+                return self._json(out, code)
+            if p == '/api/automation':
+                return self._json(APP.scheduler.add(str(data.get('name', 'Automation')), str(data.get('prompt', '')), int(data.get('interval_seconds', 3600)), bool(data.get('enabled', True))))
+            if p == '/api/automation/toggle':
+                APP.scheduler.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
+                return self._json({'ok': True})
+            return self._json({'error': 'not found'}, 404)
+        except ValueError as e:
+            return self._json({'error': str(e)}, 400)
+        except PermissionError as e:
+            return self._json({'error': str(e)}, 403)
+        except Exception as e:
+            return self._json({'error': str(e), 'trace': traceback.format_exc(limit=3)}, 500)
+
+
 def run(port=None):
-    port=int(port or os.environ.get('SARUS_PORT','8877')); host=os.environ.get('SARUS_HOST','127.0.0.1'); print(f'SARUS v1 dashboard: http://{host}:{port}'); ThreadingHTTPServer((host,port),H).serve_forever()
-if __name__=='__main__': run()
+    port = int(port or os.environ.get('SARUS_PORT', '8877'))
+    host = os.environ.get('SARUS_HOST', '127.0.0.1')
+    print(f'SARUS v1.1 dashboard: http://{host}:{port}')
+    ThreadingHTTPServer((host, port), H).serve_forever()
+
+
+if __name__ == '__main__':
+    run()

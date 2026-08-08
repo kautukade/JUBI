@@ -1,0 +1,70 @@
+name: Privileged Broker Security
+
+on:
+  push:
+    branches:
+      - agent/privileged-broker-v1
+  pull_request:
+    paths:
+      - 'sarus/**'
+      - 'scripts/create_broker_approval.py'
+      - 'installer/SETUP-BROKER.ps1'
+      - 'INSTALL-SARUS*.bat'
+      - 'config/broker_allowlist.json'
+      - 'config/policy.json'
+      - 'tests/broker_security_test.py'
+      - '.github/workflows/privileged-broker-security.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  linux-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile SARUS Python
+        run: python -m compileall -q sarus tests scripts/create_broker_approval.py
+
+      - name: Validate broker policy JSON
+        run: python -m json.tool config/broker_allowlist.json > /dev/null
+
+      - name: Run isolated privileged broker security tests
+        env:
+          SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
+        run: python tests/broker_security_test.py
+
+  windows-broker-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Provision protected broker storage
+        shell: powershell
+        run: |
+          .\installer\SETUP-BROKER.ps1
+          $secret = Join-Path $env:LOCALAPPDATA 'SARUS\broker\approval.secret'
+          $receipt = Join-Path $env:LOCALAPPDATA 'SARUS\broker\receipt-signing.key'
+          if (-not (Test-Path -LiteralPath $secret)) { throw 'Broker approval key was not provisioned.' }
+          "SARUS_BROKER_SECRET_FILE=$secret" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SARUS_RECEIPT_SIGNING_KEY_FILE=$receipt" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Compile SARUS and broker helper
+        run: python -m compileall -q sarus tests scripts/create_broker_approval.py
+
+      - name: Validate broker policy JSON
+        run: python -m json.tool config/broker_allowlist.json > NUL
+
+      - name: Run broker tests with LocalAppData key storage
+        run: python tests/broker_security_test.py
