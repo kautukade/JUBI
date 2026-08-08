@@ -1,6 +1,9 @@
 from pathlib import Path
 import sys,json,unittest,threading,urllib.request,urllib.error,time,uuid
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
+SAFE_FILE=ROOT/'workspace'/'.integration-broker-read.txt'
+def safe_file():
+ SAFE_FILE.parent.mkdir(parents=True,exist_ok=True); SAFE_FILE.write_text('SARUS integration workspace test',encoding='utf-8'); return SAFE_FILE
 from sarus.core.app import Sarus
 
 class T(unittest.TestCase):
@@ -8,7 +11,7 @@ class T(unittest.TestCase):
  def setUpClass(cls):
   cls.app=Sarus(ROOT); cls.orig_generate=cls.app.models.generate_text; cls.app.models.generate_text=lambda prompt,task_type='general',system='',model=None,timeout=300: f'MOCK_OK[{task_type}] '+prompt[:160]
  @classmethod
- def tearDownClass(cls): cls.app.models.generate_text=cls.orig_generate
+ def tearDownClass(cls): cls.app.models.generate_text=cls.orig_generate; SAFE_FILE.unlink(missing_ok=True)
  def test_01_all_10_sources_connected(self):
   s=self.app.status(); self.assertEqual(len(s['adapters']),10); self.assertTrue(all(a['connected'] for a in s['adapters']))
  def test_02_registry_exact_original_file_count(self):
@@ -33,13 +36,13 @@ class T(unittest.TestCase):
  def test_13_unknown_broker_action_default_denied_and_receipted(self):
   r=self.app.privileged.handle({'action_id':'not.allowlisted','parameters':{}}); self.assertFalse(r['ok']); self.assertEqual(r['status'],'denied'); self.assertTrue(r['receipt']['signature']['value'])
  def test_14_allowlisted_workspace_read(self):
-  r=self.app.privileged.handle({'action_id':'workspace.file.read','parameters':{'path':str(ROOT/'README.md')}}); self.assertTrue(r['ok']); self.assertIn('SARUS',r['result']['content']); self.assertTrue(r['receipt']['signature']['value'])
+  r=self.app.privileged.handle({'action_id':'workspace.file.read','parameters':{'path':str(safe_file())}}); self.assertTrue(r['ok']); self.assertIn('SARUS',r['result']['content']); self.assertTrue(r['receipt']['signature']['value'])
  def test_15_high_risk_broker_action_needs_out_of_band_approval(self):
   r=self.app.privileged.handle({'action_id':'process.stop','parameters':{'resource_id':'ollama'}}); self.assertFalse(r['ok']); self.assertEqual(r['status'],'approval_required')
  def test_16_kernel_action_is_permanently_denied(self):
   r=self.app.privileged.handle({'action_id':'kernel.read_memory','parameters':{}}); self.assertEqual(r['status'],'denied')
  def test_17_replay_request_is_denied(self):
-  rid=str(uuid.uuid4()); nonce='replay-'+uuid.uuid4().hex; req={'request_id':rid,'nonce':nonce,'timestamp':time.time(),'action_id':'workspace.file.read','parameters':{'path':str(ROOT/'README.md')}}; a=self.app.privileged.handle(req); b=self.app.privileged.handle(req); self.assertTrue(a['ok']); self.assertFalse(b['ok']); self.assertEqual(b['status'],'denied')
+  rid=str(uuid.uuid4()); nonce='replay-'+uuid.uuid4().hex; req={'request_id':rid,'nonce':nonce,'timestamp':time.time(),'action_id':'workspace.file.read','parameters':{'path':str(safe_file())}}; a=self.app.privileged.handle(req); b=self.app.privileged.handle(req); self.assertTrue(a['ok']); self.assertFalse(b['ok']); self.assertEqual(b['status'],'denied')
  def test_18_receipt_signatures_verify(self):
   v=self.app.receipts.verify_chain(); self.assertTrue(v['ok']); self.assertGreater(v['signed_count'],0); self.assertEqual(v['algorithm'],'HMAC-SHA256')
 
@@ -48,7 +51,7 @@ class HttpSmoke(unittest.TestCase):
  def setUpClass(cls):
   import sarus.server as server; cls.server_mod=server; cls.old=server.APP.models.generate_text; server.APP.models.generate_text=lambda prompt,task_type='general',system='',model=None,timeout=300:'HTTP_MOCK_OK'; cls.httpd=server.ThreadingHTTPServer(('127.0.0.1',0),server.H); cls.port=cls.httpd.server_address[1]; cls.th=threading.Thread(target=cls.httpd.serve_forever,daemon=True); cls.th.start()
  @classmethod
- def tearDownClass(cls): cls.httpd.shutdown(); cls.httpd.server_close(); cls.server_mod.APP.models.generate_text=cls.old
+ def tearDownClass(cls): cls.httpd.shutdown(); cls.httpd.server_close(); cls.server_mod.APP.models.generate_text=cls.old; SAFE_FILE.unlink(missing_ok=True)
  @classmethod
  def get(cls,path):
   with urllib.request.urlopen(f'http://127.0.0.1:{cls.port}{path}',timeout=10) as r:return r.status,json.load(r)
@@ -69,7 +72,7 @@ class HttpSmoke(unittest.TestCase):
  def test_23_broker_status_endpoint(self):
   code,b=self.get('/api/broker'); self.assertEqual(code,200); self.assertEqual(b['default'],'deny'); self.assertFalse(b['arbitrary_shell']); self.assertFalse(b['kernel_direct_access'])
  def test_24_system_action_uses_typed_request(self):
-  _,sess=self.get('/api/session'); tok=sess['token']; code,b=self.post('/api/system/action',{'action_id':'workspace.file.read','parameters':{'path':str(ROOT/'README.md')}},tok); self.assertEqual(code,200); self.assertTrue(b['ok']); self.assertTrue(b['receipt']['signature']['value'])
+  _,sess=self.get('/api/session'); tok=sess['token']; code,b=self.post('/api/system/action',{'action_id':'workspace.file.read','parameters':{'path':str(safe_file())}},tok); self.assertEqual(code,200); self.assertTrue(b['ok']); self.assertTrue(b['receipt']['signature']['value'])
  def test_25_legacy_system_action_shape_rejected(self):
   _,sess=self.get('/api/session'); tok=sess['token']; code,b=self.post('/api/system/action',{'name':'powershell','args':{'command':'whoami'},'approved':True},tok); self.assertEqual(code,400); self.assertEqual(b['status'],'invalid')
 
