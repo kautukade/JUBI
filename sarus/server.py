@@ -112,6 +112,20 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/approval':
                 return self._json(APP.execution.set_approval(str(data.get('id', '')), str(data.get('status', 'rejected'))))
             if p == '/api/system/action':
+                # Keep only old read-only dashboard aliases for compatibility.
+                # Privileged legacy names (powershell/service_control/etc.) are
+                # intentionally not translated and will fail schema validation.
+                if 'action_id' not in data:
+                    safe_legacy = {
+                        'list_processes': 'system.processes.list',
+                        'list_services': 'system.services.list',
+                        'read_file': 'workspace.file.read',
+                        'write_file': 'workspace.file.write',
+                        'open_url': 'url.open',
+                    }
+                    old_name = str(data.get('name', ''))
+                    if old_name in safe_legacy:
+                        data = {'action_id': safe_legacy[old_name], 'parameters': data.get('args') or {}}
                 # Privileged approval is deliberately out-of-band. A JSON
                 # "approved": true flag is not accepted as authorization.
                 proof = self.headers.get('X-SARUS-Approval')
