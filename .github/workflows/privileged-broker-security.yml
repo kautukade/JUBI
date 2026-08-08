@@ -52,7 +52,13 @@ jobs:
 
       - name: Provision protected broker storage
         shell: powershell
-        run: .\installer\SETUP-BROKER.ps1
+        run: |
+          .\installer\SETUP-BROKER.ps1
+          $secret = Join-Path $env:LOCALAPPDATA 'SARUS\broker\approval.secret'
+          $receipt = Join-Path $env:LOCALAPPDATA 'SARUS\broker\receipt-signing.key'
+          if (-not (Test-Path -LiteralPath $secret)) { throw 'Broker approval key was not provisioned.' }
+          "SARUS_BROKER_SECRET_FILE=$secret" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SARUS_RECEIPT_SIGNING_KEY_FILE=$receipt" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Compile SARUS and broker helper
         run: python -m compileall -q sarus tests scripts/create_broker_approval.py
