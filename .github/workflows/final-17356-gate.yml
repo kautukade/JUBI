@@ -1,0 +1,74 @@
+name: Final Exact 17356 Gate
+
+on:
+  push:
+    paths:
+      - 'RUN_FINAL_17356_GATE'
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact physical source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, sys
+          roots = {
+            'sara': ('sources/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK(4)/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK', 213),
+            'hermes': ('sources/hermes-agent-main(3)/hermes-agent-main', 8541),
+            'ecc': ('sources/ECC-main(20260807-042951)/ECC-main', 3438),
+            'agency_agents': ('sources/agency-agents-main(3)/agency-agents-main', 343),
+            'awesome_llm_apps': ('sources/awesome-llm-apps-main(2)/awesome-llm-apps-main', 1803),
+            'second_brain': ('sources/second-brain-skills-main(3)/second-brain-skills-main', 97),
+            'superpowers': ('sources/superpowers-main(3)/superpowers-main', 180),
+            'fable_os': ('sources/fable-os-main(3)/fable-os-main', 1194),
+            'cai': ('sources/cai-main(3)/cai-main', 1537),
+            'autoresearch': ('sources/autoresearch-master(3)/autoresearch-master', 10),
+          }
+          counts={}
+          complete=True
+          for k,(root,expected) in roots.items():
+            p=Path(root)
+            n=sum(1 for x in p.rglob('*') if x.is_file()) if p.exists() else 0
+            counts[k]=n
+            print(f'{k}: {n}/{expected}')
+            complete &= n==expected
+          total=sum(counts.values())
+          complete &= total==17356
+          status={'expected_original_source_files':17356,'physical_source_files':total,'missing_to_17356':17356-total,'complete':bool(complete),'per_source':counts}
+          Path('SOURCE_COUNT_STATUS.json').write_text(json.dumps(status,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(status,indent=2))
+          if not complete:
+            sys.exit('FINAL 17356 GATE FAILED')
+          PY
+
+      - name: Ensure no gitlinks remain
+        shell: bash
+        run: |
+          set -euo pipefail
+          BAD=$(git ls-files -s sources | awk '$1==160000 {print}')
+          if [ -n "$BAD" ]; then
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Commit completion marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'SARUS ORIGINAL SOURCE SNAPSHOT COMPLETE\nPHYSICAL_SOURCE_FILES=17356\nSARA=213\nPUBLIC_9=17143\nGITLINKS=0\n' > COMPLETE_17356.ok
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SOURCE_COUNT_STATUS.json COMPLETE_17356.ok
+          git commit -m 'Verify exact 17,356 physical source files' || true
+          git push origin HEAD:main
