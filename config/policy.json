@@ -1,7 +1,34 @@
 {
   "default": "allow_read",
-  "levels": {"0":"read-only","1":"safe local action","2":"project modification","3":"system modification","4":"external action","5":"privileged system action"},
-  "always_require_approval": ["delete_outside_workspace","send_external_message","change_security_settings","privileged_system_action","production_deploy","credential_access"],
-  "isolated_only": ["cai_active_security_tools","autoresearch_self_modification","fable_kernel_experiments"],
-  "never_auto": ["disable_security_controls","credential_exfiltration","unbounded_kernel_access"]
+  "levels": {
+    "0": "read-only",
+    "1": "safe local action",
+    "2": "project modification",
+    "3": "system modification",
+    "4": "external action",
+    "5": "privileged system action"
+  },
+  "always_require_approval": [
+    "delete_outside_workspace",
+    "send_external_message",
+    "change_security_settings",
+    "privileged_system_action",
+    "production_deploy",
+    "credential_access"
+  ],
+  "isolated_only": [
+    "cai_active_security_tools",
+    "autoresearch_self_modification",
+    "fable_kernel_experiments"
+  ],
+  "never_auto": [
+    "disable_security_controls",
+    "credential_exfiltration",
+    "unbounded_kernel_access",
+    "arbitrary_shell",
+    "raw_driver_access",
+    "kernel_memory_access",
+    "arbitrary_ioctl",
+    "audit_disable"
+  ]
 }
