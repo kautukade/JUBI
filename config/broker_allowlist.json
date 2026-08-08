@@ -67,6 +67,18 @@
         "url": {"type": "url", "required": true, "max_length": 4096}
       }
     },
+    "ring0.ping": {
+      "enabled": true,
+      "risk": 1,
+      "requires_approval": false,
+      "parameters": {}
+    },
+    "ring0.status": {
+      "enabled": true,
+      "risk": 1,
+      "requires_approval": false,
+      "parameters": {}
+    },
     "service.query": {
       "enabled": true,
       "risk": 1,
