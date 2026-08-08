@@ -1,0 +1,4 @@
+file        : /tmp/live-ac97.wav
+format      : 2 ch, 16-bit, 48000 Hz
+captured    : 1976768 frames = 41.183 s
+SILENT      : not one non-zero sample. The codec was fed nothing.

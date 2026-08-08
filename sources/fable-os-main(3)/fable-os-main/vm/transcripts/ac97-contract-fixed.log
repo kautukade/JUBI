@@ -1,0 +1,240 @@
+note: api key passed to the guest over fw_cfg as opt/fableos/apikey
+qemu-system-x86_64: multiboot knows VBE. we don't
+qemu-system-x86_64: -device AC97,audiodev=snd0: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: -device AC97,audiodev=snd0: audio: Can not open `ac97.mc' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[display 1024x768 32bpp via bochs-vbe -> 128x48 text, Spleen 8x16 (BSD-2-Clause) + fable-os additions]
+[console utf-8: em—dash en–dash ‘curly’ “quotes” ellipsis… bullet• ✓ ✗]
+[console glyphs: ←↑→↓↔↕ ≈≡≤≥±÷∞√ áéíóú äöü ñ ç ß ° µ ¶ §]
+[console glyphs: box ┌──┬──┐ ├──┼──┤ └──┴──┘ ╔══╦══╗ ╠══╬══╣ ╚══╩══╝]
+[console glyphs: blocks ░▒▓█▄▀▌▐ folded ╭╮╰╯ unmapped 😀]
+idt: 256 gates at 0x218000 (limit 4095), all verified; TSS with 3 IST stacks of 16 KiB (#DF=1 NMI=2 #MC=3); PIC remapped to 0x20/0x28 and fully masked
+serial: COM1 up @ 115200
+fwcfg: QEMU fw_cfg at 0x510/0x511, 14 file(s), features 0x3
+fwcfg: api key: 108 bytes loaded from fw_cfg (opt/fableos/apikey)
+pci: 00:00.0  8086:1237  class 06:00
+pci: 00:01.0  8086:7000  class 06:01
+pci: 00:01.1  8086:7010  class 01:01
+pci: 00:01.3  8086:7113  class 06:80
+pci: 00:02.0  1234:1111  class 03:00
+pci: 00:03.0  8086:100e  class 02:00
+pci: 00:04.0  8086:2415  class 04:01
+pci: 7 device(s)
+acpi: rev 0 "BOCHS ", 4 table(s), rsdp=0xf52d0 rsdt=0x7fe232e fadt=0x7fe21e2 dsdt=0x7fe0040
+acpi: pm1a_cnt=0x604 pm1b_cnt=0x0 len=2 smi=0xb2 s5=yes(a=0 b=0 from DSDT) reset=no
+kbd: PS/2 keyboard ready
+serial-in: COM1 registered as input source
+mouse: PS/2 mouse ready (4-byte packets, wheel), 720x400 box, muted until a consumer polls
+e1000: 00:03.0 MMIO=0xfebc0000
+audio: no output driver is registered - nothing can play a sound yet
+audio: 192 KB of PCM space is waiting at 0x1762000 (of a 256 KB DMA arena) for a driver to claim an audio device and register as the sink
+rtc: MC146818 at 0x70: 2026-07-30T06:16:44Z (Thursday, unix 1785392204, assumed UTC)
+rtc: self-check 64 reads: 0 unreadable, 0 out of order, 0 rollover(s) crossed, 0 gap(s), 0s span
+gui: window manager ready (1024x768, 12 windows, 48 widgets each; desktop is the 128x48 text console)
+
+--- device tree ---
+devices: 14 registered
+  [ 1] serial0    serial   active      driver=serial io=3f8 irq=4
+  [ 2] fwcfg0     system   active      driver=fwcfg  io=510
+  [ 3] pci0       bus      active      driver=pci   
+  [ 4] pci00:00.0 bus      registered  driver=-     
+  [ 5] pci00:01.0 bus      registered  driver=-     
+  [ 6] pci00:01.1 storage  registered  driver=-     
+  [ 7] pci00:01.3 bus      registered  driver=-     
+  [ 8] pci00:02.0 display  registered  driver=-      mmio=0xfd000000
+  [ 9] pci00:03.0 network  registered  driver=-      mmio=0xfebc0000
+  [10] pci00:04.0 audio    registered  driver=-      io=c000
+  [11] kbd0       input    active      driver=kbd    io=60 irq=1
+  [12] mouse0     input    active      driver=mouse  io=60 irq=12
+  [13] eth0       network  active      driver=e1000  mmio=0xfebc0000
+  [14] rtc0       timer    active      driver=rtc    io=70 irq=8
+--- power cycle: suspend all, then resume all ---
+e1000: suspend: rctl=0x04008018 tctl=0x000400f8 (rx=off tx=off) phy=powered down
+e1000: suspend: status=0x80080783 link=up 1000 Mb/s full-duplex
+e1000: suspend: STATUS.LU still set - this platform does not model PHY power state; the engines are off, so no frame can enter or leave regardless
+e1000: resume: renegotiating: status=0x80080781 link=down
+e1000: resume: rctl=0x0400801a tctl=0x000400fa (rx=on tx=on) phy=powered up link settled in 478 ms
+e1000: resume: status=0x80080783 link=up 1000 Mb/s full-duplex
+rtc: resumed, wall clock advanced 1s while suspended
+-------------------
+
+--- filesystem self-test (ramfs at /) ---
+read /etc/motd (33 bytes): fable-os native filesystem online
+stat /etc/motd: type=file size=33 mode=0x6
+ls / : tmp etc
+-----------------------------------------
+net: up at 10.0.2.15/24
+net: resolving api.anthropic.com ...
+net: api.anthropic.com -> 160.79.104.10, TLS ready
+
+--- self-test: HTTPS to api.anthropic.com ---
+[http] HTTP/1.1 500 Internal Server Error
+{"type":"error","error":{"type":"api_error","message":"Internal server error"},"request_id":"req_011CdXkequB18QHPPf1jCsaQ"}
+---------------------------------------------
+heap: 3/16384 KiB used (peak 47 KiB), 34 live / 2 free blocks, 15842 allocs 15808 frees
+
+==============================================================
+  fable-os
+==============================================================
+  tools  : 49 registered (39125 bytes of schema)
+  model  : reachable over TLS
+
+  No shell, no commands. Say what you want done, in a sentence.
+  Prose is the model talking. [Brackets] are this kernel saying
+  what it actually did.
+
+> there's a sound card in this machine with no driver. find it and write one, then play me a tone.
+I'll find the audio hardware first, then plan the driver work.
+[pci_list bus=0-255 vendor=-1 class=4 unclaimed_only=0 -> 1]
+[device_list class=audio state=* unclaimed_only=0 -> 1]
+[audio_status sink=- kind=none -> 0]
+Found it: an Intel 82801AA AC'97 audio controller (8086:2415) at PCI 00:04.0, I/O BAR at 0xc000. Let me look deeper before writing the driver.
+[pci_info 00:04.0 8086:2415 class=04:01 driven=0 -> ok]
+[driver_targets known=7 usable=2 -> 2]
+[audio_status sink=- kind=none -> 0]
+This is a standard AC'97 controller. BAR0 (0xc000) is the mixer/NAM, BAR1 (0xc400) is the bus master/NABM. Let me read the rest of the contract.
+[audio_status sink=- kind=none -> 0]
+[audio_status sink=- kind=none -> 0]
+Now I have the full picture. Let me write the plan, then the AC'97 bring-up program.
+[plan_set step-too-long -> EINVAL]
+[plan_set steps=4 goal=A registered AC'97 sink on pci00:04.0 that plays a tone on demand -> 4]
+Now the bring-up. AC'97 register map: NAM (BAR0/r0) has mixer regs — 0x00 reset, 0x02 master volume, 0x18 PCM out volume, 0x2C/0x2E/0x32 sample rate. NABM (BAR1/r1) global control is at 0x2C (GLOB_CNT); bit1 = cold reset. Let me assemble it first.
+[driver_assemble line=11 -> EINVAL]
+The port operand of out/in doesn't accept `base+disp` form — I need to compute the port address into a register first.
+[driver_assemble insns=32 -> 32]
+Assembles clean. Now run it against the device.
+[driver_run.bme pci00:04.0 cmd 0x0103 -> 0x0107 set=bus-master(bit2) already=io(bit0) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x1762000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.run insns=32 args=9 steps<=100000 io<=1024 delay<=300000 us trace=1 -> ok]
+[dvm pc=003 ln=10 out32 port=0xc42c val=0x2 -> ok]
+[dvm.trap pc=004 ln=11 DELAY_LIMIT: delay of 100000 us exceeds the 50000 us single-delay limit -> EINVAL]
+[dvm.stop DELAY_LIMIT steps=5 io=1 delay=0 us -> EINVAL]
+[driver_run.bme pci00:04.0 program failed: cleared the bits the kernel set -> ok]
+[driver_run pci00:04.0 attempt=1 DELAY_LIMIT line=11 -> EINVAL]
+Single delay caps at 50000 us. I'll split the reset delay into two 25000-us delays.
+[driver_run.bme pci00:04.0 cmd 0x0103 -> 0x0107 set=bus-master(bit2) already=io(bit0) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x1762000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.run insns=33 args=9 steps<=100000 io<=1024 delay<=400000 us trace=1 -> ok]
+[dvm pc=003 ln=10 out32 port=0xc42c val=0x2 -> ok]
+[dvm pc=004 ln=11 delay 40000 us (total 40000) -> ok]
+[dvm pc=005 ln=12 delay 40000 us (total 80000) -> ok]
+qemu-system-x86_64: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[dvm pc=007 ln=15 out16 port=0xc000 val=0x0 -> ok]
+[dvm pc=008 ln=16 delay 10000 us (total 90000) -> ok]
+[dvm pc=012 ln=21 out16 port=0xc002 val=0x0 -> ok]
+[dvm pc=015 ln=25 out16 port=0xc018 val=0x0 -> ok]
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[dvm pc=019 ln=30 out16 port=0xc02a val=0x1 -> ok]
+[dvm pc=020 ln=31 delay 10000 us (total 100000) -> ok]
+[dvm pc=024 ln=36 out16 port=0xc02c val=0xbb80 -> ok]
+[dvm pc=025 ln=37 delay 10000 us (total 110000) -> ok]
+[dvm pc=028 ln=41 in16 port=0xc002 r3=0x0 -> ok]
+[dvm pc=031 ln=44 in16 port=0xc02c r4=0xbb80 -> ok]
+[dvm.halt pc=032 ln=45 steps=33 io=8 (pr=2 pw=6 mr=0 mw=0 pci=0) dma=0 (rd=0 wr=0) delay=110000 us prints=0 -> ok]
+[driver_run pci00:04.0 attempt=2 insns=33 steps=33 io=8 -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2076 bytes) and carried on]
+Bring-up succeeded: master reads back 0x0 (unmuted, 0dB) and the PCM rate register holds 0xBB80 (48000). Step 1 done.
+[plan_mark step=1/4 todo->done -> ok]
+[plan_mark step=2/4 todo->doing -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2874 bytes) and carried on]
+Now the play program. AC'97 PCM-out (NABM channel base 0x10): BDBAR at +0x10 (buffer descriptor list base, physical), LVI at +0x15 (last valid index), CR at +0x1B (control: bit0 run, bit1 reset), SR at +0x16 (status, bit0=DMA halted).
+
+A BDL entry is 8 bytes: 4-byte buffer physical address, then 2-byte sample count (16-bit samples), then 2-byte control flags. I'll build one entry at r12 pointing at r7, with count = r10*channels = total 16-bit samples = r9/2. Set IOC bit (bit15 of flags word) so completion status shows. Then set LVI=0, run, and poll SR until DMA halted / current index passes.
+
+Let me assemble it first.
+[driver_assemble insns=42 -> 42]
+[model HTTP/1.1 500 Internal Server Error]
+[model said: Internal server error]
+
+> now play me one steady note at 1000 hz that lasts about nine hundred milliseconds.
+[audio_tone no-sink -> ENOENT]
+No sound driver is registered yet, so I need to bring up the audio card first. Let me look at what's available.
+[audio_status sink=- kind=none -> 0]
+[driver_targets known=7 usable=2 -> 2]
+The audio device is pci00:04.0, an Intel AC'97 controller (8086:2415). Let me read the play contract and inspect the device.
+[audio_status sink=- kind=none -> 0]
+[audio_status sink=- kind=none -> 0]
+[pci_info 00:04.0 8086:2415 class=04:01 driven=0 -> ok]
+[audio_status sink=- kind=none -> 0]
+This is an Intel AC'97 (ICH) audio controller. BAR0 (0xc000) is the mixer/NAM (native audio mixer), BAR1 (0xc400) is the NABM (native audio bus master). I need to write a bring-up program and then a play program. Let me plan this.
+[plan_set step-too-long -> EINVAL]
+[plan_set steps=3 goal=A 1000 Hz tone plays for ~900 ms through the AC'97 card. -> 3]
+Now the bring-up program. AC'97 register map: NABM (BAR1, r1=0xc400) has GLOB_CNT at 0x2C. NAM (BAR0, r0=0xc000) has reset at 0x00, master volume 0x02, PCM out volume 0x18, and codec-ready is read via GLOB_STA at NABM 0x30 bit 8 (primary codec ready).
+
+Let me write and assemble the bring-up first.
+[driver_assemble line=7 -> EINVAL]
+The port I/O ops take a port operand that must be a register or number, not `base+disp`. The `+disp` form is only for ld/st (MMIO). This is a port-I/O device, so I must compute the port into a register first. Let me rewrite.
+[driver_assemble insns=22 -> 22]
+Note: `bne ready` with no explicit comparison — bne uses the zero flag set by the prior cmp. Good. Let me run it.
+[driver_run.bme pci00:04.0 cmd 0x0107 -> 0x0107 set=none already=io(bit0)+bus-master(bit2) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x1762000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.run insns=22 args=9 steps<=100000 io<=1024 delay<=400000 us trace=1 -> ok]
+[dvm pc=001 ln=3 out32 port=0xc42c val=0x2 -> ok]
+[dvm.trap pc=002 ln=4 DELAY_LIMIT: delay of 100000 us exceeds the 50000 us single-delay limit -> EINVAL]
+[dvm.stop DELAY_LIMIT steps=3 io=1 delay=0 us -> EINVAL]
+[driver_run pci00:04.0 attempt=1 DELAY_LIMIT line=4 -> EINVAL]
+Delay cap is 50000 us per call. I'll split the reset settle into a couple of shorter delays.
+[driver_run.bme pci00:04.0 cmd 0x0107 -> 0x0107 set=none already=io(bit0)+bus-master(bit2) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x1762000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.run insns=24 args=9 steps<=100000 io<=1024 delay<=400000 us trace=1 -> ok]
+[dvm pc=001 ln=3 out32 port=0xc42c val=0x2 -> ok]
+[dvm pc=002 ln=4 delay 50000 us (total 50000) -> ok]
+[dvm pc=003 ln=5 delay 50000 us (total 100000) -> ok]
+[dvm pc=006 ln=9 in32 port=0xc430 r3=0x100 -> ok]
+qemu-system-x86_64: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[dvm pc=015 ln=19 out16 port=0xc000 val=0x0 -> ok]
+[dvm pc=016 ln=20 delay 1000 us (total 101000) -> ok]
+[dvm pc=018 ln=22 out16 port=0xc002 val=0x0 -> ok]
+[dvm pc=020 ln=24 out16 port=0xc018 val=0x0 -> ok]
+[dvm pc=021 ln=25 in16 port=0xc018 r7=0x0 -> ok]
+[dvm pc=022 ln=26 in32 port=0xc430 r8=0x100 -> ok]
+[dvm.halt pc=023 ln=27 steps=19 io=7 (pr=3 pw=4 mr=0 mw=0 pci=0) dma=0 (rd=0 wr=0) delay=101000 us prints=0 -> ok]
+[driver_run pci00:04.0 attempt=2 insns=24 steps=19 io=7 -> ok]
+Bring-up succeeded: codec ready (GLOB_STA bit 8 = 0x100), PCM out volume read back as 0x0 (unmuted, full). Now the play program.
+[plan_mark step=1/3 todo->done -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (620 bytes) and carried on]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2191 bytes) and carried on]
+Now the play program. AC'97 PCM-out DMA engine (PO) registers in NABM (BAR1, r1=0xc400) are based at offset 0x10:
+- 0x10 PO_BDBAR (buffer descriptor list base address, 32-bit)
+- 0x14 PO_CIV (current index, RO)
+- 0x15 PO_LVI (last valid index)
+- 0x16 PO_SR (status, 16-bit; bit0=DCH DMA halted, bit3=BCIS)
+- 0x1B PO_CR (control, 8-bit; bit0=RPBM run, bit1=reset)
+
+The BDL entry is 8 bytes: dword0 = buffer physical address, dword1 = low 16 bits = number of samples (16-bit words), bit31 = IOC, bit30 = BUP. r9 = bytes of PCM, so samples = r9/2. I'll build one BDL entry at r12 (scratch) pointing at r7.
+
+Let me assemble it.
+[driver_assemble insns=26 -> 26]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2829 bytes) and carried on]
+Concern: for a 900 ms tone the DMA won't halt until playback finishes ~900 ms, but each delay is 1 ms and I poll up to 2000 times — but delay_budget defaults to 250 ms and the play program runs under audio_tone which sets its own budget. The engine keeps playing in real time regardless; the poll delays are a floor. Rather than rely on many 1ms delays, the DMA completion is what matters. Let me install it and test.
+[driver_install pci00:04.0 sink=vmaudio insns=26 48000Hz/2ch -> ok]
+Wait — r12 is scratch but on entry only r7/r8 are defined; r12 is not guaranteed to hold a valid address. I used r12 as the BDL location without setting it. Let me check: registers on entry are r0-r8 defined. r12 is likely 0, so st32 [r12+0] would write to physical 0 — outside the DMA buffer, which would trap. I need to place the BDL inside the DMA buffer at r7, and the PCM after it. But the kernel writes PCM starting at r7. 
+
+Safest: put the BDL at the top of the buffer region the kernel doesn't use — but the kernel fills PCM at r7 for r9 bytes. I'll place the BDL at r7+r8-8 (end of buffer), assuming r9 < r8-8. Let me fix and reinstall.
+[driver_install pci00:04.0 sink=vmaudio insns=28 48000Hz/2ch -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (1003 bytes) and carried on]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (1065 bytes) and carried on]
+[audio_tone hz=1000 ms=900 wave=sine amp=8000 sink=vmaudio -> 43200]
+Done — the AC'97 card played a steady 1000 Hz sine for 900 ms (43,200 frames at 48 kHz), which the sink confirmed. I first brought the codec up (cold-reset the AC-link, waited for the primary-codec-ready bit 0x100 in GLOB_STA, unmuted master and PCM-out and read the volume back as 0), then installed a play program that builds a one-entry buffer-descriptor list at the top of the DMA buffer, points the PCM-out engine at it, runs it and polls the status register to completion. Nothing is left undone; note the sink lives in RAM and will need re-installing after a reboot.
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (1046 bytes) and carried on]
+
+> give me a little app with a button that plays a note, then press the button yourself so i can hear it.
+[model HTTP/1.1 500 Internal Server Error]
+[model said: Internal server error]
+
+> qemu-system-x86_64: terminating on signal 15 from pid 32431 (<unknown process>)

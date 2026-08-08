@@ -1,0 +1,101 @@
+# Configuration
+
+## Environment Variables
+
+CAI leverages the `.env` file to load configuration at launch. To facilitate the setup, the repo provides an exemplary [`.env.example`](.env.example) file provides a template for configuring CAI's setup and your LLM API keys to work with desired LLM models.
+
+⚠️  Important:
+
+CAI does NOT provide API keys for any model by default. Don't ask us to provide keys, use your own or host your own models.
+
+⚠️  Note:
+
+The OPENAI_API_KEY must not be left blank. It should contain either "sk-123" (as a placeholder) or your actual API key. See https://github.com/aliasrobotics/cai/issues/27.
+
+### List of Environment Variables
+
+For a complete reference organized by use case, see [Environment Variables Reference](../../environment_variables.md).
+
+**In the REPL:** `/env list` shows variables with **current values** and index numbers; bare **`/env`** shows **`CAI_*`** / **`CTF_*`** values in the current session. **`/help`** includes the **full environment reference** (tables) after the quick guide; **`/help var NAME`** opens **long-form** help for a single variable. **`/config`** is deprecated and only prints a pointer to **`/env`**. See also [Environment Variables — Discovering variables in the REPL](../../environment_variables.md#discovering-variables-in-the-repl).
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| CTF_NAME | Name of the CTF challenge to run (e.g. "picoctf_static_flag") | - |
+| CTF_CHALLENGE | Specific challenge name within the CTF to test | - |
+| CTF_SUBNET | Network subnet for the CTF container | 192.168.3.0/24 |
+| CTF_IP | IP address for the CTF container | 192.168.3.100 |
+| CTF_INSIDE | Whether to conquer the CTF from within container | true |
+| CAI_MODEL | Model to use for agents | alias1 |
+| CAI_DEBUG | Set debug output level (0: Only tool outputs, 1: Verbose debug output, 2: CLI debug output) | 1 |
+| CAI_BRIEF | Enable/disable brief output mode | false |
+| CAI_MAX_TURNS | Maximum number of turns for agent interactions | inf |
+| CAI_ORCHESTRATION_WORKER_MAX_TURNS | Max `Runner` turns per specialist worker spawned by `orchestration_agent` tools (`run_specialist`, `run_dual_approach_contest`, `run_parallel_specialists`). Integer 1–32 | 6 |
+| CAI_ORCHESTRATION_MAS_HINT | When `true`, `orchestration_agent` may receive one synthetic `user`-role nudge per `Runner` run if the prompt looks multi-front but only `run_specialist` ran (suggests parallel or contest tools). Set `false` to disable | true |
+| CAI_MAX_INTERACTIONS | Maximum number of interactions (tool calls, agent actions, etc.) allowed in a session. If exceeded, only CLI commands are allowed until increased. If force_until_flag=true, the session will exit | inf |
+| CAI_PRICE_LIMIT | Price limit for the conversation in dollars. If exceeded, only CLI commands are allowed until increased. If force_until_flag=true, the session will exit | 1 |
+| CAI_TRACING | Enable/disable OpenTelemetry tracing. When enabled, traces execution flow and agent interactions for debugging and analysis | true |
+| CAI_AGENT_TYPE | Registered agent key. Defaults to `orchestration_agent` (breadth-first entry: specialist tools `run_specialist`, `run_dual_approach_contest`, `run_parallel_specialists` plus handoffs). Use `selection_agent` for a handoff-only router without those tools, or pin a specialist such as `redteam_agent` | orchestration_agent |
+| CAI_STATE | Enable/disable stateful mode. When enabled, the agent will use a state agent to keep track of the state of the network and the flags found | false |
+| CAI_COMPACTED_MEMORY | When true, inject `/compact` conversation summaries into agent system prompts | false |
+| CAI_ENV_CONTEXT | Add environment context, dirs and current env available | true |
+| CAI_SUPPORT_MODEL | Model to use for the support agent | o3-mini |
+| CAI_SUPPORT_INTERVAL | Number of turns between support agent executions | 5 |
+| CAI_STREAM | Enable/disable streaming output for LLM inference (token-by-token display). Does NOT affect tool output | false |
+| CAI_TOOL_STREAM | Enable/disable streaming output for tool executions (real-time command output). Independent of CAI_STREAM | true |
+| CAI_DEBUG_TOOLS_VIZ | Enable debug output for tool visualization and panel rendering | false |
+| CAI_SHOW_CACHE | Show cache information and message history list | false |
+| CAI_TELEMETRY | Enable/disable telemetry | true |
+| CAI_PARALLEL | Number of parallel agent instances to run. When set to values greater than 1, executes multiple instances of the same agent in parallel and displays all results | 1 |
+| CAI_GUARDRAILS | Enable/disable security guardrails for agents. When set to "true", applies security guardrails to prevent potentially dangerous outputs and inputs | false |
+| CAI_GCTR_NITERATIONS | Number of tool interactions before triggering GCTR (Generative Cut-The-Rope) analysis in bug_bounter_gctr agent. Only applies when using gctr-enabled agents | 5 |
+| CAI_ACTIVE_CONTAINER | Docker container ID where commands should be executed. When set, shell commands and tools execute inside the specified container instead of the host. Automatically set when CTF challenges start (if CTF_INSIDE=true) or when attaching a container via `/virtualization` / `/virt` in the REPL | - |
+| CAI_TOOL_TIMEOUT | Override the default timeout for tool command executions in seconds. When set, this value overrides all default timeouts for shell commands and tool executions | varies (10s for interactive, 100s for regular) |
+
+## Custom OpenAI Base URL Support
+
+CAI supports configuring a custom OpenAI API base URL via the `OPENAI_BASE_URL` environment variable. This allows users to redirect API calls to a custom endpoint, such as a proxy or self-hosted OpenAI-compatible service.
+
+Example `.env` entry configuration:
+```
+OLLAMA_API_BASE="https://custom-openai-proxy.com/v1"
+```
+
+Or directly from the command line:
+```bash
+OLLAMA_API_BASE="https://custom-openai-proxy.com/v1" cai
+```
+
+## OpenRouter Integration
+
+The Cybersecurity AI (CAI) platform offers seamless integration with OpenRouter, a unified interface for Large Language Models (LLMs). This integration is crucial for users who wish to leverage advanced AI capabilities in their cybersecurity tasks. OpenRouter acts as a bridge, allowing CAI to communicate with various LLMs, thereby enhancing the flexibility and power of the AI agents used within CAI.
+
+To enable OpenRouter support in CAI, you need to configure your environment by adding specific entries to your `.env` file. This setup ensures that CAI can interact with the OpenRouter API, facilitating the use of sophisticated models like Meta-LLaMA. Here's how you can configure it:
+
+```bash
+CAI_AGENT_TYPE=redteam_agent
+CAI_MODEL=openrouter/meta-llama/llama-4-maverick
+OPENROUTER_API_KEY=<sk-your-key>  # note, add yours
+OPENROUTER_API_BASE=https://openrouter.ai/api/v1
+```
+
+### Selecting and pinning providers (routing controls)
+
+OpenRouter can route a model to multiple backend providers. CAI exposes the same routing controls via environment variables and an inline model suffix so you can pin, prefer, or avoid specific providers per request.
+
+Environment variables (comma‑separated lists allowed):
+
+- `OPENROUTER_PROVIDER` → sets `provider.order` (priority list). Use with `OPENROUTER_ALLOW_FALLBACKS` (default `true`).
+- `OPENROUTER_PROVIDER_ONLY` → sets `provider.only` (force these providers only).
+- `OPENROUTER_PROVIDER_IGNORE` → sets `provider.ignore` (skip these providers).
+- `OPENROUTER_QUANTIZATION` → sets `provider.quantizations` (e.g., `fp8,int4`).
+
+Inline (single-call) syntax (overrides env vars for that call):
+
+```
+CAI_MODEL="openrouter/meta-llama/llama-4-maverick::provider=anthropic,azure::only=azure::ignore=deepinfra::quant=fp8"
+```
+
+Notes:
+- Inline `provider` sets `allow_fallbacks=false` for that request (env does not override it).
+- Provider slugs match those shown on OpenRouter model pages (e.g., `azure`, `anthropic`, `deepinfra`, `atlascloud`).
+- The provider used for each response is printed in the CAI CLI header next to the model (e.g., `(openrouter/... • AtlasCloud)`).

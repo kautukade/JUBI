@@ -1,0 +1,58 @@
+file        : /tmp/live-hda2.wav
+format      : 2 ch, 16-bit, 48000 Hz
+captured    : 2475119 frames = 51.565 s
+non-silence : 2475119 frames = 51.5650 s, starting at t=0.000 s
+amplitude   : peak 4626 (14.1% full scale), rms 4626
+moving      : 2475119 non-zero frames, -1 distinct sample values
+stereo      : left == right: True
+frequency   : 445.4 Hz by zero crossings, 445.4 Hz by Goertzel
+tonality    : 0.2% of energy at 445.4 Hz (amplitude 295 there)
+pitch runs  : (the two lines above straddle any note change)
+  t= 0.000 s     445.4 Hz for  12900 ms  peak  4626  tonal  81.6%
+  t=12.950 s     445.6 Hz for   3900 ms  peak  4626  tonal  81.6%
+  t=16.900 s     445.8 Hz for  12050 ms  peak  4626  tonal  81.6%
+  t=29.000 s     445.1 Hz for   4300 ms  peak  4626  tonal  81.6%
+  t=33.350 s     445.5 Hz for  18150 ms  peak  4626  tonal  81.6%
+trailing DC : 46 frames (1.0 ms) of constant -4626
+per 50 ms   :
+  t= 0.000 s     444.0 Hz (cross    440.0)  peak  4626  tonal  80.9%
+  t= 0.050 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.4%
+  t= 0.100 s     446.0 Hz (cross    450.0)  peak  4626  tonal  79.3%
+  t= 0.150 s     446.0 Hz (cross    450.0)  peak  4626  tonal  79.0%
+  t= 0.200 s     446.0 Hz (cross    450.0)  peak  4626  tonal  74.8%
+  t= 0.250 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.8%
+  t= 0.300 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.2%
+  t= 0.350 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.9%
+  t= 0.400 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.1%
+  t= 0.450 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.9%
+  t= 0.500 s     444.0 Hz (cross    440.0)  peak  4626  tonal  80.5%
+  t= 0.550 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.8%
+  t= 0.600 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.3%
+  t= 0.650 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.9%
+  t= 0.700 s     444.0 Hz (cross    440.0)  peak  4626  tonal  79.6%
+  t= 0.750 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.4%
+  t= 0.800 s     446.0 Hz (cross    450.0)  peak  4626  tonal  79.6%
+  t= 0.850 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.5%
+  t= 0.900 s     448.0 Hz (cross    450.0)  peak  4626  tonal  65.6%
+  t= 0.950 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.8%
+  t= 1.000 s     444.0 Hz (cross    440.0)  peak  4626  tonal  73.0%
+  t= 1.050 s     446.0 Hz (cross    450.0)  peak  4626  tonal  79.1%
+  t= 1.100 s     446.0 Hz (cross    450.0)  peak  4626  tonal  76.8%
+  t= 1.150 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.3%
+  t= 1.200 s     452.0 Hz (cross    450.0)  peak  4626  tonal  50.2%
+  t= 1.250 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.8%
+  t= 1.300 s     444.0 Hz (cross    440.0)  peak  4626  tonal  80.9%
+  t= 1.350 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.9%
+  t= 1.400 s     453.4 Hz (cross    440.0)  peak  4626  tonal  59.7%
+  t= 1.450 s     446.0 Hz (cross    450.0)  peak  4626  tonal  79.2%
+  t= 1.500 s     434.0 Hz (cross    430.0)  peak  4626  tonal  43.2%
+  t= 1.550 s     446.0 Hz (cross    450.0)  peak  4626  tonal  79.2%
+  t= 1.600 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.6%
+  t= 1.650 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.1%
+  t= 1.700 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.9%
+  t= 1.750 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.4%
+  t= 1.800 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.7%
+  t= 1.850 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.5%
+  t= 1.900 s     446.0 Hz (cross    450.0)  peak  4626  tonal  78.6%
+  t= 1.950 s     444.0 Hz (cross    440.0)  peak  4626  tonal  81.6%
+  ... 991 more windows

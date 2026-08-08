@@ -1,0 +1,34 @@
+{
+  "note": "A stopwatch. 'now' is monotonic seconds since boot, so elapsed time is now-start and nothing has to be counted: a tick that is late, or one that is missed while the model is talking, still shows the right time. 'held' remembers the reading while stopped, so start resumes instead of restarting.",
+  "title": "Stopwatch",
+  "width": 250, "height": 136,
+  "grid": { "rows": 2, "cols": 3, "gap": 6, "pad": 10 },
+  "vars": { "start": 0, "held": 0, "run": 0 },
+  "widgets": [
+    { "kind": "field", "name": "elapsed", "text": "0.0", "align": "center",
+      "readonly": true, "row": 0, "col": 0, "colspan": 3 },
+    { "kind": "button", "text": "start", "name": "go",   "row": 1, "col": 0 },
+    { "kind": "button", "text": "stop",  "name": "halt", "row": 1, "col": 1 },
+    { "kind": "button", "text": "reset", "name": "zero", "row": 1, "col": 2 }
+  ],
+  "on": [
+    { "click": "go", "do": [
+      { "set": "start", "to": "now - held" },
+      { "set": "run", "to": "1" }
+    ] },
+    { "click": "halt", "do": [
+      { "set": "run", "to": "0" }
+    ] },
+    { "click": "zero", "do": [
+      { "set": "run", "to": "0" },
+      { "set": "held", "to": "0" },
+      { "set": "elapsed", "to": "'0.0'" }
+    ] },
+    { "tick": 100, "do": [
+      { "if": "run", "then": [
+        { "set": "held", "to": "now - start" },
+        { "set": "elapsed", "to": "cat(text(round(held * 10) / 10), ' s')" }
+      ] }
+    ] }
+  ]
+}

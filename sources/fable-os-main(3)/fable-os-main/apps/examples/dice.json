@@ -1,0 +1,18 @@
+{
+  "note": "Two dice. rand(6) is 0..5, so a die is rand(6)+1. Each rand() in one handler is its own draw, which is why two dice need no second statement.",
+  "title": "Dice",
+  "width": 200, "height": 120,
+  "grid": { "rows": 2, "cols": 1, "gap": 8, "pad": 10 },
+  "vars": { "total": 0 },
+  "widgets": [
+    { "kind": "label", "name": "faces", "text": "roll me",
+      "align": "center", "row": 0, "col": 0 },
+    { "kind": "button", "text": "roll", "name": "go", "row": 1, "col": 0 }
+  ],
+  "on": [
+    { "click": "go", "do": [
+      { "set": "total", "to": "rand(6) + rand(6) + 2" },
+      { "set": "faces", "to": "cat('you rolled ', text(total))" }
+    ] }
+  ]
+}

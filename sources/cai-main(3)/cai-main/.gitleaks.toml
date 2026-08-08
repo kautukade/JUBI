@@ -1,0 +1,40 @@
+# Gitleaks configuration for cai-framework.
+#
+# Extends the upstream default ruleset and adds allowlist entries for the
+# placeholder API keys used in .env.example, docs, and test fixtures so the
+# scanner does not red-X every push on known non-secrets.
+#
+# The patterns here mirror the residual-secret filter in prepare-cai-public.sh.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret placeholders and test fixtures"
+
+paths = [
+  # Test fixtures intentionally contain fake/synthetic keys.
+  '''(^|/)tests/.+\.(py|jsonl|json|yaml|yml)$''',
+  # Examples reference placeholder values, not real keys.
+  '''(^|/)examples/.+''',
+  # Documentation describes env vars with placeholder defaults.
+  '''(^|/)docs/.+\.(md|txt)$''',
+  '''(^|/)README\.md$''',
+  '''(^|/)CHANGELOG\.md$''',
+  '''(^|/)\.env\.example$''',
+  # CAIBench cyber ranges plant fake credentials as the CTF challenge itself.
+  # Containers run on isolated docker networks; IPs and secrets are decoys.
+  '''(^|/)src/cai/caibench/.+''',
+  # CyberPII / CTI / SecEval benchmarks contain synthetic PII and tokens used
+  # as detection targets — not real secrets.
+  '''(^|/)benchmarks/.+''',
+]
+
+# Regex allowlist for known placeholder API key formats. Mirrors the filter
+# in prepare-cai-public.sh so OSS scans don't flag obvious dummies.
+regexes = [
+  '''sk-(alias|live|test|proj|openai|anthropic)-(1234567890|0123456789|your[-_].*|placeholder|example|xxx+|fake|dummy|key[-_]?here|planner|mock|fixture|stub|noop|sample)''',
+  '''sk-alias-1234567890''',
+  # Alias private package index URL (publicly visible, not a secret).
+  '''packages\.aliasrobotics\.com''',
+]

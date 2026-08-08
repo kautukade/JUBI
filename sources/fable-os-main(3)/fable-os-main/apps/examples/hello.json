@@ -1,0 +1,10 @@
+{
+  "note": "The request this format existed for and could not be found doing: 'I want a window that says hello only'. No vars, no handlers - a document with only widgets is a legal app, and this is the smallest one worth shipping.",
+  "title": "Hello",
+  "width": 220, "height": 90,
+  "grid": { "rows": 1, "cols": 1, "gap": 0, "pad": 10 },
+  "widgets": [
+    { "kind": "label", "name": "greeting", "text": "hello",
+      "align": "center", "row": 0, "col": 0 }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "note": "The worked example for a capability call (include/app.h DECISION 4). A handler cannot reach a driver: it names a capability, and the kernel validates the arguments and performs it from the idle loop. hz is num(key), so one handler serves every note button - the key IS the frequency. 'into' names the field that shows what really happened: 'ok' once the sound has played, or the kernel's reason (on a machine with no audio driver, 'no audio driver'). The kernel starts at most one app sound every 500 ms, so leaning on a button gives 'too soon' rather than a queue of stale beeps.",
+  "title": "Beeper",
+  "width": 264, "height": 152,
+  "grid": { "rows": 3, "cols": 3, "gap": 6, "pad": 8 },
+  "vars": { "beeps": 0 },
+  "widgets": [
+    { "kind": "field", "name": "status", "text": "pick a note",
+      "readonly": true, "row": 0, "col": 0, "colspan": 3 },
+    { "kind": "button", "text": "440", "tag": "note", "row": 1, "col": 0 },
+    { "kind": "button", "text": "554", "tag": "note", "row": 1, "col": 1 },
+    { "kind": "button", "text": "659", "tag": "note", "row": 1, "col": 2 },
+    { "kind": "button", "text": "buzz", "name": "buzz", "row": 2, "col": 0 },
+    { "kind": "label", "name": "count", "text": "0 played",
+      "align": "center", "row": 2, "col": 1, "colspan": 2 }
+  ],
+  "on": [
+    { "click": "note", "do": [
+      { "set": "status", "to": "cat('asking for ', key)" },
+      { "call": "audio.tone", "with": { "hz": "num(key)", "ms": "150" },
+        "into": "status" },
+      { "set": "beeps", "to": "beeps + 1" },
+      { "set": "count", "to": "cat(text(beeps), ' asked')" }
+    ] },
+    { "click": "buzz", "do": [
+      { "set": "status", "to": "'asking for a buzz'" },
+      { "call": "audio.tone",
+        "with": { "hz": "110", "ms": "200", "amp": "12000", "wave": "'square'" },
+        "into": "status" },
+      { "set": "beeps", "to": "beeps + 1" },
+      { "set": "count", "to": "cat(text(beeps), ' asked')" }
+    ] }
+  ]
+}

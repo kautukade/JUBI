@@ -1,0 +1,86 @@
+# =========================================================================
+# Degraded boot: no network card at all.
+#
+# This is the "everything that can be tested without a network" case — it runs
+# identically on a CI box with no internet, and it pins down the failure path:
+# the e1000 driver must report init failure, the device model must lose the two
+# nodes that card owns (13 devices with a NIC, 11 without — the assertions below
+# are the authority on the numbers), the VFS self-test must still pass, and the
+# kernel must say
+# "[net init failed]" and then *still reach the prompt* rather than panic,
+# fault or reboot.
+#
+# That last part matters more than it looks. Natural language is the only
+# interface, and the model lives on the far side of TLS — so a machine with no
+# network has nothing it can do. It must still boot, still register its tools,
+# still listen, and still be able to say why it cannot act. This case is also
+# the network-less half of the ready-banner coverage: same tool registry, same
+# schema, but "model : UNREACHABLE".
+#
+# Syntax is documented in boot.case.
+# =========================================================================
+
+name: boot: degraded, no NIC
+description: kernel survives with no network card and still reaches the prompt
+# 10s of the runtime is the kernel's own DNS timeout.
+timeout: 45
+nic: none
+
+ready: ^>
+
+expect: serial: COM1 up @ 115200
+
+# One fewer PCI function without the e1000.
+expect-re: ^pci: 5 device\(s\)$
+check: pci_enumeration count=5
+
+# The driver must fail loudly and be reported by the driver framework...
+expect: e1000: no supported NIC found
+expect-re: ^driver e1000: init failed \(-1\)$
+
+# ...and the device tree must shrink accordingly, with no eth0.
+expect-re: ^devices: 11 registered$
+check: device_tree count=11 active=serial0,fwcfg0,pci0,kbd0,mouse0,rtc0
+forbid-re: ^\s*\[\s*\d+\] eth0\s
+
+# The rest of the boot must be unaffected: power cycle and VFS still work.
+expect: --- power cycle: suspend all, then resume all ---
+expect: --- filesystem self-test (ramfs at /) ---
+expect: read /etc/motd (34 bytes): fable-os native filesystem online
+expect-re: ^ls / :(?=.*\btmp\b)(?=.*\betc\b)
+
+# And networking gives up gracefully instead of hanging or faulting.
+expect-re: ^net: up at \d+\.\d+\.\d+\.\d+/\d+$
+expect: net: resolving api.anthropic.com ...
+expect: net: DNS resolution failed
+expect: [net init failed
+
+# The tool registry does not depend on the network: with no NIC at all the
+# schema must still assemble, or the machine could never act even once the
+# network came back. Parsed, not substring-matched — see boot.case.
+expect-re: ^  tools  : \d+ registered \(\d+ bytes of schema\)$
+check: tool_registry min_tools=12 min_schema_bytes=2000 min_bytes_per_tool=80 expect_schema_bytes=header
+
+# ...but the banner must be honest about the model being out of reach, and
+# must say so in words rather than leaving the operator to guess.
+expect-re: ^  model  : UNREACHABLE$
+expect: The model cannot be reached, and it is the only interface
+
+# And it listens anyway.
+expect-re: ^>
+
+forbid-re: \bpanic\b
+forbid: heap corruption
+forbid: heap: bad magic
+forbid: kmalloc: out of memory
+forbid: kfree: double free
+forbid: [fs init failed]
+forbid: the tool schema does not fit
+forbid: [chat: could not build a valid request]
+forbid: [http] HTTP/1.
+# The banner must never claim a model it cannot reach.
+forbid: model  : reachable over TLS
+# No tools registered has its own banner paragraph; if it ever prints, the
+# registry is empty and tool_registry above should have caught it first.
+forbid: No tools are registered
+check: occurrences pattern="^serial: COM1 up" min=1 max=1

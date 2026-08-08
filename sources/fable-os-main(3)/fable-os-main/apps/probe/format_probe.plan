@@ -1,0 +1,35 @@
+# Prove the format additions on real hardware: the examples render, and a tick
+# handler really advances over several seconds.
+#
+#   make EXTRA_CFLAGS=-DFABLEOS_APP_FORMAT_SELFTEST
+#   FABLEOS_ENV=/nonexistent gui/gui_probe.sh apps/probe/format_probe.plan /tmp/appfmt
+#
+# FABLEOS_ENV points at a file that does not exist on purpose: this probe needs no
+# API key (nothing here talks to the model), and a probe that reads the operator's
+# key when it does not need it is a probe that can lose it.
+#
+# NO MOUSE DIRECTIVES. The clicks are done inside the guest by
+# apps/app_format_selftest.c through gui_click_widget(), so nothing here has to
+# aim at a coordinate, and drivers/input/kbd.c never races the mouse for 8042
+# bytes (include/gui.h, DECISION 4). Every directive below is a screenshot or a
+# wait.
+#
+# THE TWO SHOTS SIX SECONDS APART ARE THE POINT. 01 and 02 are the same four
+# windows; the clock and the stopwatch must READ DIFFERENTLY in them, and hello
+# and the dice must read the SAME - a screen that changed everywhere would only
+# prove the compositor repaints.
+await app-format: pumping
+wait 1
+shot 01-launched
+wait 6
+shot 02-six-seconds-later
+# The stopwatch is stopped here and the clock is not: 03 must show a stopwatch
+# frozen at the value 02 left it near, with the clock moved on again.
+await app-format: clicked "stop"
+wait 3
+shot 03-stopwatch-stopped
+# hello is closed and the password generator takes its slot.
+await app-format: launched "password"
+wait 2
+shot 04-password
+wait 1

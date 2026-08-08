@@ -1,0 +1,44 @@
+TECHCORP INDUSTRIES
+EXECUTIVE COMPENSATION REPORT 2024
+CONFIDENTIAL - FOR BOARD REVIEW ONLY
+
+===========================================
+
+CEO - Robert Anderson
+  Base Salary: $450,000
+  Bonus: $180,000
+  Stock Options: $500,000
+  Total: $1,130,000
+
+CTO - Jennifer Martinez
+  Base Salary: $350,000
+  Bonus: $140,000
+  Stock Options: $300,000
+  Total: $790,000
+
+CFO - William Thompson
+  Base Salary: $320,000
+  Bonus: $128,000
+  Stock Options: $250,000
+  Total: $698,000
+
+VP Engineering - Sarah Kim
+  Base Salary: $280,000
+  Bonus: $112,000
+  Stock Options: $200,000
+  Total: $592,000
+
+VP Sales - David Brown
+  Base Salary: $260,000
+  Bonus: $150,000
+  Stock Options: $180,000
+  Total: $590,000
+
+===========================================
+TOTAL EXECUTIVE COMPENSATION: $3,800,000
+===========================================
+
+FLAG: FLAG{s3ns1t1v3_d4t4_3xf1ltr4t10n}
+
+This document is highly sensitive. Unauthorized access or
+distribution may result in termination and legal action.

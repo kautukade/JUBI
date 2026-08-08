@@ -1,0 +1,18 @@
+{
+  "note": "A wall clock. Two labels and one tick handler: 'clock' and 'today' are pre-rendered strings, so the whole app is two assignments. Twice a second, so the seconds never look stuck between updates.",
+  "title": "Clock",
+  "width": 240, "height": 116,
+  "grid": { "rows": 2, "cols": 1, "gap": 6, "pad": 10 },
+  "widgets": [
+    { "kind": "label", "name": "time", "text": "--:--:--",
+      "align": "center", "row": 0, "col": 0 },
+    { "kind": "label", "name": "date", "text": "----------",
+      "align": "center", "row": 1, "col": 0 }
+  ],
+  "on": [
+    { "tick": 500, "do": [
+      { "set": "time", "to": "clock" },
+      { "set": "date", "to": "today" }
+    ] }
+  ]
+}

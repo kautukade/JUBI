@@ -1,0 +1,87 @@
+# =========================================================================
+# One full natural-language turn through the REPL.
+#
+# There is no shell. The prompt is a bare "> " and a sentence is the only
+# input the machine accepts. What comes back is three distinguishable voices:
+#
+#     > what is 2 plus 2?          the operator, echoed by the line editor
+#     Four.                        the model, as plain prose, no prefix
+#     [model HTTP/1.1 401 ...]     the kernel, in brackets, saying what it
+#     [model said: ...]            actually did
+#
+# This case drives one turn end to end and asserts on the bracketed kernel
+# voice, because that is the part that is a fact rather than a generation.
+#
+# The kernel registers COM1 as an input source (drivers/input/serial_input.c),
+# so the harness can *type* into the VM. Cases with `send:` steps get a
+# bidirectional unix-socket serial port instead of the write-only log file:
+#
+#     send [tags] : <regex to wait for>  =>  <text to type>
+#
+# \n \r \t \\ are unescaped in the text; a bare Enter (CR) is appended if the
+# text doesn't already end in a newline. Steps fire in order, and each trigger
+# is only searched for in output produced after the previous one matched.
+#
+# With no API key supplied over fw_cfg (the default), the API answers 401 and chat.c
+# prints it as "[model HTTP/1.1 401 Unauthorized]" followed by the API's own
+# error text under "[model said: ...]". That is a *complete* proof of the
+# path — keystroke -> line editor -> tool schema -> JSON request -> TLS ->
+# HTTP response -> printed in the kernel's voice — and it is the only outcome
+# these tests can assert on, since without a key the model can never reach a
+# tool call. Build with `make KEY=sk-...` and the same case still passes
+# (http_response allows 200).
+#
+# Syntax for everything else is documented in boot.case.
+# =========================================================================
+
+name: repl: one question/answer turn
+description: type a sentence at the "> " prompt, get an answer back over TLS
+timeout: 60
+nic: user,model=e1000
+
+# Online: stop once the kernel has reported what the model said and the
+# prompt has come back for the next sentence.
+ready [net]: (?s)\[model said:.*\n>
+# Offline there is no turn to drive, so the case collapses to "the kernel
+# reached the prompt, or gave up on the network and halted cleanly".
+ready [offline]: ^>
+ready [offline]: \[net init failed
+
+send [net]: ^>  => what is 2 plus 2?
+
+expect: serial: COM1 up @ 115200
+expect: serial-in: COM1 registered as input source
+expect-re [net]: ^>
+
+# The line editor echoed what we typed...
+expect [net]: what is 2 plus 2?
+# ...the request went out over TLS and the kernel reported, in its own voice,
+# exactly what came back. 401 = no API key supplied; the TLS path worked.
+expect-re [net]: ^\[model HTTP/1\.\d \d{3} \S
+# ...and the REPL looped round for the next sentence.
+expect-re [net]: ^>
+
+# Exactly one "[http]" response: the boot self-test. The REPL turn goes
+# through chat.c/model.c, which speaks in the "[model ...]" voice instead —
+# two "[http]" lines would mean the turn took the boot self-test's code path.
+check [net]: occurrences pattern="\[http\] HTTP/1\." min=1 max=1
+# ...and exactly one "[model HTTP/...]": our turn, and only our turn.
+check [net]: occurrences pattern="\[model HTTP/1\." min=1 max=1
+check [net]: http_response allow=200,401
+
+# The tool schema has to survive into the turn: it is rebuilt into every
+# request, and a turn with no tools is a machine that can only talk.
+check [net]: tool_registry min_tools=12 min_schema_bytes=2000 min_bytes_per_tool=80 expect_schema_bytes=header
+
+forbid-re: \bpanic\b
+forbid: heap corruption
+forbid: kfree: double free
+# Regression guards. Both of these were live defects: a schema too big for
+# CHAT_TOOLS_BYTES silently stripped every tool from the request, and a
+# malformed message array made model_build() reject the turn outright. Either
+# one leaves the machine booting and prompting but unable to do anything.
+forbid: the tool schema does not fit
+forbid: [chat: could not build a valid request]
+forbid: [chat: the reply was not valid JSON]
+forbid [net]: [model unreachable
+forbid [net]: [net: timed out]

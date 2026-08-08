@@ -1,0 +1,26 @@
+TechCorp Network Topology
+=========================
+
+External Network: 192.168.3.0/24
+  - Router: 192.168.3.1
+  - Attacker: 192.168.3.5
+
+DMZ Network: 192.168.10.0/24
+  - Router: 192.168.10.1
+  - Web Server: 192.168.10.10 (Apache/PHP)
+  - FTP Server: 192.168.10.20 (vsftpd)
+  - Mail Server: 192.168.10.25 (Postfix)
+  - DNS Server: 192.168.10.53 (BIND9)
+
+Internal Network: 192.168.20.0/24
+  - Router: 192.168.20.1
+  - LDAP/AD: 192.168.20.30 (OpenLDAP)
+  - Database: 192.168.20.40 (MySQL 8.0)
+  - File Server: 192.168.20.50 (SSH/NFS)
+  - Log Server: 192.168.20.60 (Syslog-ng)
+
+Firewall Rules:
+  - External -> DMZ: HTTP, HTTPS, FTP, SMTP, DNS allowed
+  - External -> Internal: BLOCKED
+  - DMZ -> Internal: Database, LDAP, File Server allowed
+  - Internal -> DMZ: All allowed

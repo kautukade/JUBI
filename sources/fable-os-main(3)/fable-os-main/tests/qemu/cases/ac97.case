@@ -1,0 +1,156 @@
+# =========================================================================
+# A driver written in the driver VM's ISA, driving real hardware.
+#
+# THIS CASE BOOTS A KERNEL THE OPERATOR DOES NOT GET. fable-os must know nothing
+# about an attached sound card — that is the premise, and a shipped AC'97 driver
+# would both contradict it and pre-empt the experiment by claiming the device
+# before anyone can type a sentence. So the reference bring-up lives in
+# tests/qemu/fixtures/ac97_boot.c and is linked only by the `build-cflags:` line
+# below; the default kernel contains no audio code at all, which is what
+# cases/audio-unclaimed.case asserts with the same device attached.
+#
+# Everything this case proves is therefore a claim about the VM, not about the
+# shipped kernel: that an `out16` in the ISA reaches real silicon on this
+# machine, so when a MODEL's driver fails, the failure is the model's.
+#
+# This is the case that makes a model-written driver's failures attributable.
+# The VM (include/dvm.h) was verified against a synthetic device on the host, and
+# the reference AC'97 program (vm/programs/ac97_bringup.dvm) against a
+# synthetic codec in tests/host/test_dvm_ac97.c. Neither of those proves that
+# an `out16` in the VM reaches a real device. This does: QEMU is asked for an
+# AC'97 controller, the kernel finds it unclaimed, and the program brings it up
+# and plays half a second of PCM.
+#
+# Everything asserted below in [brackets] is the kernel's own account of what
+# the VM did, printed after each access from the value the hardware returned.
+# The load-bearing ones are:
+#
+#   [dvm.grant mmio none]              the program cannot reach memory at all
+#   [dvm.print glob_sta = 0x100]       the codec answered the AC-link handshake
+#   [dvm.print master vol = 0x0]       a mixer register accepted a write and
+#   [dvm.print pcm vol = 0x808]        read it back: there is a codec there
+#   [dvm.print picb was/now ...]       the position counter MOVED, which only
+#                                      happens if the DMA engine is fetching
+#                                      our samples over the PCI bus
+#   [dvm.print stopped po_cr = 0x0]    and the driver stopped it again
+#
+# The audio itself cannot be asserted on from a serial log. It is captured and
+# measured separately by vm/programs/capture_audio.sh, which boots this same
+# kernel with QEMU's `wav` audio backend and reports the sample count, the
+# amplitude and the two tones. `none` is used here so the case needs no host
+# audio device and behaves identically on any machine.
+#
+# Syntax is documented in boot.case.
+# =========================================================================
+
+name: ac97: driver VM brings up real audio hardware
+description: a hand-written .dvm program resets the codec, unmutes it, sets 48 kHz and plays PCM
+timeout: 60
+nic: user,model=e1000
+qemu-extra: -audiodev none,id=snd0 -device AC97,audiodev=snd0
+
+# The fixture build. Without this the kernel has no audio driver whatsoever and
+# every assertion below is absent, which is exactly the point of the flag.
+build-cflags: -DFABLEOS_AC97_REFERENCE
+
+ready: ^> 
+ready [offline]: \[net init failed
+
+# ---- the unclaimed device ------------------------------------------------
+# 04:01 is the AC'97-era multimedia-audio class code. No kernel driver claims
+# it during the PCI scan, which is precisely the situation the VM exploits.
+expect-re: ^pci: 00:04\.0  8086:2415  class 04:01$
+expect-re: ^pci: 7 device\(s\)$
+check: pci_enumeration count=7
+
+# ---- the caller: BARs out of config space, then hand over to the VM ------
+expect-re: ^ac97: 00:04\.0  8086:2415  bar0=0x[0-9a-f]+ bar1=0x[0-9a-f]+$
+
+# ---- the sandbox, stated before the first instruction runs ---------------
+# Two port windows the size the AC'97 spec says those BARs are, one PCI
+# function, and no memory whatsoever.
+expect-re: ^\[dvm\.grant ports 0x[0-9a-f]{4}-0x[0-9a-f]{4},0x[0-9a-f]{4}-0x[0-9a-f]{4} -> ok\]$
+expect: [dvm.grant mmio none -> ok]
+expect: [dvm.grant pci 00:04.0 -> ok]
+expect-re: ^\[dvm\.run insns=\d+ args=5 steps<=\d+ io<=\d+ delay<=\d+ us trace=1 -> ok\]$
+
+# ---- the bring-up, in order ----------------------------------------------
+# It identifies the device itself before touching a port.
+expect-re: ^\[dvm pc=000 ln=\d+ pcicfg 00:04\.0 off=0x08 r7=0x0401[0-9a-f]{4} -> ok\]$
+expect: [dvm.print pci class = 0x401 -> ok]
+# AC-link cold reset: assert, wait, release.
+expect-re: ^\[dvm pc=\d+ ln=\d+ out32 port=0x[0-9a-f]+ val=0x0 -> ok\]$
+expect-re: ^\[dvm pc=\d+ ln=\d+ out32 port=0x[0-9a-f]+ val=0x2 -> ok\]$
+# The primary codec reported ready (GLOB_STA bit 8).
+expect: [dvm.print glob_sta = 0x100 -> ok]
+# A mixer register took a write and gave it back: master unmuted at full
+# volume, PCM out unmuted at 0 dB. Both come out of reset MUTED, so these two
+# lines are the difference between silence and sound.
+expect: [dvm.print master vol = 0x0 -> ok]
+expect: [dvm.print pcm vol = 0x808 -> ok]
+# Variable-rate audio negotiated and 48 kHz accepted.
+expect: [dvm.print dac rate = 0xbb80 -> ok]
+# The bus master took the descriptor list address the caller built.
+expect-re: ^\[dvm\.print bdbar = 0x[0-9a-f]+ -> ok\]$
+# DCH clear: the DMA engine is running, not halted.
+expect: [dvm.print po_sr = 0x0 -> ok]
+# ...and the position counter moved between two reads, which can only happen
+# if the codec is really pulling samples out of guest memory.
+expect-re: ^\[dvm\.print picb was = 0x[0-9a-f]+ -> ok\]$
+expect-re: ^\[dvm\.print picb now = 0x[0-9a-f]+ -> ok\]$
+# The whole list drained (DCH set again) and the driver stopped the engine.
+expect-re: ^\[dvm\.print drained po_sr = 0x[0-9a-f]*[13579bdf] -> ok\]$
+expect: [dvm.print stopped po_cr = 0x0 -> ok]
+# mr=0 mw=0 is the load-bearing part: the program reached no memory at all. The
+# dma= group is optional because the VM's DMA scratch grant is newer than this
+# case — but if the counters are printed they must be zero for the same reason.
+# This program's buffers belong to the C caller, so it needs no memory grant and
+# takes none, and a future non-zero here would mean the reference program had
+# quietly changed what it touches.
+#
+# THE TAIL IS DELIBERATELY OPEN-ENDED, and that is a considered choice rather
+# than laziness. This line accumulates a new counter group every time the VM
+# grows a capability: `dma=` arrived with the DMA scratch buffer, then `mem=`
+# and `sys=`. Each time, a regex anchored at `prints=\d+ -> ok]` failed and the
+# failure said nothing about AC'97 — it was a formatting change in someone
+# else's file reported as a broken audio driver, which costs whoever reads it
+# the time to work out that the driver is fine.
+#
+# What this assertion is actually for is the four counters pinned by name above:
+# the reference program touches no memory (mr=0 mw=0), does exactly one PCI
+# config access (pci=1), and takes no DMA grant. Those are properties of the
+# DRIVER. The trailing counters are properties of the VM, they are named in the
+# groups that matter, and anything appended after `prints=` is tolerated so a
+# new one cannot turn this case red without a real regression behind it.
+expect-re: ^\[dvm\.halt pc=\d+ ln=\d+ steps=\d+ io=\d+ \(pr=\d+ pw=\d+ mr=0 mw=0 pci=1\)( dma=0 \(rd=0 wr=0\))? delay=\d+ us prints=\d+.* -> ok\]$
+
+# ---- the kernel's summary ------------------------------------------------
+expect-re: ^ac97: played 500 ms of PCM through the driver VM \(\d+ instructions, \d+ device accesses, \d+ us of waiting\)$
+expect-re: ^ac97: codec says glob_sta=0x100 master=0x0 pcm=0x808, picb \d+ -> \d+ samples$
+
+# ---- the device is no longer unclaimed -----------------------------------
+expect: --- device tree ---
+expect-re: ^\s*\[\s*\d+\] pci00:04\.0 audio\s+active\s+driver=ac97vm\s+io=[0-9a-f]+$
+check: device_tree count=14 active=serial0,fwcfg0,pci0,kbd0,mouse0,eth0,rtc0,pci00:04.0
+
+# The 12 KB program image is malloc'd for the run and freed after it; the heap
+# must balance exactly as it does without an AC'97 attached.
+check [net]: heap_integrity max_live=64 max_used_kib=64 min_allocs=1000
+
+# ---- nothing went wrong --------------------------------------------------
+# Any trap at all means the bring-up failed somewhere; the message says where.
+forbid: [dvm.trap
+forbid: [dvm.stop
+forbid: ac97: bring-up stopped
+forbid: ac97: no AC'97-class audio controller found
+forbid: ac97: the reference program does not assemble
+forbid: ac97: BAR0/BAR1 are not I/O BARs
+forbid: ac97: no memory for the program image
+# The trace must fit its budget: a truncated transcript is a broken proof.
+forbid: line budget
+forbid-re: \bpanic\b
+forbid: heap corruption
+forbid: kfree: double free
+# Exactly one bring-up. Two would mean the machine reset and did it again.
+check: occurrences pattern="^\[dvm\.halt " min=1 max=1
+check: occurrences pattern="^ac97: played 500 ms of PCM" min=1 max=1

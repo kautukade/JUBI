@@ -1,0 +1,297 @@
+; ===========================================================================
+; ac97_bringup.dvm — bring up an Intel AC'97 codec, play the caller's buffer,
+;                    and stop the bus master cleanly afterwards. Written in the
+;                    driver VM's assembly (see include/dvm.h).
+;
+; This is the reference program for the driver VM: hand-written, known-good,
+; and executed on real (emulated) hardware at boot by vm/programs/ac97_boot.c.
+; It exists so that when a MODEL is asked to write a driver in this ISA and it
+; does not work, the failure is attributable — the VM's ability to drive real
+; hardware is already established by this file.
+;
+; SOURCE OF THE REGISTER SEMANTICS
+;   Intel AC'97 Component Specification 2.3 (the codec/mixer side, "NAM")
+;   Intel 82801AA (ICH) datasheet, the AC'97 audio controller section (the bus
+;   master side, "NABM"), which is what QEMU's -device AC97 implements.
+;
+;   NAM  (BAR0) is the codec's mixer register file, 16-bit registers:
+;       0x00 reset          write anything -> mixer back to power-on defaults
+;       0x02 master volume  bit15 = mute, 13:8 = left att, 5:0 = right att
+;       0x18 PCM out volume bit15 = mute, 0x0808 = 0 dB
+;       0x28 extended audio ID           bit0 = VRA (variable rate) supported
+;       0x2a extended audio ctrl/status  bit0 = VRA enable
+;       0x2c PCM front DAC rate          Hz, writable only when VRA is enabled
+;   NABM (BAR1) is the DMA engine. The PCM-out channel lives at 0x10:
+;       0x10 PO_BDBAR  32-bit physical address of the buffer descriptor list
+;       0x14 PO_CIV    current index in that list        (read only)
+;       0x15 PO_LVI    last valid index
+;       0x16 PO_SR     status; bit0 DCH = DMA controller halted
+;       0x18 PO_PICB   samples left in the current buffer (read only)
+;       0x1b PO_CR     control; bit0 RPBM = run, bit1 RR = reset the channel
+;   and the link-wide registers at:
+;       0x2c GLOB_CNT  bit1 = AC-link cold reset# (0 asserts, 1 releases)
+;       0x30 GLOB_STA  bit8 = primary codec ready
+;
+; ARGUMENTS — the caller preloads these, so nothing here is hardcoded to one
+; machine. The BARs come from PCI config space, read by the caller.
+;   r0  NAM  base I/O port  (BAR0)
+;   r1  NABM base I/O port  (BAR1)
+;   r2  physical address of the buffer descriptor list, 8-byte aligned
+;   r3  last valid index in that list (LVI)
+;   r4  the controller's PCI bdf, as bus<<8 | dev<<3 | fn
+;
+; RESULTS — left in registers for the caller to check and print
+;   r11 GLOB_STA once the codec reported ready
+;   r12 master volume as it read back after unmuting
+;   r13 PCM out volume as it read back
+;   r14 PO_PICB at the first observation
+;   r15 PO_PICB at the second observation; r15 != r14 proves DMA is moving
+;
+; WHAT THIS PROGRAM DOES NOT DO, because the ISA cannot express it:
+;   - build the buffer descriptor list or the PCM samples. There is no writable
+;     memory in this machine and RAM is on the VM's deny list, so the caller
+;     supplies both and passes the list's address in r2.
+;   - enable PCI bus mastering. pcicfg is a READ; without the caller setting
+;     the bus-master bit first, every DMA fetch below would return garbage.
+; ===========================================================================
+
+; ---- NAM (mixer) ----------------------------------------------------------
+.equ NAM_RESET      0x00
+.equ NAM_MASTER     0x02
+.equ NAM_PCM_OUT    0x18
+.equ NAM_EXT_ID     0x28
+.equ NAM_EXT_CTRL   0x2a
+.equ NAM_DAC_RATE   0x2c
+
+; ---- NABM (bus master) ----------------------------------------------------
+.equ PO_BDBAR       0x10
+.equ PO_LVI         0x15
+.equ PO_SR          0x16
+.equ PO_PICB        0x18
+.equ PO_CR          0x1b
+.equ GLOB_CNT       0x2c
+.equ GLOB_STA       0x30
+
+; ---- bits -----------------------------------------------------------------
+.equ GC_COLD        0x02        ; GLOB_CNT: release the AC-link cold reset
+.equ GS_PCR         0x100       ; GLOB_STA: primary codec ready
+.equ CR_RPBM        0x01        ; PO_CR:    run bus master
+.equ CR_RR          0x02        ; PO_CR:    reset this channel's registers
+.equ SR_DCH         0x01        ; PO_SR:    DMA controller halted
+.equ MUTE           0x8000      ; every mixer volume register, bit 15
+.equ VRA            0x0001      ; extended audio: variable rate audio
+.equ RATE_48K       0xbb80      ; 48000, the AC'97 reference rate
+.equ PCM_0DB        0x0808      ; PCM out volume, 0 dB, unmuted
+.equ CLASS_AUDIO    0x0401      ; PCI class 04 subclass 01 = AC'97-era audio
+
+; ---------------------------------------------------------------------------
+; 0. Confirm what is at that PCI function before touching any of its ports.
+; ---------------------------------------------------------------------------
+    pcicfg r7, r4, 0x08         ; class / subclass / prog-if / revision
+    shr    r7, 16
+    cmp    r7, CLASS_AUDIO
+    bne    bad_device
+    print  "pci class", r7
+
+; ---------------------------------------------------------------------------
+; 1. Cold-reset the AC-link: drop GLOB_CNT bit1, wait, raise it again.
+;    (Linux's snd_intel8x0 does exactly this before touching the codec.)
+; ---------------------------------------------------------------------------
+    add   r5, r1, GLOB_CNT
+    out32 r5, 0
+    delay 2000
+    out32 r5, GC_COLD
+    delay 20000
+    in32  r7, r5
+    print "glob_cnt", r7
+
+; ---------------------------------------------------------------------------
+; 2. Wait for the primary codec to report ready. This is the handshake that
+;    says a codec is wired to the link at all; everything below assumes it.
+; ---------------------------------------------------------------------------
+    add  r5, r1, GLOB_STA
+    mov  r6, 40                 ; 40 ms of patience, in 1 ms steps
+pcr_wait:
+    in32 r11, r5
+    test r11, GS_PCR
+    bne  pcr_ok
+    delay 1000
+    sub  r6, 1
+    cmp  r6, 0
+    bne  pcr_wait
+    abort "primary codec never reported ready"
+pcr_ok:
+    print "glob_sta", r11
+
+; ---------------------------------------------------------------------------
+; 3. Reset the mixer to its power-on defaults. Master and PCM come back MUTED
+;    (0x8000 / 0x8808 per the spec), which is why step 4 and 5 exist.
+; ---------------------------------------------------------------------------
+    add   r5, r0, NAM_RESET
+    out16 r5, 0
+    delay 1000
+
+; ---------------------------------------------------------------------------
+; 4. Prove a codec is really answering: the mute bit must stick when set, and
+;    must clear when cleared. A register file that is not there reads back as
+;    all-ones or all-zeroes and fails one of the two.
+; ---------------------------------------------------------------------------
+    add   r5, r0, NAM_MASTER
+    out16 r5, MUTE
+    in16  r7, r5
+    test  r7, MUTE
+    beq   no_codec
+    out16 r5, 0                 ; unmute, 0 dB attenuation, both channels
+    in16  r12, r5
+    test  r12, MUTE
+    bne   still_muted
+    print "master vol", r12
+
+; ---------------------------------------------------------------------------
+; 5. Unmute the PCM mixer path at 0 dB. Master alone is not enough: the PCM
+;    stream is attenuated separately and also comes out of reset muted.
+; ---------------------------------------------------------------------------
+    add   r5, r0, NAM_PCM_OUT
+    out16 r5, PCM_0DB
+    in16  r13, r5
+    test  r13, MUTE
+    bne   pcm_muted
+    print "pcm vol", r13
+
+; ---------------------------------------------------------------------------
+; 6. Sample rate. Only a VRA-capable codec can be asked for one; a codec
+;    without VRA is fixed at 48 kHz, which is the rate the caller generated.
+; ---------------------------------------------------------------------------
+    add  r5, r0, NAM_EXT_ID
+    in16 r7, r5
+    test r7, VRA
+    beq  rate_fixed
+    add   r5, r0, NAM_EXT_CTRL
+    in16  r8, r5
+    or    r8, VRA
+    out16 r5, r8
+    add   r5, r0, NAM_DAC_RATE
+    out16 r5, RATE_48K
+    in16  r8, r5
+    cmp   r8, RATE_48K
+    bne   rate_bad
+    print "dac rate", r8
+    jmp   rate_done
+rate_fixed:
+    print "no vra: fixed 48k"
+rate_done:
+
+; ---------------------------------------------------------------------------
+; 7. Reset the PCM-out DMA channel. RR clears BDBAR/LVI/CIV/PICB and is
+;    self-clearing, so it doubles as a liveness check on the bus master.
+; ---------------------------------------------------------------------------
+    add  r5, r1, PO_CR
+    out8 r5, CR_RR
+    mov  r6, 20
+rr_wait:
+    in8  r7, r5
+    test r7, CR_RR
+    beq  rr_done
+    delay 1000
+    sub  r6, 1
+    cmp  r6, 0
+    bne  rr_wait
+    abort "PCM-out reset bit never cleared"
+rr_done:
+
+; ---------------------------------------------------------------------------
+; 8. Hand it the descriptor list. Both registers are read back: this is the
+;    cheapest proof that the BAR really is the bus master's register file.
+; ---------------------------------------------------------------------------
+    add   r5, r1, PO_BDBAR
+    out32 r5, r2
+    in32  r7, r5
+    cmp   r7, r2
+    bne   bdbar_bad
+    print "bdbar", r7
+
+    add  r5, r1, PO_LVI
+    out8 r5, r3
+    in8  r7, r5
+    cmp  r7, r3
+    bne  lvi_bad
+
+; ---------------------------------------------------------------------------
+; 9. Run. From here the codec is pulling our samples over the PCI bus.
+; ---------------------------------------------------------------------------
+    add  r5, r1, PO_CR
+    out8 r5, CR_RPBM
+    delay 5000
+    add  r5, r1, PO_SR
+    in16 r7, r5
+    test r7, SR_DCH
+    bne  dma_halted
+    print "po_sr", r7
+
+; ---------------------------------------------------------------------------
+; 10. Prove it. PICB counts down through the current buffer as the codec
+;     consumes it, so two different readings mean audio is really moving —
+;     not merely that the registers accepted what we wrote.
+; ---------------------------------------------------------------------------
+    add  r5, r1, PO_PICB
+    in16 r14, r5
+    mov  r6, 20                 ; up to 100 ms; one QEMU audio tick is ~10 ms
+picb_wait:
+    delay 5000
+    in16 r15, r5
+    cmp  r15, r14
+    bne  picb_moved
+    sub  r6, 1
+    cmp  r6, 0
+    bne  picb_wait
+    abort "dma is running but picb never moved"
+picb_moved:
+    print "picb was", r14
+    print "picb now", r15
+
+; ---------------------------------------------------------------------------
+; 11. Let the list drain, then stop the bus master. A machine with no
+;     interrupts has to poll for the end, and leaving the engine running past
+;     the last buffer is what makes hardware click or drone: the controller
+;     keeps feeding the codec whatever the underrun policy says.
+; ---------------------------------------------------------------------------
+    add  r5, r1, PO_SR
+    mov  r6, 60                 ; up to 1.5 s for a buffer of well under 1 s
+drain_wait:
+    in16 r7, r5
+    test r7, SR_DCH
+    bne  drained
+    delay 25000
+    sub  r6, 1
+    cmp  r6, 0
+    bne  drain_wait
+    abort "playback never finished: no DCH"
+drained:
+    print "drained po_sr", r7
+    add  r5, r1, PO_CR
+    out8 r5, 0                  ; clear RPBM: the bus master is idle again
+    in8  r7, r5
+    print "stopped po_cr", r7
+    halt
+
+; ---------------------------------------------------------------------------
+; Failure exits. Every one of these names the step that failed, because the
+; whole point of running a driver in a VM is that a broken bring-up leaves a
+; readable transcript instead of a dead machine.
+; ---------------------------------------------------------------------------
+bad_device:
+    abort "not a PCI audio-class function"
+no_codec:
+    abort "master mute bit did not stick"
+still_muted:
+    abort "master volume stayed muted"
+pcm_muted:
+    abort "pcm out volume stayed muted"
+rate_bad:
+    abort "codec refused the 48 kHz rate"
+bdbar_bad:
+    abort "bdbar did not read back"
+lvi_bad:
+    abort "lvi did not read back"
+dma_halted:
+    abort "dma halted immediately after start"

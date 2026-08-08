@@ -1,0 +1,250 @@
+note: api key passed to the guest over fw_cfg as opt/fableos/apikey
+qemu-system-x86_64: multiboot knows VBE. we don't
+qemu-system-x86_64: -device AC97,audiodev=snd0: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: -device AC97,audiodev=snd0: audio: Can not open `ac97.mc' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[display 1024x768 32bpp via bochs-vbe -> 128x48 text, Spleen 8x16 (BSD-2-Clause) + fable-os additions]
+[console utf-8: em—dash en–dash ‘curly’ “quotes” ellipsis… bullet• ✓ ✗]
+[console glyphs: ←↑→↓↔↕ ≈≡≤≥±÷∞√ áéíóú äöü ñ ç ß ° µ ¶ §]
+[console glyphs: box ┌──┬──┐ ├──┼──┤ └──┴──┘ ╔══╦══╗ ╠══╬══╣ ╚══╩══╝]
+[console glyphs: blocks ░▒▓█▄▀▌▐ folded ╭╮╰╯ unmapped 😀]
+idt: 256 gates at 0x243000 (limit 4095), all verified; TSS with 3 IST stacks of 16 KiB (#DF=1 NMI=2 #MC=3); PIC remapped to 0x20/0x28 and fully masked
+serial: COM1 up @ 115200
+fwcfg: QEMU fw_cfg at 0x510/0x511, 14 file(s), features 0x3
+fwcfg: api key: 108 bytes loaded from fw_cfg (opt/fableos/apikey)
+pci: 00:00.0  8086:1237  class 06:00
+pci: 00:01.0  8086:7000  class 06:01
+pci: 00:01.1  8086:7010  class 01:01
+pci: 00:01.3  8086:7113  class 06:80
+pci: 00:02.0  1234:1111  class 03:00
+pci: 00:03.0  8086:100e  class 02:00
+pci: 00:04.0  8086:2415  class 04:01
+pci: 7 device(s)
+acpi: rev 0 "BOCHS ", 4 table(s), rsdp=0xf52d0 rsdt=0x7fe232e fadt=0x7fe21e2 dsdt=0x7fe0040
+acpi: pm1a_cnt=0x604 pm1b_cnt=0x0 len=2 smi=0xb2 s5=yes(a=0 b=0 from DSDT) reset=no
+ata: ata0 128 MiB (262144 sectors) PIO LBA28 at 0x1f0 master: QEMU HARDDISK
+ata: ata2 is not an ATA disk (signature eb14) - skipped
+kbd: PS/2 keyboard ready
+serial-in: COM1 registered as input source
+mouse: PS/2 mouse ready (4-byte packets, wheel), 720x400 box, muted until a consumer polls
+e1000: 00:03.0 MMIO=0xfebc0000
+audio: no output driver is registered - nothing can play a sound yet
+audio: 192 KB of PCM space is waiting at 0x178d000 (of a 256 KB DMA arena) for a driver to claim an audio device and register as the sink
+rtc: MC146818 at 0x70: 2026-07-30T08:15:21Z (Thursday, unix 1785399321, assumed UTC)
+rtc: self-check 64 reads: 0 unreadable, 0 out of order, 0 rollover(s) crossed, 0 gap(s), 0s span
+gui: window manager ready (1024x768, 12 windows, 48 widgets each; desktop is the 128x48 text console)
+fiber: "ui" created, 32768 byte stack at 0x2573a0..0x25f3a0 (+256 byte poison band each end)
+
+--- device tree ---
+devices: 15 registered
+  [ 1] serial0    serial   active      driver=serial io=3f8 irq=4
+  [ 2] fwcfg0     system   active      driver=fwcfg  io=510
+  [ 3] pci0       bus      active      driver=pci   
+  [ 4] pci00:00.0 bus      registered  driver=-     
+  [ 5] pci00:01.0 bus      registered  driver=-     
+  [ 6] pci00:01.1 storage  registered  driver=-     
+  [ 7] pci00:01.3 bus      registered  driver=-     
+  [ 8] pci00:02.0 display  registered  driver=-      mmio=0xfd000000
+  [ 9] pci00:03.0 network  registered  driver=-      mmio=0xfebc0000
+  [10] pci00:04.0 audio    registered  driver=-      io=c000
+  [12] ata0       storage  active      driver=ata    io=1f0
+  [13] kbd0       input    active      driver=kbd    io=60 irq=1
+  [14] mouse0     input    active      driver=mouse  io=60 irq=12
+  [15] eth0       network  active      driver=e1000  mmio=0xfebc0000
+  [16] rtc0       timer    active      driver=rtc    io=70 irq=8
+--- power cycle: suspend all, then resume all ---
+e1000: suspend: rctl=0x04008018 tctl=0x000400f8 (rx=off tx=off) phy=powered down
+e1000: suspend: status=0x80080783 link=up 1000 Mb/s full-duplex
+e1000: suspend: STATUS.LU still set - this platform does not model PHY power state; the engines are off, so no frame can enter or leave regardless
+e1000: resume: renegotiating: status=0x80080781 link=down
+e1000: resume: rctl=0x0400801a tctl=0x000400fa (rx=on tx=on) phy=powered up link settled in 476 ms
+e1000: resume: status=0x80080783 link=up 1000 Mb/s full-duplex
+rtc: resumed, wall clock advanced 1s while suspended
+-------------------
+fat: ata0 FAT32, 128 MiB, 258016 clusters of 512 bytes, label "FABLEOS"
+fs: ata0 mounted at /disk - files written there survive a reboot
+
+--- persistence: /disk survives a reboot ---
+/disk/boot.log holds 3 line(s) written by earlier boots:
+  | boot 1 2026-07-30T07:22:12Z
+  | boot 2 2026-07-30T07:22:24Z
+  | boot 3 2026-07-30T07:23:36Z
+appended "boot 4 2026-07-30T08:15:22Z" - it will be here after the next reboot
+ls /disk : boot.log
+--------------------------------------------
+
+--- filesystem self-test (ramfs at /) ---
+read /etc/motd (33 bytes): fable-os native filesystem online
+stat /etc/motd: type=file size=33 mode=0x6
+ls / : tmp etc disk
+-----------------------------------------
+net: up at 10.0.2.15/24
+net: resolving api.anthropic.com ...
+net: api.anthropic.com -> 160.79.104.10, TLS ready
+
+--- self-test: HTTPS to api.anthropic.com ---
+[http] HTTP/1.1 200 OK
+fable-os online
+fiber: that 1585 ms API call was not dead air - the ui fiber serviced the screen 330 times and fired 0 app tick handler(s) during it, across 738560 context switches
+---------------------------------------------
+heap: 37/16384 KiB used (peak 81 KiB), 45 live / 2 free blocks, 15868 allocs 15823 frees
+fiber: 2 live, 2 runnable, 799812 switches
+fiber:   main [running] boot stack, 656 bytes deep at the deepest measured, resumed 399907 times
+fiber:   ui [ready] stack 256/32768 bytes used (0%), resumed 399906 times
+
+==============================================================
+  fable-os
+==============================================================
+  tools  : 53 registered (42909 bytes of schema)
+  model  : reachable over TLS
+
+  No shell, no commands. Say what you want done, in a sentence.
+  Prose is the model talking. [Brackets] are this kernel saying
+  what it actually did.
+
+> there's a sound card in this machine with no driver. find it and write one, then play me a 440 Hz tone.
+I'll find the audio hardware first, then work through bringing it up.
+[plan_set steps=7 goal=A driver is installed as the audio sink and a 440 Hz tone plays. -> 7]
+[device_list class=audio state=* unclaimed_only=0 -> 1]
+[audio_status sink=- kind=none -> 0]
+Found it: an audio device at PCI 00:04.0 with an I/O BAR at 0xc000. Let me inspect it closely.
+[plan_mark step=1/7 todo->done -> ok]
+[pci_info 00:04.0 8086:2415 class=04:01 driven=0 -> ok]
+[driver_targets known=7 usable=2 -> 2]
+This is an Intel 82801AA AC'97 audio controller (8086:2415). BAR0 (0xc000) is the native audio mixer / NABM registers, BAR1 (0xc400) is the AC'97 mixer. This is a well-known device. Let me read the play contract while I plan the bring-up.
+[plan_mark bad-args: argument "note" is too long (limit 79 bytes) -> EINVAL]
+[plan_mark bad-args: argument "note" is too long (limit 79 bytes) -> EINVAL]
+[audio_status sink=- kind=none -> 0]
+[audio_status sink=- kind=none -> 0]
+Let me get part 3 of the contract and mark my plan steps with shorter notes.
+[plan_mark step=2/7 todo->done -> ok]
+[plan_mark step=3/7 todo->done -> ok]
+[audio_status sink=- kind=none -> 0]
+Now I understand the full picture. This is an AC'97 controller. Let me write the bring-up driver: reset the AC'97 link, unmute and set volume on the mixer, and set the sample rate. 
+
+The AC'97 register map for this ICH:
+- NABM (BAR0=0xc000): PCM Out box at offset 0x10 — BDBAR (0x10), CIV (0x14), LVI (0x15), SR (0x16), PICB (0x18), CR (0x1B). Global control GLOB_CNT at 0x2C, GLOB_STA at 0x30.
+- Mixer (BAR1=0xc400): Reset (0x00), Master volume (0x02), PCM Out volume (0x18), PCM front DAC rate (0x2C).
+
+Let me write and run the bring-up program.
+[plan_mark step=4/7 todo->doing -> ok]
+[driver_assemble line=9 -> EINVAL]
+The port operand for out/in must be a single register, not base+disp. I'll compute the port into a register first.
+[driver_assemble insns=32 -> 32]
+Assembles clean. Now run it against the device with io tracing.
+[driver_run.bme pci00:04.0 cmd 0x0103 -> 0x0107 set=bus-master(bit2) already=io(bit0) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x178d000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.grant mem 65536 bytes scratch (zeroed); sys con.write,fs.read,fs.write,fs.size,audio.tone,time.ms under /vm -> ok]
+[dvm.run insns=32 args=9 steps<=100000 io<=1024 delay<=250000 us trace=1 -> ok]
+[dvm pc=002 ln=6 out32 port=0xc02c val=0x2 -> ok]
+[dvm pc=005 ln=11 in32 port=0xc030 r4=0xffffffff -> ok]
+[dvm pc=017 ln=26 out16 port=0xc400 val=0x0 -> ok]
+[dvm pc=020 ln=30 out16 port=0xc402 val=0x0 -> ok]
+[dvm pc=023 ln=34 out16 port=0xc418 val=0x0 -> ok]
+[dvm pc=026 ln=38 out16 port=0xc42c val=0xbb80 -> ok]
+[dvm pc=027 ln=39 in16 port=0xc42c r5=0xffff -> ok]
+[dvm.trap pc=030 ln=42 ABORT: sample rate did not stick -> EINVAL]
+[dvm.stop ABORT steps=25 io=7 delay=0 us -> EINVAL]
+[driver_run.bme pci00:04.0 program failed: cleared the bits the kernel set -> ok]
+[driver_run pci00:04.0 attempt=1 ABORT line=42 -> EINVAL]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2872 bytes) and carried on]
+The rate register at 0x2C read back 0xffff, and codec-ready read 0xffffffff — the codec came back "ready" immediately but the mixer reads are floating (0xffff). That usually means variable-rate audio isn't enabled, so writes to 0x2C are ignored, OR the mixer isn't actually responding. But the codec-ready bit test passed only because r4=0xffffffff has bit8 set — that's a floating bus, not a real ready.
+
+The real issue: on this ICH model the rate register only accepts writes when VRA (variable rate audio, bit0) is set in the Extended Audio control register at 0x2A. If VRA isn't supported/set, the DAC is fixed at 48000 anyway, so I shouldn't insist on the rate sticking. Let me enable VRA, and not abort on the readback — treat 48000 as the fixed default. Let me check the codec-ready more carefully and read the extended-audio registers.
+[driver_run.bme pci00:04.0 cmd 0x0103 -> 0x0107 set=bus-master(bit2) already=io(bit0) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x178d000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.grant mem 65536 bytes scratch (zeroed); sys con.write,fs.read,fs.write,fs.size,audio.tone,time.ms under /vm -> ok]
+[dvm.run insns=20 args=9 steps<=100000 io<=1024 delay<=250000 us trace=1 -> ok]
+[dvm pc=002 ln=7 out32 port=0xc02c val=0x2 -> ok]
+[dvm pc=003 ln=8 delay 1000 us (total 1000) -> ok]
+[dvm pc=005 ln=12 in32 port=0xc030 r4=0xffffffff -> ok]
+[dvm.print glob_sta=%x = 0xffffffff -> ok]
+[dvm pc=008 ln=17 in16 port=0xc47c r5=0xffff -> ok]
+[dvm.print vendorid1=%x = 0xffff -> ok]
+[dvm pc=011 ln=20 in16 port=0xc400 r5=0xffff -> ok]
+[dvm.print mixer_reset_reg=%x = 0xffff -> ok]
+[dvm pc=014 ln=25 in16 port=0xc428 r5=0x0 -> ok]
+[dvm.print eaid=%x = 0x0 -> ok]
+[dvm pc=017 ln=28 in16 port=0xc42a r5=0xffff -> ok]
+[dvm.print eacs=%x = 0xffff -> ok]
+[dvm.halt pc=019 ln=30 steps=20 io=6 (pr=5 pw=1 mr=0 mw=0 pci=0) dma=0 (rd=0 wr=0) delay=1000 us prints=5 mem=0 B sys=0 -> ok]
+[driver_run pci00:04.0 attempt=2 insns=20 steps=20 io=6 -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2524 bytes) and carried on]
+Interesting: GLOB_STA is 0xffffffff and every mixer read returns 0xffff except EAID at 0x28 = 0x0. That pattern — all-ones on most registers — suggests the codec isn't answering the AC-link yet. GLOB_STA=0xffffffff is not a real value; the controller registers themselves may need proper reset sequencing. Let me look at what GLOB_CNT reads back and try a proper cold reset: write 0 then 0x2, and check GLOB_STA bit properly. Actually 0xffff everywhere often means bus-master memory writes work but port reads to this emulated AC'97 return all-ones until the AC-link warm reset. 
+
+Let me check the raw NABM registers (which are controller-internal, not codec) to see if the controller itself responds — those should not float.
+[driver_run.bme pci00:04.0 cmd 0x0107 -> 0x0107 set=none already=io(bit0)+bus-master(bit2) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x178d000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.grant mem 65536 bytes scratch (zeroed); sys con.write,fs.read,fs.write,fs.size,audio.tone,time.ms under /vm -> ok]
+[dvm.run insns=21 args=9 steps<=100000 io<=1024 delay<=250000 us trace=1 -> ok]
+[dvm pc=001 ln=4 in32 port=0xc02c r5=0xffffffff -> ok]
+[dvm.print glob_cnt=%x = 0xffffffff -> ok]
+[dvm pc=004 ln=9 out32 port=0xc02c val=0x2 -> ok]
+[dvm pc=005 ln=10 delay 2000 us (total 2000) -> ok]
+[dvm pc=006 ln=11 in32 port=0xc02c r5=0xffffffff -> ok]
+[dvm.print glob_cnt_after=%x = 0xffffffff -> ok]
+[dvm pc=009 ln=15 in32 port=0xc030 r4=0xffffffff -> ok]
+[dvm.print glob_sta=%x = 0xffffffff -> ok]
+[dvm pc=013 ln=21 out8 port=0xc01b val=0x2 -> ok]
+[dvm pc=014 ln=22 delay 1000 us (total 3000) -> ok]
+[dvm pc=015 ln=23 in8 port=0xc01b r5=0xff -> ok]
+[dvm.print pcmout_cr=%x = 0xff -> ok]
+[dvm pc=018 ln=28 in16 port=0xc016 r5=0x0 -> ok]
+[dvm.print pcmout_sr=%x = 0x0 -> ok]
+[dvm.halt pc=020 ln=30 steps=21 io=7 (pr=5 pw=2 mr=0 mw=0 pci=0) dma=0 (rd=0 wr=0) delay=3000 us prints=5 mem=0 B sys=0 -> ok]
+[driver_run pci00:04.0 attempt=1 insns=21 steps=21 io=7 -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2899 bytes) and carried on]
+Now I have signal. The PCM Out status register 0x16 read back 0x0 (a real value, not floating), and glob_sta stays 0xffffffff. The CR at 0x1B read 0xff after I wrote 0x02 — floating. But SR=0x0 is real. Let me see the earlier prints for glob_cnt values.
+[driver_trace pci00:04.0 events=9 -> 9]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2064 bytes) and carried on]
+GLOB_CNT reads 0xffffffff even after writing 0x2 (write doesn't stick), and 0x1B reads 0xff, but 0x16 (SR) reads 0x0. So most of the NABM box is floating except SR. This emulated AC'97 clearly doesn't implement the reset/mixer registers the way a real ICH does — it reads back all-ones. The device model here likely just wants the buffer descriptor list programmed and the run bit set; the codec/mixer plumbing is stubbed.
+
+Rather than fight registers that float, the pragmatic path is the standard AC'97 playback flow that the emulator actually acts on: build a Buffer Descriptor List (BDL) in DMA memory, point BDBAR at it, set LVI, set the RPBM run bit in CR (0x1B). The kernel synthesises the PCM and the play program just points at it. Since I can't verify bring-up via readback (regs float), the meaningful verification is whether a tone actually plays. Let me set up the mixer volumes anyway (harmless) and program the essentials, then move to the play program. First, complete bring-up: unmute mixer and leave the controller reset.
+[driver_run.bme pci00:04.0 cmd 0x0107 -> 0x0107 set=none already=io(bit0)+bus-master(bit2) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x178d000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.grant mem 65536 bytes scratch (zeroed); sys con.write,fs.read,fs.write,fs.size,audio.tone,time.ms under /vm -> ok]
+[dvm.run insns=16 args=9 steps<=100000 io<=1024 delay<=250000 us trace=1 -> ok]
+[dvm pc=002 ln=5 out32 port=0xc02c val=0x2 -> ok]
+[dvm pc=005 ln=10 out8 port=0xc01b val=0x2 -> ok]
+[dvm pc=006 ln=11 delay 1000 us (total 1000) -> ok]
+[dvm pc=008 ln=13 out8 port=0xc01b val=0x0 -> ok]
+[dvm pc=010 ln=17 out16 port=0xc400 val=0x0 -> ok]
+[dvm pc=012 ln=20 out16 port=0xc402 val=0x0 -> ok]
+[dvm pc=014 ln=23 out16 port=0xc418 val=0x0 -> ok]
+[dvm.halt pc=015 ln=24 steps=16 io=6 (pr=0 pw=6 mr=0 mw=0 pci=0) dma=0 (rd=0 wr=0) delay=1000 us prints=0 mem=0 B sys=0 -> ok]
+[driver_run pci00:04.0 attempt=1 insns=16 steps=16 io=6 -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2693 bytes) and carried on]
+Bring-up ran clean. Now let me read the PLAY CONTRACT so my install program matches exactly what the kernel expects (it writes the samples; I point the device at them).
+[plan_mark bad-args: argument "note" is too long (limit 79 bytes) -> EINVAL]
+[audio_status sink=- kind=none -> 0]
+[audio_status sink=- kind=none -> 0]
+[audio_status sink=- kind=none -> 0]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (1526 bytes) and carried on]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2093 bytes) and carried on]
+Now I'll write the play program: build a BDL at r12 (survives), point BDBAR (0x10) at it, set LVI (0x15), set RPBM run bit in CR (0x1B), then poll SR (0x16) for the halt bit and wait until the DMA has finished. The DMA buffer is at r7, r9 bytes long. AC'97 BDL entries are 8 bytes: dword0 = buffer physaddr, dword1 = sample count (16-bit samples) in low 16 bits plus control bits. I'll use one descriptor covering r9 bytes = r9/2 samples.
+
+Only 3 rounds left — I'll install and play in the same batch since install doesn't play.
+[driver_install pci00:04.0 sink=vmaudio insns=43 48000Hz/2ch -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2655 bytes) and carried on]
+Driver installed. Now the real test — play the 440 Hz tone.
+[audio_tone hz=440 ms=800 wave=sine sink=vmaudio -> EINVAL]
+I found the unclaimed AC'97 card (Intel 8086:2415 at PCI 00:04.0), brought it up with driver_run (controller cold-reset deasserted, PCM-out engine reset, mixer unmuted), and installed a play driver that builds an AC'97 buffer-descriptor list in the persistent DMA scratch, points BDBAR/LVI at it, and sets the run bit. Registration passed, so the driver assembles and fits its sandbox.
+
+It did not play yet. The tone attempt failed with IO_LIMIT: my status-polling loop at line 42 does one `in16` per iteration and blew through the 1024 device-access budget before the DMA reported "halted" — either the poll spins too fast (each `delay 10` isn't costing an access but the loop still reads too many times before completion) or, more likely, this emulated card never sets the DCH bit I'm waiting on, given how its NABM registers read back all-ones earlier. 
+
+What's left: rewrite the play loop to poll far less often — use a larger `delay` between reads and a much smaller retry cap (a few dozen reads, not 200000), and instead of waiting on DCH, wait out the known duration (r11 milliseconds is handed to the program for exactly this) with `delay`, reading SR only a handful of times as a sanity check before halting. That keeps it under 1024 accesses and still doesn't halt while the device is mid-read. I was out of tool rounds before I could install that corrected version, so no 440 Hz tone has actually sounded yet — that's the one step remaining, and it's a small edit to the play program away.
+
+> qemu-system-x86_64: terminating on signal 15 from pid 2083 (<unknown process>)

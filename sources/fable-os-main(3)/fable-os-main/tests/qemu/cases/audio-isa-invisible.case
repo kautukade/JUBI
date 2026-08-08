@@ -1,0 +1,98 @@
+# =========================================================================
+# AN ISA SOUND CARD IS INVISIBLE TO THE DRIVER VM. THIS IS A LIMITATION,
+# RECORDED AS A TEST SO IT CANNOT BE REDISCOVERED THE EXPENSIVE WAY.
+#
+# The experiment this project exists for is "attach a sound card the kernel has
+# never heard of, ask the model to write a driver, hear a sound". The FIRST card
+# tried was QEMU's `-device adlib` — OPL2 FM synthesis behind two I/O ports, no
+# DMA, no descriptors, the least machinery between a model and a noise. It was
+# expected to be the easy one. It is instead the impossible one, and not for any
+# reason to do with audio:
+#
+#   adlib is an ISA device. It has no PCI configuration space at all.
+#
+# drivers/pci/pci.c publishes a device node per PCI function, so an ISA device is
+# published by nobody. tools/dvm_tools.c's resolve_target() then requires the
+# name to be a REGISTERED node AND to parse as "pci<bb>:<dd>.<f>" before it will
+# derive a sandbox from BARs. An ISA card fails both halves, so driver_targets
+# cannot offer it and driver_run cannot be pointed at it. There is no primitive
+# for "grant me ports 0x388-0x389": every port window in the VM's policy is
+# derived from a BAR, and there is no BAR.
+#
+# A live model was asked to drive one. It did everything right — enumerated the
+# whole bus, filtered by class 4, checked device_list, checked audio_status —
+# found nothing, and correctly told the operator the machine had no sound card
+# rather than inventing one. See vm/transcripts/adlib.log.
+#
+# WHAT THIS CASE ASSERTS, and why each line is here rather than a comment:
+#   * with an OPL2 card attached, the PCI bus is UNCHANGED (6 functions, none
+#     audio-class) — so "the model found nothing" was the truth, not a bug in
+#     the enumeration;
+#   * the device tree gains no audio row, so the device model does not know
+#     about it either;
+#   * the audio service still says it can play nothing, which is the honest
+#     answer and the one the model was given.
+#
+# WHEN THIS CASE FAILS, THAT IS PROBABLY GOOD NEWS. If someone teaches the
+# kernel to publish legacy/ISA devices as targetable nodes with an explicit port
+# window, this case starts failing and should be REWRITTEN, not deleted: the new
+# assertion is that adlib IS offered by driver_targets. The comment above is the
+# specification for that work.
+#
+# Syntax is documented in boot.case.
+# =========================================================================
+
+name: audio-isa: an ISA sound card cannot be a driver target
+description: -device adlib attaches an OPL2 card that has no PCI config space, so the kernel cannot offer it to the driver VM at all
+timeout: 45
+nic: user,model=e1000
+
+# No build-cflags: this must be the kernel `make` produces.
+
+# `-audiodev none` so no host audio device is needed and the case behaves the
+# same on any machine. adlib is an ISA device, so it takes no PCI slot argument.
+qemu-extra: -audiodev none,id=snd0 -device adlib,audiodev=snd0
+
+ready: ^>
+ready [offline]: \[net init failed
+
+# ---- the PCI bus is exactly what it is with no card at all --------------
+# Six functions: host bridge, ISA bridge, IDE, ACPI, VGA, e1000. Attaching the
+# sound card added nothing, because it is not on this bus. The count is asserted
+# as well as the absence, so this cannot pass by the scan having failed.
+expect-re: ^pci: 00:00\.0  8086:1237  class 06:00$
+expect-re: ^pci: 00:03\.0  8086:100e  class 02:00$
+expect-re: ^pci: 6 device\(s\)$
+check: pci_enumeration count=6
+
+# No PCI function of any audio class exists. `class 04:` is what pci.c prints
+# for base class 4 (multimedia), and it must not appear for any subclass — an
+# OPL2 chip is audio hardware by any reasonable definition and is still absent
+# from the only namespace the driver VM can reach.
+forbid-re: ^pci: .* class 04:
+
+# ---- so the honest answer is the one the model was given ----------------
+# Before the device tree, because `expect` is ordered and the audio service
+# reports during driver init, well ahead of the tree dump.
+expect-re: ^audio: no output driver is registered - nothing can play a sound yet$
+forbid-re: ^audio: sink
+
+# ---- and the device model has no audio node either ----------------------
+expect: --- device tree ---
+check: device_tree count=13
+forbid-re: ^\s*\[\s*\d+\] \S+\s+audio\s
+
+# ---- nothing in the image went looking for it --------------------------
+# No program ran, so no port was poked. If a future change lets the VM reach
+# legacy ports, it must still not do so unasked at boot.
+forbid: [dvm
+forbid-re: ^ac97:
+forbid-re: \bOPL\b
+forbid-re: \badlib\b
+
+# ---- and the machine is otherwise completely normal --------------------
+expect-re: ^  tools  : \d+ registered
+forbid-re: \bpanic\b
+forbid: heap corruption
+forbid: kfree: double free
+forbid-re: ^\[fault

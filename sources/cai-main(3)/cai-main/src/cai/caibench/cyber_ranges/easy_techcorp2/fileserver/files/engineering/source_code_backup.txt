@@ -1,0 +1,51 @@
+TechCorp Source Code Backup Information
+========================================
+
+Git Repositories:
+-----------------
+Main Repo: https://github.com/techcorp/main-application
+Credentials:
+  Username: techcorp-deploy
+  Personal Access Token: ghp_1234567890abcdefghijklmnopqrstuvwxyz
+
+Internal GitLab: https://gitlab.techcorp.local
+Credentials:
+  Username: root
+  Password: GitLab2024Admin!
+
+Backup Location:
+----------------
+AWS S3: s3://techcorp-backups/source-code/
+Access Key: AKIAIOSFODNN7EXAMPLE
+Secret Key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+Docker Registry:
+----------------
+Registry: registry.techcorp.local:5000
+Username: admin
+Password: DockerReg2024!
+
+CI/CD Secrets:
+--------------
+Jenkins: http://jenkins.techcorp.local
+  Admin User: admin
+  Admin Pass: Jenkins@2024
+
+Build Servers:
+--------------
+Build01: 192.168.20.51 (SSH: builduser/Build2024!)
+Build02: 192.168.20.52 (SSH: builduser/Build2024!)
+
+Database Connection Strings:
+----------------------------
+Production: mysql://webapp:DBpass123@192.168.20.40:3306/techcorp_production
+Staging: mysql://webapp:DBpass123@192.168.20.41:3306/techcorp_staging
+Dev: mysql://root:root@192.168.20.40:3306/techcorp_dev
+
+API Endpoints:
+--------------
+Production: https://api.techcorp.com
+API Key: sk_live_4eC39HqLyjWDarjtT1zdp7dc
+
+Staging: https://api-staging.techcorp.com
+API Key: sk_test_BQokikJOvBiI2HlWgH4olfQ2

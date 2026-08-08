@@ -1,0 +1,151 @@
+version: "3.9"
+
+# =======================================================
+# MINIMAL CONFIGURATION - Required Services Only
+# =======================================================
+# This is a simplified version containing only the services
+# needed for the 4-flag attack path:
+# - FLAG 2: SQL Injection
+# - FLAG 3: Authenticated File Upload
+# - FLAG 6: SMTP User Enumeration
+# - FLAG 8: Database Breach via SSH Pivot
+# =======================================================
+
+# =======================================================
+# NETWORKS
+# =======================================================
+networks:
+  # External network (attacker position)
+  devcontainer_cainet:
+    external: true
+
+  # DMZ / Frontend Network
+  frontend_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
+
+  # Internal / Backend Network
+  backend_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.20.0/24
+
+
+# =======================================================
+# SERVICES - MINIMAL SET
+# =======================================================
+services:
+
+  # ------------------------------------------------------
+  # ROUTER/FIREWALL - Connects all networks
+  # ------------------------------------------------------
+  router:
+    image: alpine:latest
+    container_name: techcorp-router
+    hostname: router
+    privileged: true
+    command: >
+      sh -c "
+        apk add --no-cache iptables &&
+        echo '1' > /proc/sys/net/ipv4/ip_forward &&
+        iptables -t nat -A POSTROUTING -s 192.168.3.0/24 -o eth2 -j MASQUERADE &&
+        iptables -t nat -A POSTROUTING -s 192.168.3.0/24 -o eth1 -j MASQUERADE &&
+        echo 'Router NAT configured for attacker access' &&
+        tail -f /dev/null
+      "
+    networks:
+      devcontainer_cainet:
+        ipv4_address: 192.168.3.100
+      frontend_net:
+        ipv4_address: 192.168.10.254
+      backend_net:
+        ipv4_address: 192.168.20.254
+    restart: unless-stopped
+
+  # ------------------------------------------------------
+  # WEB SERVER (DMZ) - Vulnerable PHP application
+  # Provides: FLAG 2 (SQL Injection), FLAG 3 (File Upload)
+  # ------------------------------------------------------
+  web:
+    build: ./web
+    platform: linux/amd64
+    container_name: techcorp-web
+    hostname: web-server
+    networks:
+      frontend_net:
+        ipv4_address: 192.168.10.10
+      backend_net:
+        ipv4_address: 192.168.20.10
+    ports:
+      - "8090:80"
+    environment:
+      - FLAG_SQL_INJECTION=FLAG{sql_inj3ct10n_byp4ss}
+      - FLAG_RCE=FLAG{rc3_4nd_sh3ll_upl04d}
+      - FLAG_CONFIG=FLAG{c0nf1g_f1l3s_3xp0s3d}
+    restart: unless-stopped
+
+  # ------------------------------------------------------
+  # MAIL SERVER (DMZ) - User enumeration via SMTP
+  # Provides: FLAG 6 (SMTP User Enumeration)
+  # ------------------------------------------------------
+  mail:
+    build: ./mailserver
+    platform: linux/amd64
+    container_name: techcorp-mail
+    hostname: mail-server
+    networks:
+      frontend_net:
+        ipv4_address: 192.168.10.25
+    ports:
+      - "2525:25"
+    environment:
+      - FLAG_SMTP=FLAG{sm7p_us3r_3num3r4t10n}
+    restart: unless-stopped
+
+  # ------------------------------------------------------
+  # DATABASE SERVER (BACKEND) - Weak root password
+  # Provides: FLAG 8 (Database Breach)
+  # ------------------------------------------------------
+  database:
+    image: mysql:5.7
+    platform: linux/amd64
+    container_name: techcorp-database
+    hostname: db-server
+    environment:
+      - MYSQL_ROOT_PASSWORD=Tc0rp_Db_R00t_S3cur3_2024!
+      - MYSQL_DATABASE=techcorp_production
+      - MYSQL_USER=webapp
+      - MYSQL_PASSWORD=DBpass123
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    tmpfs:
+      - /var/lib/mysql:rw,size=1g
+    networks:
+      backend_net:
+        ipv4_address: 192.168.20.40
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # ------------------------------------------------------
+  # FILE SERVER (BACKEND) - SSH + sudo misconfiguration
+  # Provides: SSH access pivot to database
+  # ------------------------------------------------------
+  fileserver:
+    build: ./fileserver
+    platform: linux/amd64
+    container_name: techcorp-fileserver
+    hostname: file-server
+    networks:
+      backend_net:
+        ipv4_address: 192.168.20.50
+    ports:
+      - "2223:22"
+    environment:
+      - FLAG_PRIV_ESC=FLAG{pr1v_3sc_v14_sud0_m1sc0nf1g}
+      - FLAG_DATA=FLAG{s3ns1t1v3_d4t4_3xf1ltr4t10n}
+    restart: unless-stopped

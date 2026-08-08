@@ -1,0 +1,219 @@
+# =========================================================================
+# Baseline boot: long mode -> drivers -> device model -> VFS -> networking
+# -> TLS -> HTTPS round-trip -> heap integrity -> tool registry -> the "> "
+# prompt.
+#
+# There is no shell and no command set: natural language is the only
+# interface. Boot therefore has to end with three things true at once — the
+# machine is on the network, the tool registry serialised into a schema the
+# model can actually be offered, and a bare "> " prompt is waiting.
+#
+# CASE FILE SYNTAX
+#
+#   <directive> [tags] : <argument>
+#
+#   Settings
+#     name          display name (default: the file name)
+#     description   one line of prose
+#     timeout       hard limit in seconds for this case
+#     ready         regex; the VM is killed as soon as it matches (so a
+#                   passing run takes ~2s instead of the full timeout).
+#                   If no ready pattern ever matches, the case FAILS.
+#     nic           argument for qemu -nic (use "none" for no NIC at all)
+#     qemu-extra    extra qemu arguments
+#     build-cflags  EXTRA_CFLAGS this case needs, e.g.
+#                   -DFABLEOS_AC97_REFERENCE. Almost no case should use it:
+#                   the suite exists to assert things about the kernel an
+#                   operator actually gets, and this boots a different one.
+#                   It is for code that must be assertable and must NOT
+#                   ship — see cases/ac97.case. The harness builds that
+#                   kernel once, snapshots it, and puts the tree back (see
+#                   build_variant_kernels in harness.py); the run prints a
+#                   note on every case that used one.
+#
+#   Assertions
+#     expect          ordered literal substring (must follow the previous one)
+#     expect-re       ordered regex, MULTILINE
+#     expect-any      unordered literal substring
+#     expect-any-re   unordered regex
+#     forbid          literal substring that must never appear
+#     forbid-re       regex that must never appear (case-insensitive)
+#     check           named semantic assertion; parses numbers out of the log
+#                     rather than substring-matching them. See CHECKS in
+#                     harness.py: heap_integrity, pci_enumeration,
+#                     device_tree, http_response, tool_registry,
+#                     occurrences.
+#
+#   Tags
+#     (none)      always asserted
+#     [net]       only asserted when the network is up (skipped offline)
+#     [offline]   only asserted in offline mode
+#
+#   Offline mode is FABLEOS_TEST_OFFLINE=1, or autodetected when
+#   api.anthropic.com is unreachable. Offline only ever *relaxes* the suite.
+# =========================================================================
+
+name: boot: full stack (net)
+description: everything from long mode to the "> " prompt and a live tool schema
+timeout: 30
+nic: user,model=e1000
+
+# The kernel is an endless REPL; it never exits. Stop at the bare "> " prompt.
+# A network-less machine still reaches that prompt (it just cannot act), but it
+# says "[net init failed" ~10s earlier, so offline we stop there instead of
+# paying the DNS timeout.
+ready: ^> 
+ready [offline]: \[net init failed
+
+# --- boot: reaching this at all proves the 32->64 bit trampoline worked, the
+# --- higher-half mapping is live, and the serial driver bound to COM1.
+expect: serial: COM1 up @ 115200
+
+# --- fw_cfg: the channel the API key arrives on --------------------------
+# The key is not a build input any more (there is no KEY= and no
+# -DFABLEOS_API_KEY), so what boot has to prove is that the host->guest channel
+# came up and that the kernel is honest about whether a key came with it. This
+# suite passes no key, so the second line is normally the "none" one — it is
+# pinned as a shape so that running the suite WITH
+# FABLEOS_TEST_QEMU_EXTRA='-fw_cfg name=opt/fableos/apikey,file=...' does not turn
+# a working machine into a failing case.
+expect-re: ^fwcfg: QEMU fw_cfg at 0x510/0x511, \d+ file\(s\), features 0x[0-9a-f]+$
+expect-re: ^fwcfg: (api key: \d+ bytes loaded from fw_cfg|no api key )
+
+# --- PCI enumeration -----------------------------------------------------
+expect-re: ^pci: 00:00\.0  8086:1237  class 06:00$
+expect-re: ^pci: 00:03\.0  8086:100e  class 02:00$
+expect-re: ^pci: 6 device\(s\)$
+check: pci_enumeration count=6
+
+# --- driver bring-up -----------------------------------------------------
+expect: kbd: PS/2 keyboard ready
+# The PS/2 auxiliary port. The bring-up line says which packet length was
+# negotiated: QEMU's mouse takes the IntelliMouse magic sequence, so a machine
+# that reports 3-byte packets here has lost the wheel upgrade. "muted" is the
+# other half of the contract - the driver enables data reporting to verify it,
+# then switches it off again, so nothing arrives in the 8042 output buffer that
+# the keyboard driver would read as scancodes (see include/mouse.h).
+expect-re: ^mouse: PS/2 mouse ready \(4-byte packets, wheel\), \d+x\d+ box, muted until a consumer polls$
+expect-re: ^e1000: 00:03\.0 MMIO=0x[0-9a-f]+$
+# The CMOS wall clock. Pinned as a shape, not a value: the date is whatever the
+# host's clock says. A four-digit year starting 20 is enough to catch a driver
+# that decodes BCD as binary (which would print year 2038 for 2026-ish) or that
+# loses the century register (1926).
+expect-re: ^rtc: MC146818 at 0x70: 20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ \(\w+day, unix \d{10}, assumed UTC\)$
+# The driver reads the clock in a tight loop at boot and checks the readings
+# against each other; none may be unreadable or out of order.
+expect-re: ^rtc: self-check \d+ reads: 0 unreadable, 0 out of order,
+
+# --- device model: tree, then the suspend/resume power cycle -------------
+expect: --- device tree ---
+expect-re: ^devices: 13 registered$
+expect-re: ^\s*\[\s*1\] serial0\s+serial\s+active\s+driver=serial\s+io=3f8 irq=4$
+expect-re: ^\s*\[\s*10\] kbd0\s+input\s+active\s+driver=kbd\s+io=60 irq=1$
+expect-re: ^\s*\[\s*11\] mouse0\s+input\s+active\s+driver=mouse\s+io=60 irq=12$
+expect-re: ^\s*\[\s*12\] eth0\s+network\s+active\s+driver=e1000\s+mmio=0x[0-9a-f]+$
+expect-re: ^\s*\[\s*13\] rtc0\s+timer\s+active\s+driver=rtc\s+io=70 irq=8$
+expect: --- power cycle: suspend all, then resume all ---
+expect-re: ^-{19}$
+check: device_tree count=13 active=serial0,fwcfg0,pci0,kbd0,mouse0,eth0,rtc0
+
+# --- VFS self-test (ramfs mounted at /) ----------------------------------
+expect: --- filesystem self-test (ramfs at /) ---
+expect: read /etc/motd (34 bytes): fable-os native filesystem online
+expect-re: ^stat /etc/motd: type=file size=34 mode=0x[0-9a-f]+$
+expect-re: ^ls / :(?=.*\btmp\b)(?=.*\betc\b)
+expect-re: ^-{41}$
+
+# --- networking: interface up, then DNS + TLS ----------------------------
+expect-re: ^net: up at \d+\.\d+\.\d+\.\d+/\d+$
+expect [net]: net: resolving api.anthropic.com ...
+expect-re [net]: ^net: api\.anthropic\.com -> \d+\.\d+\.\d+\.\d+, TLS ready$
+
+# --- the HTTPS round-trip ------------------------------------------------
+expect [net]: --- self-test: HTTPS to api.anthropic.com ---
+expect-re [net]: ^\[http\] HTTP/1\.\d \d{3} \S
+check [net]: http_response allow=200,401
+
+# --- heap: structurally intact and no leak after ~15800 TLS allocations --
+expect-re [net]: ^heap: \d+/\d+ KiB used
+check [net]: heap_integrity max_live=64 max_used_kib=64 min_allocs=1000
+
+# --- the ready banner: what this machine can do, and how to read it ------
+# The tool count and schema size are the machine's whole vocabulary. Asserted
+# by parsing the numbers (check tool_registry) rather than substring-matching
+# them, so "21" can become "34" without touching this file — what is pinned
+# is that the registry is populated and that it serialised into something the
+# model can actually be handed.
+#
+# expect_schema_bytes=header is the exception, and it is an equality on purpose.
+# No host test links all 45 tools, so include/chat.h's CHAT_REGISTRY_BYTES is
+# the only written-down copy of the real total, and two host suites PRINT it as
+# a measured fact. It drifted 699 bytes below the truth once, in the unsafe
+# direction, with everything green. This makes growing a description a two-line
+# change instead of a one-line change plus a lie: the failure names the new
+# number to paste in.
+#
+# max_schema_bytes IS NOT WRITTEN HERE, ON PURPOSE, and it used to be. This line
+# carried a literal max_schema_bytes=57344, which is a hand-copy of
+# CHAT_TOOLS_BYTES in include/chat.h — the exact stale-mirror shape that has cost
+# this project days. It had already been wrong once: chat.h said 57344 while these
+# three files still pinned 49152, so the binding limit was 8 KiB below the one the
+# header declared and nobody could tell which number was real. harness.py's default
+# for max_schema_bytes is CHAT_TOOLS_BYTES, parsed out of the header, so omitting
+# the argument means there is exactly one copy of that bound in the tree and it is
+# the one the kernel compiles against.
+expect-re [net]: ^  tools  : \d+ registered \(\d+ bytes of schema\)$
+expect-re [net]: ^  model  : reachable over TLS$
+check [net]: tool_registry min_tools=12 min_schema_bytes=2000 min_bytes_per_tool=80 expect_schema_bytes=header
+
+# (The network-less side of the same banner is covered by no-nic.case, which
+# reaches the prompt with the model genuinely unreachable.)
+
+# The framing that replaced the old chat-client prompt. [net]-tagged like
+# everything else past this point: offline, `ready` fires on "[net init
+# failed" and the VM is shot before the banner is guaranteed to be flushed.
+expect [net]: No shell, no commands.
+expect [net]: Prose is the model talking. [Brackets] are this kernel saying
+
+# --- and we land at the prompt -------------------------------------------
+expect-re [net]: ^>
+
+# --- things that must never happen ---------------------------------------
+# A byte count is the only thing this kernel may ever say about the API key.
+# These hold whether or not a key was supplied to the run: if one was, none of
+# it reached the console. (Bare "x-api-key" is NOT forbidden — the API's own 401
+# body says "x-api-key header is required", which is the far end talking, not a
+# leak. What is forbidden is the header with a credential after it.)
+forbid-re: sk-ant
+forbid: x-api-key: sk-
+forbid-re: \bpanic\b
+forbid: heap corruption
+forbid: heap: bad magic
+forbid: heap: broken link
+forbid: heap: uncoalesced free blocks
+forbid: heap: size accounting mismatch
+forbid: kmalloc: out of memory
+forbid: kfree: double free
+forbid: [fs init failed]
+# chat_init() assembles the tool schema at boot precisely so this shows up
+# here and not mid-sentence. If it does, tool_count() is still non-zero but
+# the schema is discarded and the model is offered nothing.
+forbid: the tool schema does not fit
+forbid: [chat: could not build a valid request]
+forbid: [net: altcp_tls_new failed]
+forbid: e1000: no supported NIC found
+forbid: driver e1000: init failed
+forbid [net]: TLS handshake failed
+forbid [net]: net: TLS config init failed
+forbid [net]: net: DNS resolution failed
+forbid [net]: [net init failed
+forbid [net]: [net: timed out]
+forbid [net]: [net: TLS/connect failed]
+# Backstop for the two above: net_ask() reports every boot self-test failure
+# as "[net: <reason>]", so forbid the shape rather than only the reasons we
+# have already seen. (This replaced a `[no answer` guard that had gone dead —
+# the kernel no longer emits that string anywhere.)
+forbid-re [net]: ^\[net:
+
+# A triple fault would restart the machine and print the banner twice.
+check: occurrences pattern="^serial: COM1 up" min=1 max=1

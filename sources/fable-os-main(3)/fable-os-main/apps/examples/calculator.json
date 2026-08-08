@@ -1,0 +1,87 @@
+{
+  "note": "The hand-written reference app for fable-os: a working calculator, written by a human in the same document format the model emits, so that a model failure is attributable to the model and not to the runtime. Fixed point, six decimals, magnitude up to 9e9; division by zero and overflow produce the error value, which text() renders as the word error and which latches until C.",
+  "title": "Calculator",
+  "width": 216,
+  "height": 266,
+  "grid": { "rows": 6, "cols": 4, "gap": 5, "pad": 6 },
+
+  "vars": { "acc": 0, "rhs": 0, "res": 0, "op": "", "fresh": 1, "err": 0 },
+
+  "widgets": [
+    { "kind": "field", "name": "display", "text": "0", "align": "right",
+      "readonly": true, "row": 0, "col": 0, "colspan": 4 },
+
+    { "kind": "button", "text": "7", "tag": "digit", "row": 1, "col": 0 },
+    { "kind": "button", "text": "8", "tag": "digit", "row": 1, "col": 1 },
+    { "kind": "button", "text": "9", "tag": "digit", "row": 1, "col": 2 },
+    { "kind": "button", "text": "/", "tag": "op",    "row": 1, "col": 3 },
+
+    { "kind": "button", "text": "4", "tag": "digit", "row": 2, "col": 0 },
+    { "kind": "button", "text": "5", "tag": "digit", "row": 2, "col": 1 },
+    { "kind": "button", "text": "6", "tag": "digit", "row": 2, "col": 2 },
+    { "kind": "button", "text": "*", "tag": "op",    "row": 2, "col": 3 },
+
+    { "kind": "button", "text": "1", "tag": "digit", "row": 3, "col": 0 },
+    { "kind": "button", "text": "2", "tag": "digit", "row": 3, "col": 1 },
+    { "kind": "button", "text": "3", "tag": "digit", "row": 3, "col": 2 },
+    { "kind": "button", "text": "-", "tag": "op",    "row": 3, "col": 3 },
+
+    { "kind": "button", "text": "0", "tag": "digit", "row": 4, "col": 0 },
+    { "kind": "button", "text": ".", "name": "dot",  "row": 4, "col": 1 },
+    { "kind": "button", "text": "C", "name": "clear", "row": 4, "col": 2 },
+    { "kind": "button", "text": "+", "tag": "op",    "row": 4, "col": 3 },
+
+    { "kind": "button", "text": "=", "name": "equals", "row": 5, "col": 0,
+      "colspan": 4 }
+  ],
+
+  "on": [
+    { "click": "clear", "do": [
+      { "set": "acc", "to": "0" },
+      { "set": "rhs", "to": "0" },
+      { "set": "res", "to": "0" },
+      { "set": "op", "to": "''" },
+      { "set": "fresh", "to": "1" },
+      { "set": "err", "to": "0" },
+      { "set": "display", "to": "'0'" }
+    ] },
+
+    { "click": "digit", "do": [
+      { "if": "err", "then": [ { "stop": true } ] },
+      { "if": "fresh", "then": [
+        { "set": "display", "to": "''" },
+        { "set": "fresh", "to": "0" }
+      ] },
+      { "if": "digits(display) >= 12", "then": [ { "stop": true } ] },
+      { "if": "display == '0'", "then": [ { "set": "display", "to": "''" } ] },
+      { "set": "display", "to": "cat(display, key)" }
+    ] },
+
+    { "click": "dot", "do": [
+      { "if": "err", "then": [ { "stop": true } ] },
+      { "if": "fresh", "then": [
+        { "set": "display", "to": "'0'" },
+        { "set": "fresh", "to": "0" }
+      ] },
+      { "if": "has(display, '.')", "then": [ { "stop": true } ] },
+      { "if": "display == ''", "then": [ { "set": "display", "to": "'0'" } ] },
+      { "set": "display", "to": "cat(display, '.')" }
+    ] },
+
+    { "click": [ "op", "equals" ], "do": [
+      { "if": "err", "then": [ { "stop": true } ] },
+      { "set": "rhs", "to": "num(display)" },
+      { "if": "op == ''",  "then": [ { "set": "res", "to": "rhs" } ] },
+      { "if": "op == '+'", "then": [ { "set": "res", "to": "acc + rhs" } ] },
+      { "if": "op == '-'", "then": [ { "set": "res", "to": "acc - rhs" } ] },
+      { "if": "op == '*'", "then": [ { "set": "res", "to": "acc * rhs" } ] },
+      { "if": "op == '/'", "then": [ { "set": "res", "to": "acc / rhs" } ] },
+      { "set": "acc", "to": "res" },
+      { "set": "display", "to": "text(res)" },
+      { "if": "iserr(res)", "then": [ { "set": "err", "to": "1" } ] },
+      { "if": "key == '='", "then": [ { "set": "op", "to": "''" } ],
+                            "else": [ { "set": "op", "to": "key" } ] },
+      { "set": "fresh", "to": "1" }
+    ] }
+  ]
+}

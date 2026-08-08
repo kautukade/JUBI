@@ -1,0 +1,109 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - cai-v1.0.5
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     - name: Setup uv
+  #       uses: astral-sh/setup-uv@v5
+  #       with:
+  #         enable-cache: true
+  #     - name: Install dependencies
+  #       run: make sync
+  #     - name: Run lint
+  #       run: make lint
+
+  # typecheck:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     - name: Setup uv
+  #       uses: astral-sh/setup-uv@v5
+  #       with:
+  #         enable-cache: true
+  #     - name: Install dependencies
+  #       run: make sync
+  #     - name: Run typecheck
+  #       run: make mypy
+
+  # Lightweight prompt / layering checks (no refusals suite; mirrors GitLab smoke slice)
+  cyber-prompt-smoke:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: fake-for-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: make sync
+      - name: Run cyber layering and prompt bundle load tests
+        run: uv run pytest tests/util/test_cyber_prompt_layering.py tests/prompts/test_prompt_bundles_load.py -q --timeout=300
+
+  # Heavier: full selection_agent import graph (optional in local runs: pytest -m "not slow")
+  selection-agent-smoke:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: fake-for-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: make sync
+      - name: Run selection agent smoke tests
+        run: uv run pytest tests/agents/test_selection_agent_smoke.py -q --timeout=600
+
+  build-docs:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: fake-for-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: make sync
+      - name: Build docs
+        run: make build-docs
+
+  # old_versions:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     OPENAI_API_KEY: fake-for-tests
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     - name: Setup uv
+  #       uses: astral-sh/setup-uv@v5
+  #       with:
+  #         enable-cache: true
+  #     - name: Install dependencies
+  #       run: make sync
+  #     - name: Run tests
+  #       run: make old_version_tests

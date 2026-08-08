@@ -1,0 +1,63 @@
+networks:
+  poo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.13.38.0/24
+          gateway: 10.13.38.1
+
+services:
+  # Attacker machine (Kali-like)
+  poo-attacker:
+    build:
+      context: ./attacker
+      dockerfile: Dockerfile
+    container_name: poo-attacker
+    hostname: attacker
+    networks:
+      poo-network:
+        ipv4_address: 10.13.38.5
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./attacker/tools:/tools
+    depends_on:
+      - poo-webserver
+
+  # Web Server - Entry point (similar to IIS in original)
+  poo-webserver:
+    build:
+      context: ./webserver
+      dockerfile: Dockerfile
+    container_name: poo-webserver
+    hostname: compatibility
+    domainname: intranet.poo
+    networks:
+      poo-network:
+        ipv4_address: 10.13.38.11
+    ports:
+      - "8080:80"
+    depends_on:
+      - poo-database
+    environment:
+      - DB_HOST=poo-database
+      - DB_USER=external_user
+      - DB_PASS=p00Public3xt3rnalUs3r#
+
+  # Database Server (PostgreSQL - similar to MS SQL)
+  poo-database:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: poo-database
+    hostname: db-server
+    networks:
+      poo-network:
+        ipv4_address: 10.13.38.12
+    environment:
+      - POSTGRES_PASSWORD=SuperSecretDBRoot!
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d

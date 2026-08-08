@@ -1,0 +1,103 @@
+note: api key passed to the guest over fw_cfg as opt/fableos/apikey
+qemu-system-x86_64: multiboot knows VBE. we don't
+[display 1024x768 32bpp via bochs-vbe -> 128x48 text, Spleen 8x16 (BSD-2-Clause) + fable-os additions]
+[console utf-8: em—dash en–dash ‘curly’ “quotes” ellipsis… bullet• ✓ ✗]
+[console glyphs: ←↑→↓↔↕ ≈≡≤≥±÷∞√ áéíóú äöü ñ ç ß ° µ ¶ §]
+[console glyphs: box ┌──┬──┐ ├──┼──┤ └──┴──┘ ╔══╦══╗ ╠══╬══╣ ╚══╩══╝]
+[console glyphs: blocks ░▒▓█▄▀▌▐ folded ╭╮╰╯ unmapped 😀]
+idt: 256 gates at 0x217000 (limit 4095), all verified; TSS with 3 IST stacks of 16 KiB (#DF=1 NMI=2 #MC=3); PIC remapped to 0x20/0x28 and fully masked
+serial: COM1 up @ 115200
+fwcfg: QEMU fw_cfg at 0x510/0x511, 14 file(s), features 0x3
+fwcfg: api key: 108 bytes loaded from fw_cfg (opt/fableos/apikey)
+pci: 00:00.0  8086:1237  class 06:00
+pci: 00:01.0  8086:7000  class 06:01
+pci: 00:01.1  8086:7010  class 01:01
+pci: 00:01.3  8086:7113  class 06:80
+pci: 00:02.0  1234:1111  class 03:00
+pci: 00:03.0  8086:100e  class 02:00
+pci: 6 device(s)
+acpi: rev 0 "BOCHS ", 4 table(s), rsdp=0xf52e0 rsdt=0x7fe2328 fadt=0x7fe21dc dsdt=0x7fe0040
+acpi: pm1a_cnt=0x604 pm1b_cnt=0x0 len=2 smi=0xb2 s5=yes(a=0 b=0 from DSDT) reset=no
+kbd: PS/2 keyboard ready
+serial-in: COM1 registered as input source
+mouse: PS/2 mouse ready (4-byte packets, wheel), 720x400 box, muted until a consumer polls
+e1000: 00:03.0 MMIO=0xfebc0000
+audio: no output driver is registered - nothing can play a sound yet
+audio: 192 KB of PCM space is waiting at 0x1761000 (of a 256 KB DMA arena) for a driver to claim an audio device and register as the sink
+rtc: MC146818 at 0x70: 2026-07-30T01:18:11Z (Thursday, unix 1785374291, assumed UTC)
+rtc: self-check 64 reads: 0 unreadable, 0 out of order, 0 rollover(s) crossed, 0 gap(s), 0s span
+gui: window manager ready (1024x768, 12 windows, 48 widgets each; desktop is the 128x48 text console)
+
+--- device tree ---
+devices: 13 registered
+  [ 1] serial0    serial   active      driver=serial io=3f8 irq=4
+  [ 2] fwcfg0     system   active      driver=fwcfg  io=510
+  [ 3] pci0       bus      active      driver=pci   
+  [ 4] pci00:00.0 bus      registered  driver=-     
+  [ 5] pci00:01.0 bus      registered  driver=-     
+  [ 6] pci00:01.1 storage  registered  driver=-     
+  [ 7] pci00:01.3 bus      registered  driver=-     
+  [ 8] pci00:02.0 display  registered  driver=-      mmio=0xfd000000
+  [ 9] pci00:03.0 network  registered  driver=-      mmio=0xfebc0000
+  [10] kbd0       input    active      driver=kbd    io=60 irq=1
+  [11] mouse0     input    active      driver=mouse  io=60 irq=12
+  [12] eth0       network  active      driver=e1000  mmio=0xfebc0000
+  [13] rtc0       timer    active      driver=rtc    io=70 irq=8
+--- power cycle: suspend all, then resume all ---
+e1000: suspend: rctl=0x04008018 tctl=0x000400f8 (rx=off tx=off) phy=powered down
+e1000: suspend: status=0x80080783 link=up 1000 Mb/s full-duplex
+e1000: suspend: STATUS.LU still set - this platform does not model PHY power state; the engines are off, so no frame can enter or leave regardless
+e1000: resume: renegotiating: status=0x80080781 link=down
+e1000: resume: rctl=0x0400801a tctl=0x000400fa (rx=on tx=on) phy=powered up link settled in 485 ms
+e1000: resume: status=0x80080783 link=up 1000 Mb/s full-duplex
+rtc: resumed, wall clock advanced 0s while suspended
+-------------------
+
+--- filesystem self-test (ramfs at /) ---
+read /etc/motd (33 bytes): fable-os native filesystem online
+stat /etc/motd: type=file size=33 mode=0x6
+ls / : tmp etc
+-----------------------------------------
+net: up at 10.0.2.15/24
+net: resolving api.anthropic.com ...
+net: api.anthropic.com -> 160.79.104.10, TLS ready
+
+--- self-test: HTTPS to api.anthropic.com ---
+[http] HTTP/1.1 200 OK
+fable-os online
+---------------------------------------------
+heap: 3/16384 KiB used (peak 47 KiB), 32 live / 2 free blocks, 15854 allocs 15822 frees
+
+==============================================================
+  fable-os
+==============================================================
+  tools  : 48 registered (39312 bytes of schema)
+  model  : reachable over TLS
+
+  No shell, no commands. Say what you want done, in a sentence.
+  Prose is the model talking. [Brackets] are this kernel saying
+  what it actually did.
+
+> there's a sound card in this machine that has no driver. find it and write one, then play me a tone.
+I'll find the unclaimed audio hardware first.
+[device_list class=audio state=* unclaimed_only=0 -> 0]
+[pci_list bus=0-255 vendor=-1 class=4 unclaimed_only=0 -> 0]
+No audio class device. Let me scan the whole PCI bus and look at what's unclaimed and targetable.
+[pci_list bus=0-255 vendor=-1 class=-1 unclaimed_only=0 -> 6]
+[driver_targets known=6 usable=1 -> 1]
+The PCI bus here has a host bridge, ISA bridge, IDE controller, ACPI bridge, VGA and an e1000 NIC — and nothing else. There is no sound card on this machine: no PCI audio-class function, no unclaimed audio device, and the only targetable device is the IDE controller.
+
+Let me check whether audio is instead provided through the kernel's own audio sink rather than PCI hardware.
+[audio_status sink=- kind=none -> 0]
+I have to be straight with you: there is no sound card in this machine. I scanned the full PCI bus and it holds only a host bridge, an ISA bridge, an IDE controller, an ACPI bridge, the VGA console and an e1000 network card — no audio-class function, nothing unclaimed that is audio, and the only driver-targetable device at all is the IDE controller. The kernel confirms no audio sink is registered and nothing on this machine can produce sound until a real audio device exists to hand samples to. Since there's no audio hardware to bring up, I can't write a driver for it or play you a tone.
+
+> if something is stopping you, tell me exactly what is missing and where you got stuck.
+Nothing broke — I got stuck at the very first step, finding the device, because the device isn't there.
+
+Concretely: `pci_list` over the whole bus returns six functions and I can name every one — 00:00.0 host bridge (8086:1237), 00:01.0 ISA bridge (8086:7000), 00:01.1 IDE (8086:7010), 00:01.3 ACPI (8086:7113), 00:02.0 VGA (1234:1111), 00:03.0 e1000 NIC (8086:100e). There is no class-04 (multimedia/audio) function, and `device_list class=audio` matched zero devices. So there is no unclaimed sound card to claim — the premise that one exists doesn't hold on this hardware.
+
+What's missing is the hardware itself. To write a driver I need a targetable audio device from `driver_targets`, and the only usable target it offers is the IDE controller (00:01.1); everything else is either a bridge with no BAR or the VGA console, which is off-limits. And `audio_status` confirms the downstream consequence: no sink is registered, so even the kernel's own `audio_tone` path has nothing to hand samples to.
+
+I could write and run a driver against the IDE controller, but that's a disk interface — it can't emit sound, so it wouldn't get you a tone. If you were told this VM has an audio device (something like an ac97 or intel-hda would show as class 04), it wasn't added to this machine's PCI configuration. Add such a device and I'll find it, bring it up, and play you the tone.
+
+> qemu-system-x86_64: terminating on signal 15 from pid 15625 (<unknown process>)

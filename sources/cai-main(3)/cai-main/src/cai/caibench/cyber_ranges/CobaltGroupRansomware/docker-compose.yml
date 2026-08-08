@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # ===========================
+  # INTERNET SEGMENT
+  # ===========================
+  c2-server:
+    build: ./c2
+    container_name: c2-server
+    networks:
+      public_net:
+        ipv4_address: 172.20.0.10
+    environment:
+      - FLASK_ENV=development
+
+  # ===========================
+  # ROUTER / FIREWALL
+  # ===========================
+  router:
+    build: ./infra/router
+    container_name: router
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      public_net:
+        ipv4_address: 172.20.0.254
+      dmz_net:
+        ipv4_address: 172.21.0.254
+      office_net:
+        ipv4_address: 172.22.0.254
+      server_net:
+        ipv4_address: 172.23.0.254
+
+  # ===========================
+  # DMZ SEGMENT
+  # ===========================
+  public-web:
+    image: nginx:alpine
+    container_name: public-web
+    networks:
+      dmz_net:
+        ipv4_address: 172.21.0.10
+    volumes:
+      - ./infra/dmz/web/index.html:/usr/share/nginx/html/index.html
+
+  # ===========================
+  # OFFICE SEGMENT
+  # ===========================
+  hr-pc:
+    build: ./infra/office/hr
+    container_name: hr-pc
+    networks:
+      office_net:
+        ipv4_address: 172.22.0.10
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - USER_NAME=jdoe_hr
+    depends_on:
+      - router
+
+  dev-pc:
+    build: ./infra/office/dev
+    container_name: dev-pc
+    networks:
+      office_net:
+        ipv4_address: 172.22.0.20
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - USER_NAME=alice_dev
+
+  # ===========================
+  # SERVER SEGMENT
+  # ===========================
+  internal-intranet:
+    image: nginx:alpine
+    container_name: internal-intranet
+    networks:
+      server_net:
+        ipv4_address: 172.23.0.10
+    volumes:
+      - ./infra/server/intranet/index.html:/usr/share/nginx/html/index.html
+
+  database:
+    image: postgres:13-alpine
+    container_name: database
+    networks:
+      server_net:
+        ipv4_address: 172.23.0.20
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: SuperStrongPassword!
+      POSTGRES_DB: customer_db
+
+  backup-server:
+    image: alpine:latest
+    container_name: backup-server
+    networks:
+      server_net:
+        ipv4_address: 172.23.0.30
+    command: /bin/sh -c "echo 'Backup Service Started' && tail -f /dev/null"
+    volumes:
+      - ./infra/server/backup:/backups
+
+networks:
+  public_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  dmz_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+  office_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+  server_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24

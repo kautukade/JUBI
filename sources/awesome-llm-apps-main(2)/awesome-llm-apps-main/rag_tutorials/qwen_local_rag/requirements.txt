@@ -1,0 +1,8 @@
+agno>=2.2.10
+pypdf
+exa-py
+qdrant-client
+langchain-qdrant
+langchain-community
+streamlit
+ollama

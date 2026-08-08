@@ -1,0 +1,108 @@
+# =========================================================================
+# THE KERNEL KNOWS NOTHING ABOUT SOUND CARDS.
+#
+# This is the case that keeps the project's premise true. fable-os is supposed to
+# be handed an audio device it has never heard of and be able to say only "here
+# is an unclaimed PCI function, here are its BARs" — everything about how that
+# chip works has to come from the model, at run time, through the driver VM.
+#
+# The kernel used to ship a hand-written AC'97 driver (a DRV_LEVEL_LATE driver
+# that claimed the device, reset the codec and played a tone before anyone could
+# type a sentence). That is now a test fixture, built only by cases/ac97.case
+# under -DFABLEOS_AC97_REFERENCE, and THIS case boots the kernel an operator
+# actually gets with the same hardware attached and asserts the opposite:
+#
+#   * two audio-class devices are enumerated (AC'97 is class 04:01, Intel HDA is
+#     class 04:03) — both are found, so this is not passing by absence;
+#   * both are `registered  driver=-`, i.e. unclaimed, with their BARs published;
+#   * not one line of the boot log mentions a codec, a tone, or the driver VM.
+#
+# Two different controller generations on purpose. A gate that keyed off "AC'97"
+# specifically would pass a one-device version of this case and still leave the
+# other chip driven, and an audio driver is exactly the kind of thing that comes
+# back by being re-added "just for HDA".
+#
+# WHAT WOULD MAKE THIS CASE FAIL, and what each failure would mean:
+#   driver=ac97vm / driver=<anything>   something in the image claimed the card
+#   any ^ac97: line                     a fixture leaked into a default build
+#   any [dvm line                       a program ran at boot, unasked
+#   /codec/                             a default build touched a mixer
+#
+# Syntax is documented in boot.case.
+# =========================================================================
+
+name: audio-unclaimed: a default kernel drives no sound card
+description: an AC'97 and an Intel HDA controller are both enumerated, both left unclaimed, and nothing in the image touches either
+timeout: 45
+nic: user,model=e1000
+
+# NO build-cflags. That is the whole point: this case must run against the
+# kernel `make` produces, with no flags of any kind.
+
+# `-audiodev none` so the case needs no host audio device and behaves the same
+# on any machine. intel-hda takes no audiodev of its own (its codecs do, and
+# none is attached — an audio controller with no codec is still an audio-class
+# PCI function, which is all this case is about).
+qemu-extra: -audiodev none,id=snd0 -device AC97,audiodev=snd0 -device intel-hda
+
+ready: ^>
+ready [offline]: \[net init failed
+
+# ---- both cards are really there ----------------------------------------
+# The PCI scan is generic: vendor, device, class, subclass, straight out of
+# config space. 8086:2415 is QEMU's AC'97 at class 04:01; 8086:2668 is its
+# HD Audio controller at class 04:03.
+expect-re: ^pci: 00:04\.0  8086:2415  class 04:01$
+expect-re: ^pci: 00:05\.0  8086:2668  class 04:03$
+expect-re: ^pci: 8 device\(s\)$
+check: pci_enumeration count=8
+
+# ---- and the kernel says outright that it cannot use either -------------
+# The audio service (core/audio.c) IS in a default build and belongs there: it
+# owns a DMA-reachable buffer and turns "440 Hz" into PCM, which is arithmetic
+# every OS gives a driver author, not knowledge of any chip. What must not exist
+# is a SINK — something claiming it can make this hardware emit those bytes. So
+# assert the service's own verdict rather than forbidding the word "audio": with
+# two sound cards on the bus, the kernel still reports that it can play nothing.
+expect-re: ^audio: no output driver is registered - nothing can play a sound yet$
+forbid-re: ^audio: sink
+
+# ---- and both are unclaimed, with their BARs ----------------------------
+# `registered` (not active, not failed) with `driver=-` is the device model
+# saying: this exists, nothing owns it. The resource column is the BAR the model
+# will be handed as r0 by driver_run — an I/O BAR on the AC'97, a memory BAR on
+# the HDA — so the kernel is offering the device AND the way in, and nothing
+# else about it.
+expect: --- device tree ---
+expect-re: ^\s*\[\s*\d+\] pci00:04\.0 audio\s+registered\s+driver=-\s+io=[0-9a-f]+$
+expect-re: ^\s*\[\s*\d+\] pci00:05\.0 audio\s+registered\s+driver=-\s+mmio=0x[0-9a-f]+$
+check: device_tree count=15 active=serial0,fwcfg0,pci0,kbd0,mouse0,eth0,rtc0
+
+# ---- nothing claimed them ----------------------------------------------
+# A bound driver would print its name in the driver= column of one of those two
+# rows. Negative lookahead rather than a literal name: this must fail for ANY
+# driver that ever claims an audio device, not just for the one that used to.
+forbid-re: ^\s*\[\s*\d+\] pci00:0[45]\.0 audio\s+\S+\s+driver=(?!-\s)
+forbid-re: ^driver ac97
+
+# ---- and nothing touched them -----------------------------------------
+# Every line the reference fixture prints starts with "ac97:"; every access the
+# driver VM makes prints a "[dvm" trace line. Neither exists in this image, and
+# the absence of the trace is the strongest statement available: the VM cannot
+# touch a device without logging it.
+forbid-re: ^ac97:
+forbid: [dvm
+forbid-re: codec
+forbid-re: \bAC.?97\b
+forbid-re: \bHD.?audio\b
+forbid-re: played \d+ ms
+
+# ---- the machine is otherwise completely normal ------------------------
+# An unknown device on the bus must not perturb anything: same prompt, same
+# heap discipline, no faults. If attaching a sound card broke the boot, "it is
+# unclaimed" would be true for an uninteresting reason.
+expect-re: ^  tools  : \d+ registered
+forbid-re: \bpanic\b
+forbid: heap corruption
+forbid: kfree: double free
+forbid-re: ^\[fault

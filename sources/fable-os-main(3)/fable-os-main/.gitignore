@@ -1,0 +1,58 @@
+# Secrets. There is exactly ONE file in this tree that holds the Anthropic API
+# key, and it is this one: .env (KEY="sk-ant-..."), read by `make run` and
+# handed to the guest at boot over QEMU's fw_cfg channel. Nothing the build
+# produces can contain it, because the build is never told what it is.
+#
+# It used to be everywhere. `-DFABLEOS_API_KEY='"$(KEY)"'` put the live key
+# inside net.o, kernel.elf, kernel.bin, fableos.iso and the .build-flags stamp
+# (which recorded `KEY=sk-ant-...` in plain text), and this file was what kept
+# those five artifacts out of git. That is the wrong place for a safety
+# property: one `git add -f`, one CI cache, one shared build directory and the
+# key is published. The Makefile has no KEY variable any more and passes no -D,
+# so `grep -r sk-ant` over every build output finds nothing — the entries below
+# are hygiene, not a containment measure.
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+*.o
+kernel.elf
+kernel.bin
+# The stamp that forces a full rebuild when EXTRA_CFLAGS changes. It used to
+# record `KEY=sk-ant-...` verbatim; there is no KEY to record now.
+.build-flags
+
+# Dependency files from the compiler's -MMD -MP, one per object
+*.d
+
+# Host test binaries from `make test-host`. Leading **/ because a pattern with a
+# slash in it is anchored to this file's directory, and the tree is tests/.
+**/tests/build/
+
+# Packet capture from `make run-pcap`
+net.pcap
+
+# The persistent disk (`make disk`, attached by `make run`). It is the machine's
+# own storage: whatever the model wrote last time is in there, it can be
+# hundreds of MiB, and it is not source. Never committed — but note the reason
+# is size and churn, NOT secrecy: nothing secret is ever put in the image (the
+# API key travels over fw_cfg into RAM and is never written to disk).
+disk.img
+*.img
+
+# Bootable media from `make iso` (a 4 MB ISO and its staging tree)
+fableos.iso
+build/
+
+# Scratch idea notes
+ideas/
+
+# macOS
+.DS_Store
+
+# Appliance (Python)
+appliance/.venv/
+appliance/visual_check.png
+__pycache__/
+*.pyc

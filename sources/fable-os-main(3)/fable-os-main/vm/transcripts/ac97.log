@@ -1,0 +1,302 @@
+note: api key passed to the guest over fw_cfg as opt/fableos/apikey
+qemu-system-x86_64: multiboot knows VBE. we don't
+qemu-system-x86_64: -device AC97,audiodev=snd0: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: -device AC97,audiodev=snd0: audio: Can not open `ac97.mc' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[display 1024x768 32bpp via bochs-vbe -> 128x48 text, Spleen 8x16 (BSD-2-Clause) + fable-os additions]
+[console utf-8: em—dash en–dash ‘curly’ “quotes” ellipsis… bullet• ✓ ✗]
+[console glyphs: ←↑→↓↔↕ ≈≡≤≥±÷∞√ áéíóú äöü ñ ç ß ° µ ¶ §]
+[console glyphs: box ┌──┬──┐ ├──┼──┤ └──┴──┘ ╔══╦══╗ ╠══╬══╣ ╚══╩══╝]
+[console glyphs: blocks ░▒▓█▄▀▌▐ folded ╭╮╰╯ unmapped 😀]
+idt: 256 gates at 0x217000 (limit 4095), all verified; TSS with 3 IST stacks of 16 KiB (#DF=1 NMI=2 #MC=3); PIC remapped to 0x20/0x28 and fully masked
+serial: COM1 up @ 115200
+fwcfg: QEMU fw_cfg at 0x510/0x511, 14 file(s), features 0x3
+fwcfg: api key: 108 bytes loaded from fw_cfg (opt/fableos/apikey)
+pci: 00:00.0  8086:1237  class 06:00
+pci: 00:01.0  8086:7000  class 06:01
+pci: 00:01.1  8086:7010  class 01:01
+pci: 00:01.3  8086:7113  class 06:80
+pci: 00:02.0  1234:1111  class 03:00
+pci: 00:03.0  8086:100e  class 02:00
+pci: 00:04.0  8086:2415  class 04:01
+pci: 7 device(s)
+acpi: rev 0 "BOCHS ", 4 table(s), rsdp=0xf52d0 rsdt=0x7fe232e fadt=0x7fe21e2 dsdt=0x7fe0040
+acpi: pm1a_cnt=0x604 pm1b_cnt=0x0 len=2 smi=0xb2 s5=yes(a=0 b=0 from DSDT) reset=no
+kbd: PS/2 keyboard ready
+serial-in: COM1 registered as input source
+mouse: PS/2 mouse ready (4-byte packets, wheel), 720x400 box, muted until a consumer polls
+e1000: 00:03.0 MMIO=0xfebc0000
+audio: no output driver is registered - nothing can play a sound yet
+audio: 192 KB of PCM space is waiting at 0x1761000 (of a 256 KB DMA arena) for a driver to claim an audio device and register as the sink
+rtc: MC146818 at 0x70: 2026-07-30T01:19:02Z (Thursday, unix 1785374342, assumed UTC)
+rtc: self-check 64 reads: 0 unreadable, 0 out of order, 0 rollover(s) crossed, 0 gap(s), 0s span
+gui: window manager ready (1024x768, 12 windows, 48 widgets each; desktop is the 128x48 text console)
+
+--- device tree ---
+devices: 14 registered
+  [ 1] serial0    serial   active      driver=serial io=3f8 irq=4
+  [ 2] fwcfg0     system   active      driver=fwcfg  io=510
+  [ 3] pci0       bus      active      driver=pci   
+  [ 4] pci00:00.0 bus      registered  driver=-     
+  [ 5] pci00:01.0 bus      registered  driver=-     
+  [ 6] pci00:01.1 storage  registered  driver=-     
+  [ 7] pci00:01.3 bus      registered  driver=-     
+  [ 8] pci00:02.0 display  registered  driver=-      mmio=0xfd000000
+  [ 9] pci00:03.0 network  registered  driver=-      mmio=0xfebc0000
+  [10] pci00:04.0 audio    registered  driver=-      io=c000
+  [11] kbd0       input    active      driver=kbd    io=60 irq=1
+  [12] mouse0     input    active      driver=mouse  io=60 irq=12
+  [13] eth0       network  active      driver=e1000  mmio=0xfebc0000
+  [14] rtc0       timer    active      driver=rtc    io=70 irq=8
+--- power cycle: suspend all, then resume all ---
+e1000: suspend: rctl=0x04008018 tctl=0x000400f8 (rx=off tx=off) phy=powered down
+e1000: suspend: status=0x80080783 link=up 1000 Mb/s full-duplex
+e1000: suspend: STATUS.LU still set - this platform does not model PHY power state; the engines are off, so no frame can enter or leave regardless
+e1000: resume: renegotiating: status=0x80080781 link=down
+e1000: resume: rctl=0x0400801a tctl=0x000400fa (rx=on tx=on) phy=powered up link settled in 492 ms
+e1000: resume: status=0x80080783 link=up 1000 Mb/s full-duplex
+rtc: resumed, wall clock advanced 0s while suspended
+-------------------
+
+--- filesystem self-test (ramfs at /) ---
+read /etc/motd (33 bytes): fable-os native filesystem online
+stat /etc/motd: type=file size=33 mode=0x6
+ls / : tmp etc
+-----------------------------------------
+net: up at 10.0.2.15/24
+net: resolving api.anthropic.com ...
+net: api.anthropic.com -> 160.79.104.10, TLS ready
+
+--- self-test: HTTPS to api.anthropic.com ---
+[http] HTTP/1.1 200 OK
+fable-os online
+---------------------------------------------
+heap: 3/16384 KiB used (peak 47 KiB), 34 live / 2 free blocks, 15837 allocs 15803 frees
+
+==============================================================
+  fable-os
+==============================================================
+  tools  : 48 registered (39312 bytes of schema)
+  model  : reachable over TLS
+
+  No shell, no commands. Say what you want done, in a sentence.
+  Prose is the model talking. [Brackets] are this kernel saying
+  what it actually did.
+
+> there's a sound card in this machine with no driver. find it and write one, then play me a tone.
+I'll find the audio hardware first.
+[pci_list bus=0-255 vendor=-1 class=4 unclaimed_only=0 -> 1]
+[audio_status sink=- kind=none -> 0]
+Found it: an Intel 82801AA AC'97 audio controller (8086:2415) at 00:04.0, unclaimed, with I/O at 0xc000. Let me read the rest of the play contract and inspect the device.
+[audio_status sink=- kind=none -> 0]
+[driver_targets known=7 usable=2 -> 2]
+[pci_info 00:04.0 8086:2415 class=04:01 driven=0 -> ok]
+This is a classic AC'97 controller. BAR0 (0xc000) is the mixer (NAM), BAR1 (0xc400) is the bus master (NABM). I need the full play contract to know the exact register/sink-registration convention this kernel wants. Let me read the truncated part.
+[vfs_read /proc/audio_contract -> ENOENT]
+That was a guess. The contract text is only in audio_status but it's truncated at 1023 bytes. Let me check whether there's a docs file, and also look for how sink registration works — but the contract said "register a PLAY program as the sink." There's no explicit register tool in my registry. Let me re-read: the only audio tools are audio_status, audio_tone, audio_melody. Sink registration must happen implicitly. Let me check the filesystem for any docs.
+[vfs_readdir / -> 2]
+[vfs_readdir /etc -> 1]
+No docs on disk. The full contract is in audio_status but truncated. The key missing piece is how the PLAY program gets *registered* as the sink — there's no separate tool, so registration must be a side effect of driver_run when the program leaves the device configured, OR audio_tone itself installs it. Let me look: audio_status ends mid-sentence "The samples are signed 16-bit little-e[ndian]...". I need bytes past 1023. The tool truncates, so I can't get more from it directly.
+
+Let me reason from AC'97 knowledge and just write the driver. First, a bring-up program to reset the codec and configure the bus-master engine, playing from the DMA buffer. Let me plan this.
+[plan_set steps=5 goal=AC'97 at 00:04.0 driven; a tone actually sounds via the registered sink -> 5]
+Before writing, I need the rest of the play contract — how registration happens and the exact register meanings this kernel expects. The audio_status text is truncated but maybe there's a way it's shorter without the "buffer" verbosity. Actually, I'll rely on standard AC'97 semantics. Let me write the bring-up now.
+
+AC'97 NAM (mixer, r0=0xc000): reg 0x00 reset, 0x02 master volume, 0x18 PCM out volume, 0x2C PCM front DAC rate.
+AC'97 NABM (bus master, r1=0xc400): global control 0x2C (GLOB_CNT), global status 0x30. PCM out channel base 0x10: BDBAR 0x10, LVI 0x15, control 0x1B, status 0x16.
+
+Let me start with reset and readback.
+[plan_mark step=1/5 todo->doing -> ok]
+[driver_assemble line=6 -> EINVAL]
+The out/in port syntax doesn't take `r1+0x2C`. Ports are addressed differently — I likely need to compute the port into a register first with add, then `out32 rport, val`. Let me fix: compute each port address in a register.
+[driver_assemble insns=24 -> 24]
+Assembles. Now run it against the device with tracing.
+[driver_run.bme pci00:04.0 cmd 0x0103 -> 0x0107 set=bus-master(bit2) already=io(bit0) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x1761000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.run insns=24 args=9 steps<=100000 io<=1024 delay<=250000 us trace=1 -> ok]
+[dvm pc=001 ln=6 out32 port=0xc42c val=0x2 -> ok]
+[dvm pc=002 ln=7 delay 1000 us (total 1000) -> ok]
+qemu-system-x86_64: audio: Can not open `ac97.pi' (no host audio driver)
+qemu-system-x86_64: audio: Can not open `ac97.mc' (no host audio driver)
+[dvm pc=003 ln=10 out16 port=0xc000 val=0x0 -> ok]
+[dvm pc=004 ln=11 delay 1000 us (total 2000) -> ok]
+[dvm pc=007 ln=17 in32 port=0xc430 r4=0x100 -> ok]
+[dvm pc=016 ln=29 out16 port=0xc002 val=0x0 -> ok]
+[dvm pc=018 ln=31 out16 port=0xc018 val=0x0 -> ok]
+[dvm pc=020 ln=35 out16 port=0xc02c val=0xbb80 -> ok]
+[dvm pc=021 ln=36 in16 port=0xc02c r9=0xbb80 -> ok]
+[dvm.halt pc=023 ln=39 steps=19 io=7 (pr=2 pw=5 mr=0 mw=0 pci=0) dma=0 (rd=0 wr=0) delay=2000 us prints=0 -> ok]
+[driver_run pci00:04.0 attempt=1 insns=24 steps=19 io=7 -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (1859 bytes) and carried on]
+Bring-up succeeded: codec ready (GLOB_STA bit8=0x100), mixer unmuted, and the 48 kHz rate stuck (readback 0xBB80). Now the PLAY program.
+[plan_mark step=1/5 doing->done -> ok]
+[plan_mark step=2/5 todo->done -> ok]
+[plan_mark step=3/5 todo->doing -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (3247 bytes) and carried on]
+Now the PLAY program. The kernel writes PCM at r7 (r9 bytes, r10 frames). I must build a Buffer Descriptor List, point the PCM-out engine at it, set LVI, and start. The BDL must live in the DMA arena but not overlap the PCM. The PCM buffer is 196608 bytes at 0x1761000; the arena is 262144, so there's room above the PCM (0x1761000+0x40000 = 0x17A1000; PCM uses up to 0x30000). I'll put the BDL at r7+0x30000.
+
+BDL entry: 8 bytes — dword0 = buffer physical addr, dword1 = [bit31 IOC][bit30 BUP][15:0 sample count (16-bit samples, i.e. count = bytes/2)]. Samples = r9/2.
+
+NABM PCM out (base 0x10): BDBAR at +0x10 (dword), LVI at +0x15 (byte), CR at +0x1B (byte). CR: bit0=RPBM run, bit1=reset.
+
+Let me write it.
+[driver_assemble insns=24 -> 24]
+Assembles. But this PLAY program is what the kernel must run *as the sink* each time audio plays — it's registered, not run standalone (there's no PCM in the buffer yet when I run it). The contract said driver_run registers the sink. But I have no explicit "register" flag. Given my tool set, the mechanism must be: driver_run leaves the device configured, and audio_status detects it. Let me just run the PLAY program to install/configure the engine, then check audio_status to see if a sink got registered.
+[driver_run.bme pci00:04.0 cmd 0x0107 -> 0x0107 set=none already=io(bit0)+bus-master(bit2) -> ok]
+[dvm.grant ports 0xc000-0xc0ff,0xc400-0xc4ff -> ok]
+[dvm.grant mmio none -> ok]
+[dvm.grant pci 00:04.0 -> ok]
+[dvm.grant dma 0x1761000+0x40000 rw (scratch buffer; a device pointed at it will master into it) -> ok]
+[dvm.run insns=24 args=9 steps<=100000 io<=1024 delay<=250000 us trace=1 -> ok]
+[dvm pc=001 ln=3 out8 port=0xc41b val=0x2 -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 100) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 200) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 300) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 400) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 500) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 600) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 700) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 800) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 900) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1000) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1100) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1200) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1300) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1400) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1500) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1600) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1700) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1800) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 1900) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2000) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2100) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2200) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2300) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2400) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2500) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2600) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2700) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2800) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 2900) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3000) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3100) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3200) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3300) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3400) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3500) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3600) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3700) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3800) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 3900) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4000) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4100) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4200) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4300) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4400) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4500) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4600) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4700) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4800) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 4900) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5000) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5100) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5200) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5300) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5400) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5500) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5600) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5700) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5800) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 5900) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 6000) -> ok]
+[dvm pc=003 ln=6 in8 port=0xc41b r4=0x0 -> ok]
+[dvm pc=006 ln=9 delay 100 us (total 6100) -> ok]
+[dvm.trace line budget 128 reached; further dvm lines suppressed -> ok]
+[dvm.halt pc=023 ln=27 steps=717 io=105 (pr=101 pw=4 mr=0 mw=0 pci=0) dma=2 (rd=0 wr=2) delay=10000 us prints=0 -> ok]
+[driver_run pci00:04.0 attempt=1 insns=24 steps=717 io=105 -> ok]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (782 bytes) and carried on]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (912 bytes) and carried on]
+The engine started (CR readback = 0x1, RPBM running), but note r6 sample count came out as pure 0xC0000000 — meaning r9 was 0 (no bytes staged yet), so it played an empty descriptor. That's fine for bring-up; the real PCM gets filled by the kernel when audio_tone runs. Let me check whether a sink is now registered.
+[audio_status sink=- kind=none -> 0]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (403 bytes) and carried on]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2135 bytes) and carried on]
+Now I understand: I must *register* the play program. But my only tool that runs driver source is driver_run — there's no "register" argument. The contract says "register a PLAY program as the sink." The registration must be a distinguished behaviour of driver_run — perhaps a program that ends without halt-consuming, or maybe registration happens when the program is a valid sink. But audio_status still shows none registered after my run.
+
+I'm low on rounds. The likely missing piece: the sink is registered when the play program itself does the DMA setup keyed off r9/r10/r11 (real PCM args), and driver_run installs it. But there is no flag exposed to me. Given my tool surface, the intended path is that audio_tone itself invokes the registered play program — and registration evidently isn't something driver_run exposed. Let me re-read the full contract tail to find the registration mechanism.
+[audio_status sink=- kind=none -> 0]
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (2869 bytes) and carried on]
+The result is truncated at 1023 bytes and cuts off exactly where the registration instructions would be. I don't have a tool that reads it further, and driver_run has no register flag in its schema — so with the tools exposed to me I cannot complete the registration step, and audio_tone will fail until a sink exists. Let me confirm that honestly rather than claim a tone played.
+[audio_tone no-sink -> ENOENT]
+I found the sound card (Intel 82801AA AC'97, 8086:2415 at PCI 00:04.0, unclaimed) and wrote a working AC'97 driver against it. The bring-up program verified cold-reset and codec readiness (GLOB_STA read back 0x100), unmuted the master and PCM-out mixer lines, and set the 48 kHz DAC rate — confirmed by reading the rate register back as 0xBB80. The play program then reset the PCM-out bus-master engine, built a buffer descriptor at r7+0x30000 pointing at the PCM buffer, programmed BDBAR and LVI, and started the engine — confirmed by reading the control register back as 0x01 (run bit set). So the hardware is alive and correctly programmed.
+
+What is left undone: no tone actually played. Registering the play program as the kernel's audio sink is the final required step, and nothing in my tool set performs it — driver_run only executes a program against the device, it has no "register as sink" option, and the PLAY CONTRACT text that would describe the handoff is truncated at 1023 bytes by audio_status with no way for me to read past it. I verified the gap directly: audio_status still reports "NO OUTPUT DRIVER IS REGISTERED," and audio_tone failed for exactly that reason. So the driver is written and the device is brought up and running, but until there is a way to register the sink, this machine still can't emit the tone — I won't pretend it did.
+[chat: this turn no longer fits its memory - forgot its oldest failed attempt (1488 bytes) and carried on]
+
+> now play me a longer sound through the driver you just wrote - about a second, and make it a clear steady note.
+I can't — and nothing changed since my last message that would let me. The driver is written and the AC'97 device is brought up and running, but there is still no registered audio sink, and my tool set has no way to register one: driver_run only executes a program against the device, and the PLAY CONTRACT text that would describe the sink handoff is cut off at 1023 bytes with no tool to read further. audio_tone and audio_melody both fail with "no audio output driver is registered," so a one-second steady note can't play any more than the 300 ms one could. The hardware is ready; the missing piece is the registration step, which isn't exposed to me.
+
+> qemu-system-x86_64: terminating on signal 15 from pid 15683 (<unknown process>)

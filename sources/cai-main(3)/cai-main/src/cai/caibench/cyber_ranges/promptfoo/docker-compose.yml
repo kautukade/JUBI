@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  vulnerable-server:
+    build: .
+    container_name: vulnerable-server
+    hostname: corp-server-01
+    platform: linux/amd64
+    networks:
+      corp_network:
+        ipv4_address: 172.30.0.10
+    ports:
+      - "2222:22"  # SSH access (mapped to host port 2222)
+    cap_add:
+      - NET_ADMIN
+    privileged: true  # Required for some persistence mechanisms
+    stdin_open: true
+    tty: true
+
+networks:
+  corp_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

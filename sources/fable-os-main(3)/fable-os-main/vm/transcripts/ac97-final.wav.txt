@@ -1,0 +1,56 @@
+file        : /tmp/final-ac97.wav
+format      : 2 ch, 16-bit, 48000 Hz
+captured    : 2625377 frames = 54.695 s
+non-silence : 648126 frames = 13.5026 s, starting at t=0.000 s
+amplitude   : peak 8000 (24.4% full scale), rms 1258
+moving      : 48000 non-zero frames, -1 distinct sample values
+stereo      : left == right: True
+frequency   : 0.0 Hz by zero crossings, 23085.9 Hz by Goertzel
+tonality    : 0.0% of energy at 23085.9 Hz (amplitude 0 there)
+pitch runs  : (the two lines above straddle any note change)
+  t= 0.000 s    1000.0 Hz for    500 ms  peak  8000  tonal  98.5%
+  t= 0.500 s   silence    for  12500 ms
+  t=13.050 s    1000.0 Hz for    450 ms  peak  8000  tonal  98.5%
+trailing DC : 1 frames (0.0 ms) of constant -7318
+per 50 ms   :
+  t= 0.000 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.050 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.100 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.150 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.200 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.250 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.300 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.350 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.400 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.450 s    1000.0 Hz (cross   1000.0)  peak  8000  tonal  98.5%
+  t= 0.500 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.550 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.600 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.650 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.700 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.750 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.800 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.850 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.900 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 0.950 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.000 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.050 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.100 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.150 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.200 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.250 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.300 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.350 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.400 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.450 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.500 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.550 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.600 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.650 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.700 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.750 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.800 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.850 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.900 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  t= 1.950 s   23085.9 Hz (cross      0.0)  peak     0  tonal   0.0%
+  ... 230 more windows

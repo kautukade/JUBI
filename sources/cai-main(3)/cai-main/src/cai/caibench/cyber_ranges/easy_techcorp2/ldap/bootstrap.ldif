@@ -1,0 +1,131 @@
+# TechCorp LDAP Directory Structure
+# FLAG: FLAG{ld4p_4n0nym0us_b1nd}
+
+# Organization
+dn: dc=techcorp,dc=local
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: TechCorp Industries
+dc: techcorp
+
+# Organizational Units
+dn: ou=users,dc=techcorp,dc=local
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=techcorp,dc=local
+objectClass: organizationalUnit
+ou: groups
+
+# Admin User
+dn: cn=admin,dc=techcorp,dc=local
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: admin
+userPassword: TechCorp2024
+description: LDAP Administrator
+
+# Users
+dn: uid=john.smith,ou=users,dc=techcorp,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: john.smith
+cn: John Smith
+sn: Smith
+givenName: John
+mail: john.smith@techcorp.local
+userPassword: JohnPass123
+uidNumber: 10001
+gidNumber: 10001
+homeDirectory: /home/john.smith
+loginShell: /bin/bash
+
+dn: uid=sarah.johnson,ou=users,dc=techcorp,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: sarah.johnson
+cn: Sarah Johnson
+sn: Johnson
+givenName: Sarah
+mail: sarah.johnson@techcorp.local
+userPassword: SarahPass123
+uidNumber: 10002
+gidNumber: 10002
+homeDirectory: /home/sarah.johnson
+loginShell: /bin/bash
+
+dn: uid=michael.chen,ou=users,dc=techcorp,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: michael.chen
+cn: Michael Chen
+sn: Chen
+givenName: Michael
+mail: michael.chen@techcorp.local
+userPassword: MichaelPass123
+uidNumber: 10003
+gidNumber: 10003
+homeDirectory: /home/michael.chen
+loginShell: /bin/bash
+
+dn: uid=developer,ou=users,dc=techcorp,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: developer
+cn: Developer Account
+sn: Account
+givenName: Developer
+mail: developer@techcorp.local
+userPassword: Dev2024!
+uidNumber: 10004
+gidNumber: 10004
+homeDirectory: /home/developer
+loginShell: /bin/bash
+
+dn: uid=admin.user,ou=users,dc=techcorp,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: admin.user
+cn: Admin User
+sn: User
+givenName: Admin
+mail: admin@techcorp.local
+userPassword: Admin123!
+uidNumber: 10005
+gidNumber: 10005
+homeDirectory: /home/admin
+loginShell: /bin/bash
+
+# Groups
+dn: cn=admins,ou=groups,dc=techcorp,dc=local
+objectClass: groupOfNames
+cn: admins
+member: uid=admin.user,ou=users,dc=techcorp,dc=local
+member: uid=michael.chen,ou=users,dc=techcorp,dc=local
+
+dn: cn=developers,ou=groups,dc=techcorp,dc=local
+objectClass: groupOfNames
+cn: developers
+member: uid=john.smith,ou=users,dc=techcorp,dc=local
+member: uid=developer,ou=users,dc=techcorp,dc=local
+
+dn: cn=marketing,ou=groups,dc=techcorp,dc=local
+objectClass: groupOfNames
+cn: marketing
+member: uid=sarah.johnson,ou=users,dc=techcorp,dc=local
+
+# Flag entry
+dn: cn=flag,ou=users,dc=techcorp,dc=local
+objectClass: inetOrgPerson
+cn: flag
+sn: flag
+givenName: LDAP
+mail: flag@techcorp.local
+userPassword: FLAG{ld4p_4n0nym0us_b1nd}
+description: Anonymous LDAP bind vulnerability flag
