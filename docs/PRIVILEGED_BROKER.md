@@ -42,13 +42,22 @@ The legacy Windows executor names `powershell`, `service_control`, `stop_process
 
 ## Approval model
 
-High-risk broker actions require an out-of-band approval proof in the HTTP header:
+High-risk actions require a short-lived, request-bound approval proof supplied in:
 
 ```text
-X-SARUS-Approval: <secret>
+X-SARUS-Approval: v1:<expiry>:<HMAC-SHA256>
 ```
 
-The secret is read only from the SARUS process environment variable:
+The proof is cryptographically bound to all of these values:
+
+- request ID
+- action ID
+- SHA-256 hash of the exact validated parameters
+- expiration timestamp
+
+The maximum proof lifetime is 300 seconds. A proof for `process.stop` cannot authorize `service.stop`, another request ID, or modified parameters.
+
+The HMAC secret is read only from the SARUS process environment variable:
 
 ```text
 SARUS_BROKER_APPROVAL_SECRET
@@ -59,6 +68,14 @@ Use a random value of at least 24 characters. Do not place it in prompts, model 
 If the environment variable is not configured, high-risk broker actions fail closed with `approval_required`.
 
 A JSON field such as `"approved": true` is not authorization and is rejected for privileged legacy requests.
+
+A local helper is included for the trusted operator side:
+
+```text
+python scripts/create_broker_approval.py --request-id <REQUEST_ID> --action-id process.stop --parameters-json "{\"resource_id\":\"ollama\"}" --ttl 120
+```
+
+The helper is not exposed through the SARUS HTTP API. In the future native-service phase, approval issuance should move to a separate elevated UI/service identity.
 
 ## Action receipts
 
@@ -76,6 +93,8 @@ New receipts contain:
 - current SHA-256 receipt hash
 - HMAC-SHA256 authentication value
 - signing key ID
+
+Raw file contents, stdout/stderr, passwords, tokens, API keys and authorization values are not copied into broker receipts. Sensitive values are represented by byte length and SHA-256 hash instead.
 
 The receipt chain is stored in the SARUS SQLite database. The local receipt key is generated at first run in:
 
