@@ -27,6 +27,7 @@ class ReceiptStore:
             for name in ('signature_alg', 'key_id', 'signature'):
                 if name not in cols:
                     c.execute(f"ALTER TABLE receipts ADD COLUMN {name} TEXT DEFAULT ''")
+            c.commit()
 
     def _load_or_create_key(self) -> bytes:
         if self.key_path.exists():
@@ -35,8 +36,6 @@ class ReceiptStore:
                 raise RuntimeError('SARUS receipt signing key is invalid or truncated')
             return raw
         key = secrets.token_bytes(32)
-        # Exclusive creation prevents two first-run processes from silently
-        # replacing each other's signing key.
         try:
             with self.key_path.open('xb') as f:
                 f.write(key)
@@ -68,6 +67,7 @@ class ReceiptStore:
                 "INSERT INTO receipts(id,ts,task_id,step_id,source,status,payload,prev_hash,hash,signature_alg,key_id,signature) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 (rid, ts, task_id, step_id, source, status, blob, prev, digest, self.SIGNATURE_ALGORITHM, self.key_id, signature),
             )
+            c.commit()
         return {
             'id': rid,
             'ts': ts,
