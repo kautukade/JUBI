@@ -57,15 +57,19 @@ The proof is cryptographically bound to all of these values:
 
 The maximum proof lifetime is 300 seconds. A proof for `process.stop` cannot authorize `service.stop`, another request ID, or modified parameters.
 
-The HMAC secret is read only from the SARUS process environment variable:
+### Protected approval-key storage
+
+`INSTALL-SARUS.bat` and `INSTALL-SARUS-FALLBACK.bat` run `installer/SETUP-BROKER.ps1`. It generates a random approval key outside the repository at:
 
 ```text
-SARUS_BROKER_APPROVAL_SECRET
+%LOCALAPPDATA%\SARUS\broker\approval.secret
 ```
 
-Use a random value of at least 24 characters. Do not place it in prompts, model context, repository files, browser localStorage, logs, receipts, or automation payloads.
+The broker directory has inherited ACLs removed and explicitly grants access to the installing Windows identity and `SYSTEM`. The SARUS runtime loads this file automatically. The approval key therefore does not need to be placed in source code, `.env`, prompts, browser storage, or automation payloads.
 
-If the environment variable is not configured, high-risk broker actions fail closed with `approval_required`.
+For CI or controlled overrides, `SARUS_BROKER_APPROVAL_SECRET` and `SARUS_BROKER_SECRET_FILE` remain supported. Environment values take precedence.
+
+If no secure approval key can be loaded, high-risk broker actions fail closed with `approval_required`.
 
 A JSON field such as `"approved": true` is not authorization and is rejected for privileged legacy requests.
 
@@ -75,7 +79,7 @@ A local helper is included for the trusted operator side:
 python scripts/create_broker_approval.py --request-id <REQUEST_ID> --action-id process.stop --parameters-json "{\"resource_id\":\"ollama\"}" --ttl 120
 ```
 
-The helper is not exposed through the SARUS HTTP API. In the future native-service phase, approval issuance should move to a separate elevated UI/service identity.
+The helper automatically uses the protected LocalAppData key and is not exposed through the SARUS HTTP API. In the future native-service phase, approval issuance should move to a separate elevated UI/service identity.
 
 ## Action receipts
 
@@ -96,15 +100,19 @@ New receipts contain:
 
 Raw file contents, stdout/stderr, passwords, tokens, API keys and authorization values are not copied into broker receipts. Sensitive values are represented by byte length and SHA-256 hash instead.
 
-The receipt chain is stored in the SARUS SQLite database. The local receipt key is generated at first run in:
+### Receipt signing-key storage
+
+On Windows the receipt signing key is kept outside the SARUS workspace at:
 
 ```text
-data/receipt-signing.key
+%LOCALAPPDATA%\SARUS\broker\receipt-signing.key
 ```
 
-The key is not stored inside the SQLite receipt row.
+If an earlier SARUS 1.1 development build created `data/receipt-signing.key`, `ReceiptStore` migrates that same key to protected LocalAppData storage and removes the workspace copy. This preserves verification of previously signed receipts while preventing workspace file-read capabilities from exposing the signing key.
 
-`GET /api/receipts` verifies both the hash chain and signatures for new rows. Older pre-1.1 rows remain readable and are reported as legacy unsigned receipts.
+For controlled testing, `SARUS_RECEIPT_SIGNING_KEY_FILE` can override the location.
+
+`GET /api/receipts` verifies both the hash chain and signatures for new rows. Older pre-signature rows remain readable and are reported as legacy unsigned receipts.
 
 ## Replay protection
 
@@ -162,10 +170,14 @@ Implemented typed operations:
 
 The default allowlist currently contains only the Ollama logical service/process mapping for privileged operations. Add additional resources explicitly rather than accepting user-supplied names.
 
+## CI validation
+
+The `Privileged Broker Security` workflow runs both Linux security tests and a Windows broker smoke job. The Windows job provisions the protected broker storage and exercises real read-only `tasklist` and `sc.exe` calls through the typed broker.
+
 ## Current certification boundary
 
-This repository upgrade hardens the SARUS Python/API execution path. It does not claim that Python itself is a kernel isolation boundary.
+This repository upgrade hardens the SARUS Python/API execution path and its Windows installation path. It does not claim that Python itself is a kernel isolation boundary or that a dedicated native SCM broker service has already been certified on the user's physical machine.
 
-For higher assurance on the target Windows machine, the next native hardening layer should run the executor as a dedicated Windows Service with a restricted service SID, use a named-pipe or local RPC ACL, move receipt signing to Windows CNG/TPM, and expose only fixed typed broker handlers. Any future kernel driver must use a small signed KMDF interface with fixed IOCTLs and a broker-only device ACL.
+For higher assurance on the target Windows machine, the next native hardening layer should run the privileged executor as a dedicated Windows Service with a restricted service SID, use a named-pipe or local RPC ACL, move receipt signing from local HMAC to Windows CNG/TPM, and expose only fixed typed broker handlers. Any future kernel driver must use a small signed KMDF interface with fixed IOCTLs and a broker-only device ACL.
 
 No future native layer should reintroduce arbitrary shell, arbitrary IOCTL, or arbitrary kernel-memory primitives.
