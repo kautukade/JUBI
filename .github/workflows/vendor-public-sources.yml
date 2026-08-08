@@ -1,0 +1,93 @@
+name: Vendor All Public Source Snapshots
+
+on:
+  push:
+    paths:
+      - 'VENDOR_PUBLIC_SOURCES_READY'
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SARUS
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Materialize nine pinned repositories as physical files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          vendor_repo() {
+            local url="$1"
+            local sha="$2"
+            local dest="$3"
+            local tmp
+            tmp="$(mktemp -d)"
+            echo "Vendoring $url @ $sha -> $dest"
+            git clone --quiet "$url" "$tmp/repo"
+            git -C "$tmp/repo" checkout --quiet "$sha"
+            rm -rf "$tmp/repo/.git"
+
+            # Remove the gitlink/submodule entry from the SARUS index if present.
+            git rm -f --cached --ignore-unmatch "$dest" || true
+            rm -rf "$dest"
+            mkdir -p "$(dirname "$dest")"
+            cp -a "$tmp/repo" "$dest"
+            rm -rf "$tmp"
+          }
+
+          vendor_repo 'https://github.com/NousResearch/hermes-agent.git' '1fe53bd1ab3bfce098a2161cad0622d436738476' 'sources/hermes-agent-main(3)/hermes-agent-main'
+          vendor_repo 'https://github.com/affaan-m/ECC.git' '9aac8585ab887d9c51252730240b25d9cca180da' 'sources/ECC-main(20260807-042951)/ECC-main'
+          vendor_repo 'https://github.com/msitarzewski/agency-agents.git' 'ebe9c99acb5c96f9468de368d8bead775387d1a7' 'sources/agency-agents-main(3)/agency-agents-main'
+          vendor_repo 'https://github.com/Shubhamsaboo/awesome-llm-apps.git' '779e9f9bcf87fa8cd95870a438b70b84e47d3173' 'sources/awesome-llm-apps-main(2)/awesome-llm-apps-main'
+          vendor_repo 'https://github.com/coleam00/second-brain-skills.git' '75e1e9cd60ef46bffbd294fdfe4d0320cee2f563' 'sources/second-brain-skills-main(3)/second-brain-skills-main'
+          vendor_repo 'https://github.com/obra/superpowers.git' '44c9b2d6e889982ac18c27d05a19fefe335194e1' 'sources/superpowers-main(3)/superpowers-main'
+          vendor_repo 'https://github.com/robiot/fable-os.git' '1cfe17c4baa77fac128008621721823913a1335c' 'sources/fable-os-main(3)/fable-os-main'
+          vendor_repo 'https://github.com/aliasrobotics/cai.git' '62871b6f5a4b8951b2f4dd94dbb301ac306b3a65' 'sources/cai-main(3)/cai-main'
+          vendor_repo 'https://github.com/karpathy/autoresearch.git' '228791fb499afffb54b46200aca536f79142f117' 'sources/autoresearch-master(3)/autoresearch-master'
+
+          # Submodules are no longer used once the source trees are materialized.
+          rm -f .gitmodules
+
+          python - <<'PY'
+          from pathlib import Path
+          roots = [
+            Path('sources/hermes-agent-main(3)/hermes-agent-main'),
+            Path('sources/ECC-main(20260807-042951)/ECC-main'),
+            Path('sources/agency-agents-main(3)/agency-agents-main'),
+            Path('sources/awesome-llm-apps-main(2)/awesome-llm-apps-main'),
+            Path('sources/second-brain-skills-main(3)/second-brain-skills-main'),
+            Path('sources/superpowers-main(3)/superpowers-main'),
+            Path('sources/fable-os-main(3)/fable-os-main'),
+            Path('sources/cai-main(3)/cai-main'),
+            Path('sources/autoresearch-master(3)/autoresearch-master'),
+          ]
+          counts = {}
+          total = 0
+          for root in roots:
+            n = sum(1 for p in root.rglob('*') if p.is_file())
+            counts[str(root)] = n
+            total += n
+          print('Physical public-source file counts:')
+          for k, v in counts.items():
+            print(f'  {v:6d}  {k}')
+          print('TOTAL_PUBLIC_FILES=', total)
+          if total != 17143:
+            raise SystemExit(f'Expected exactly 17143 public source files from original snapshot, got {total}. Refusing to commit.')
+          PY
+
+      - name: Commit physical source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Vendor nine source snapshots as physical files'
+          git push origin HEAD:main
