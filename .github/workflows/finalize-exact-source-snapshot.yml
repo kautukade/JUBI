@@ -1,0 +1,95 @@
+name: Finalize Exact Source Snapshot
+
+on:
+  push:
+    paths:
+      - 'FINALIZE_EXACT_17356'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Hard gate exact 17,356 physical files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, sys
+          roots={
+            'sara':('sources/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK(4)/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK',213),
+            'hermes':('sources/hermes-agent-main(3)/hermes-agent-main',8541),
+            'ecc':('sources/ECC-main(20260807-042951)/ECC-main',3438),
+            'agency_agents':('sources/agency-agents-main(3)/agency-agents-main',343),
+            'awesome_llm_apps':('sources/awesome-llm-apps-main(2)/awesome-llm-apps-main',1803),
+            'second_brain':('sources/second-brain-skills-main(3)/second-brain-skills-main',97),
+            'superpowers':('sources/superpowers-main(3)/superpowers-main',180),
+            'fable_os':('sources/fable-os-main(3)/fable-os-main',1194),
+            'cai':('sources/cai-main(3)/cai-main',1537),
+            'autoresearch':('sources/autoresearch-master(3)/autoresearch-master',10),
+          }
+          counts={}
+          for name,(root,expected) in roots.items():
+            p=Path(root); n=sum(1 for x in p.rglob('*') if x.is_file()) if p.exists() else 0
+            counts[name]=n
+            print(f'{name}: {n}/{expected}')
+            if n!=expected: sys.exit(f'{name} count mismatch')
+          total=sum(counts.values())
+          if total!=17356: sys.exit(f'total mismatch: {total}')
+          status={'expected_original_source_files':17356,'physical_source_files':17356,'missing_to_17356':0,'complete':True,'per_source':counts}
+          Path('SOURCE_COUNT_STATUS.json').write_text(json.dumps(status,indent=2)+'\n',encoding='utf-8')
+          PY
+          if git ls-files -s sources | awk '$1==160000 {bad=1} END{exit bad?0:1}'; then
+            echo 'Gitlink remains under sources/' >&2
+            exit 1
+          fi
+
+      - name: Write final upload status
+        shell: bash
+        run: |
+          cat > UPLOAD_STATUS.md <<'EOF'
+          # SARUS Source Upload Status
+
+          **COMPLETE — 17,356 / 17,356 original source files are physically stored under `sources/`.**
+
+          - SARA: 213
+          - Hermes: 8,541
+          - ECC: 3,438
+          - Agency Agents: 343
+          - Awesome LLM Apps: 1,803
+          - Second Brain Skills: 97
+          - Superpowers: 180
+          - Fable OS: 1,194
+          - CAI: 1,537
+          - Autoresearch: 10
+          - Total: 17,356
+          - Missing: 0
+          - Source gitlinks/submodules under `sources/`: 0
+          EOF
+          printf 'SARUS ORIGINAL SOURCE SNAPSHOT COMPLETE\nPHYSICAL_SOURCE_FILES=17356\nMISSING=0\nGITLINKS=0\n' > COMPLETE_17356.ok
+
+      - name: Remove one-time transfer triggers from current tree
+        shell: bash
+        run: |
+          rm -f SARA_SAFE_V2_READY SARA_SECURE_TRANSFER_READY RUN_LIVE_SOURCE_REPORT RUN_FINAL_17356_GATE FINALIZE_EXACT_17356 || true
+          rm -f .github/workflows/materialize-sara-secure-transfer.yml || true
+          rm -f .github/workflows/materialize-sara-v2-existing.yml || true
+          rm -f .github/workflows/report-live-source-count.yml || true
+          rm -f .github/workflows/final-17356-gate.yml || true
+
+      - name: Commit guarded completion
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Finalize exact 17,356 physical source snapshot' || true
+          git push origin HEAD:main
