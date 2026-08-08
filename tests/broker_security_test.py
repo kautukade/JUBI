@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import json
 import sys
 import tempfile
 import time
@@ -65,6 +65,15 @@ class BrokerSecurityTest(unittest.TestCase):
         self.assertFalse(r['ok'])
         self.assertEqual(r['status'], 'approval_required')
 
+    def test_approval_proof_is_bound_to_request_action_and_parameters(self):
+        rid = str(uuid.uuid4())
+        params = {'resource_id': 'ollama'}
+        proof = self.broker.create_approval_proof(rid, 'process.stop', params, ttl_seconds=60)
+        self.assertTrue(self.broker._approval_ok(proof, rid, 'process.stop', params))
+        self.assertFalse(self.broker._approval_ok(proof, str(uuid.uuid4()), 'process.stop', params))
+        self.assertFalse(self.broker._approval_ok(proof, rid, 'service.stop', params))
+        self.assertFalse(self.broker._approval_ok(proof, rid, 'process.stop', {'resource_id': 'ollama', 'force': True}))
+
     def test_kernel_memory_action_permanently_denied(self):
         r = self.broker.handle({'action_id': 'kernel.read_memory', 'parameters': {}})
         self.assertEqual(r['status'], 'denied')
@@ -90,6 +99,25 @@ class BrokerSecurityTest(unittest.TestCase):
         })
         self.assertTrue(r['ok'])
         self.assertIn('SARUS', r['result']['content'])
+        receipt_json = json.dumps(r['receipt'], ensure_ascii=False)
+        self.assertNotIn(r['result']['content'][:50], receipt_json)
+        self.assertTrue(r['receipt']['payload']['result']['content']['redacted'])
+
+    def test_sensitive_write_content_is_redacted_from_receipt(self):
+        target = ROOT / 'data' / '.broker-audit-test.txt'
+        marker = 'TOP-SECRET-MARKER-' + uuid.uuid4().hex
+        try:
+            r = self.broker.handle({
+                'action_id': 'workspace.file.write',
+                'parameters': {'path': str(target), 'content': marker},
+            })
+            self.assertTrue(r['ok'])
+            self.assertNotIn(marker, json.dumps(r['receipt'], ensure_ascii=False))
+            redacted = r['receipt']['payload']['parameters']['content']
+            self.assertTrue(redacted['redacted'])
+            self.assertEqual(redacted['bytes'], len(marker.encode('utf-8')))
+        finally:
+            target.unlink(missing_ok=True)
 
     def test_workspace_escape_is_denied(self):
         r = self.broker.handle({
