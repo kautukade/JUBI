@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import secrets
@@ -42,6 +43,7 @@ class PrivilegedBroker:
             'receipt_signing': self.receipts.SIGNATURE_ALGORITHM,
             'kernel_direct_access': False,
             'arbitrary_shell': False,
+            'audit_raw_content': False,
         }
 
     @staticmethod
@@ -124,6 +126,42 @@ class PrivilegedBroker:
             return False
         return secrets.compare_digest(self._approval_secret, str(proof))
 
+    @staticmethod
+    def _redacted_value(value):
+        if isinstance(value, str):
+            data = value.encode('utf-8', errors='replace')
+            return {
+                'redacted': True,
+                'bytes': len(data),
+                'sha256': hashlib.sha256(data).hexdigest(),
+            }
+        raw = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str).encode('utf-8')
+        return {
+            'redacted': True,
+            'bytes': len(raw),
+            'sha256': hashlib.sha256(raw).hexdigest(),
+        }
+
+    def _audit_parameters(self, parameters: dict) -> dict:
+        safe = {}
+        sensitive_names = {'content', 'password', 'secret', 'token', 'api_key', 'authorization'}
+        for key, value in parameters.items():
+            if key.lower() in sensitive_names:
+                safe[key] = self._redacted_value(value)
+            else:
+                safe[key] = value
+        return safe
+
+    def _audit_result(self, result: dict) -> dict:
+        safe = {}
+        content_names = {'content', 'stdout', 'stderr', 'password', 'secret', 'token', 'api_key', 'authorization'}
+        for key, value in result.items():
+            if key.lower() in content_names:
+                safe[key] = self._redacted_value(value)
+            else:
+                safe[key] = value
+        return safe
+
     def _receipt(self, request_id: str, action_id: str, status: str, payload: dict):
         safe_payload = {
             'schema': 'sarus.controlbridge.receipt.v1',
@@ -169,20 +207,21 @@ class PrivilegedBroker:
                 raise PermissionError('action is not allowlisted')
 
             parameters = self._validate_parameters(spec, request.get('parameters') or {})
+            audit_parameters = self._audit_parameters(parameters)
             resolved = self._resolve_resource(spec, parameters)
             risk = int(spec.get('risk', 0))
             decision = self.policy.evaluate('privileged_system_action' if risk >= 4 else action_id, risk, 'core')
             if decision.get('decision') in {'deny', 'isolated'}:
                 receipt = self._receipt(request_id, action_id, 'denied', {
                     'status': 'denied', 'reason': decision.get('reason'), 'risk': risk,
-                    'parameters': parameters, 'resource_id': resolved.get('resource_id'),
+                    'parameters': audit_parameters, 'resource_id': resolved.get('resource_id'),
                 })
                 return {'ok': False, 'status': 'denied', 'policy': decision, 'receipt': receipt}
 
             requires_approval = bool(spec.get('requires_approval')) or decision.get('decision') == 'approval'
             if requires_approval and not self._approval_ok(approval_proof):
                 receipt = self._receipt(request_id, action_id, 'approval_required', {
-                    'status': 'approval_required', 'risk': risk, 'parameters': parameters,
+                    'status': 'approval_required', 'risk': risk, 'parameters': audit_parameters,
                     'resource_id': resolved.get('resource_id'),
                     'approval_secret_configured': len(self._approval_secret) >= 24,
                 })
@@ -202,9 +241,9 @@ class PrivilegedBroker:
             receipt = self._receipt(request_id, action_id, status, {
                 'status': status,
                 'risk': risk,
-                'parameters': parameters,
+                'parameters': audit_parameters,
                 'resource_id': resolved.get('resource_id'),
-                'result': result,
+                'result': self._audit_result(result),
             })
             return {
                 'ok': bool(result.get('ok')),
