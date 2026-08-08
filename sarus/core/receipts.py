@@ -7,9 +7,9 @@ from pathlib import Path
 class ReceiptStore:
     """Append-only hash-chained execution evidence store with cryptographic MACs.
 
-    New receipts are authenticated with HMAC-SHA256 using a local key that is
-    generated on first run and kept outside the database. Existing legacy rows
-    remain readable and are reported as unsigned by verify_chain().
+    On Windows the signing key is kept outside the SARUS workspace under the
+    protected LocalAppData broker directory. A legacy workspace key is migrated
+    on first use so existing signed receipts continue to verify.
     """
 
     SIGNATURE_ALGORITHM = 'HMAC-SHA256'
@@ -18,7 +18,8 @@ class ReceiptStore:
         self.db = db
         self.lock = threading.Lock()
         db.parent.mkdir(parents=True, exist_ok=True)
-        self.key_path = db.parent / 'receipt-signing.key'
+        self.legacy_key_path = db.parent / 'receipt-signing.key'
+        self.key_path = self._preferred_key_path()
         self._signing_key = self._load_or_create_key()
         self.key_id = hashlib.sha256(self._signing_key).hexdigest()[:16]
         with closing(sqlite3.connect(db)) as c:
@@ -29,23 +30,50 @@ class ReceiptStore:
                     c.execute(f"ALTER TABLE receipts ADD COLUMN {name} TEXT DEFAULT ''")
             c.commit()
 
-    def _load_or_create_key(self) -> bytes:
-        if self.key_path.exists():
-            raw = self.key_path.read_bytes()
-            if len(raw) < 32:
-                raise RuntimeError('SARUS receipt signing key is invalid or truncated')
-            return raw
-        key = secrets.token_bytes(32)
+    def _preferred_key_path(self) -> Path:
+        override = os.environ.get('SARUS_RECEIPT_SIGNING_KEY_FILE', '').strip()
+        if override:
+            return Path(override).expanduser()
+        local = os.environ.get('LOCALAPPDATA', '').strip()
+        if local:
+            return Path(local) / 'SARUS' / 'broker' / 'receipt-signing.key'
+        return self.legacy_key_path
+
+    @staticmethod
+    def _validate_key(raw: bytes) -> bytes:
+        if len(raw) < 32:
+            raise RuntimeError('SARUS receipt signing key is invalid or truncated')
+        return raw
+
+    def _write_key_exclusive(self, path: Path, key: bytes) -> bytes:
+        path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            with self.key_path.open('xb') as f:
+            with path.open('xb') as f:
                 f.write(key)
         except FileExistsError:
-            key = self.key_path.read_bytes()
+            key = self._validate_key(path.read_bytes())
         try:
-            os.chmod(self.key_path, 0o600)
+            os.chmod(path, 0o600)
         except OSError:
             pass
         return key
+
+    def _load_or_create_key(self) -> bytes:
+        if self.key_path.exists():
+            return self._validate_key(self.key_path.read_bytes())
+
+        # Upgrade migration: preserve the old HMAC identity, then remove the
+        # workspace copy so broker file-read capabilities cannot expose it.
+        if self.key_path != self.legacy_key_path and self.legacy_key_path.exists():
+            key = self._validate_key(self.legacy_key_path.read_bytes())
+            key = self._write_key_exclusive(self.key_path, key)
+            try:
+                self.legacy_key_path.unlink()
+            except OSError as exc:
+                raise RuntimeError('Migrated receipt signing key but could not remove insecure workspace copy') from exc
+            return key
+
+        return self._write_key_exclusive(self.key_path, secrets.token_bytes(32))
 
     @staticmethod
     def _digest(rid, ts, task_id, step_id, source, status, prev, blob):
@@ -131,5 +159,6 @@ class ReceiptStore:
             'all_new_receipts_signed': signed_count + unsigned_legacy == len(rows),
             'key_id': self.key_id,
             'algorithm': self.SIGNATURE_ALGORITHM,
+            'key_storage': 'protected-local-file' if self.key_path != self.legacy_key_path else 'local-test-fallback',
             'errors': errors[:20],
         }
