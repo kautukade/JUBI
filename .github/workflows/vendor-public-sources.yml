@@ -33,7 +33,10 @@ jobs:
           for rec in data.split(b"\0"):
               if not rec: continue
               meta,path=rec.split(b"\t",1)
-              sha=meta.split()[2]
+              fields=meta.split()
+              if fields[1] != b"blob":
+                  continue
+              sha=fields[2]
               rows.append((path,sha))
           h=hashlib.sha256()
           for path,sha in sorted(rows):
@@ -62,7 +65,7 @@ jobs:
             if [ "$count" = "$expected_count" ] && [ "$fp" = "$expected_fp" ]; then
               found="$start_sha"
             else
-              echo "Pinned commit differs from original ZIP: count=$count fp=$fp; searching history..."
+              echo "Pinned commit differs from original ZIP blobs: count=$count fp=$fp; searching history..."
               while read -r cand; do
                 info="$(tree_info "$repo" "$cand")"
                 count="${info%% *}"
@@ -76,7 +79,7 @@ jobs:
             fi
 
             if [ -z "$found" ]; then
-              echo "ERROR: exact original ZIP snapshot not found for $url"
+              echo "ERROR: exact original ZIP blob snapshot not found for $url"
               exit 1
             fi
             echo "Exact original snapshot resolved: $found ($expected_count files, $expected_fp)"
