@@ -1,0 +1,18 @@
+{
+  "expected_original_source_files": 17356,
+  "physical_source_files": 16,
+  "missing_to_17356": 17340,
+  "complete": false,
+  "per_source": {
+    "sara": 16,
+    "hermes": 0,
+    "ecc": 0,
+    "agency_agents": 0,
+    "awesome_llm_apps": 0,
+    "second_brain": 0,
+    "superpowers": 0,
+    "fable_os": 0,
+    "cai": 0,
+    "autoresearch": 0
+  }
+}
