@@ -6,13 +6,15 @@ import subprocess
 import webbrowser
 from pathlib import Path
 
+from sarus.core.ring0 import Ring0Bridge
+
 
 class WindowsBroker:
     """Low-level executor for already-authorized typed actions.
 
-    This class deliberately has no arbitrary PowerShell/cmd/exec primitive.
-    Privileged callers must go through PrivilegedBroker, which resolves logical
-    resource IDs before this executor is reached.
+    This class has no arbitrary PowerShell/cmd/exec primitive. Ring-0 access is
+    available only through fixed Ring0Bridge methods whose IOCTLs are compiled
+    into SARUS; callers cannot provide raw IOCTL numbers or kernel addresses.
     """
 
     _BLOCKED_LEGACY = {'powershell', 'stop_process', 'service_control', 'open_app'}
@@ -20,6 +22,7 @@ class WindowsBroker:
     def __init__(self, root: Path):
         self.root = root.resolve()
         self.file_roots = self._load_file_roots()
+        self.ring0 = Ring0Bridge()
 
     def _load_file_roots(self) -> tuple[Path, ...]:
         cfg_path = self.root / 'config' / 'broker_allowlist.json'
@@ -28,7 +31,6 @@ class WindowsBroker:
             roots = cfg.get('path_scopes', {}).get('user_workspace', [])
         except (OSError, ValueError, TypeError):
             roots = []
-        # Fail closed if configuration is absent or malformed.
         return tuple((self.root / str(p)).resolve() for p in roots if str(p).strip())
 
     def available(self):
@@ -63,8 +65,8 @@ class WindowsBroker:
     def action(self, name: str, args: dict | None = None, approved=False):
         """Backward-compatible low-risk API.
 
-        Old privileged names are intentionally blocked even when approved=True.
-        This prevents an LLM from turning a boolean into arbitrary shell access.
+        Old privileged names remain disabled. Ring-0 access uses typed action
+        IDs instead of a generic driver-control primitive.
         """
         args = args or {}
         if name in self._BLOCKED_LEGACY:
@@ -75,6 +77,8 @@ class WindowsBroker:
             'write_file': 'workspace.file.write',
             'list_processes': 'system.processes.list',
             'list_services': 'system.services.list',
+            'ring0_ping': 'ring0.ping',
+            'ring0_status': 'ring0.status',
         }
         action_id = mapping.get(name)
         if not action_id:
@@ -105,6 +109,12 @@ class WindowsBroker:
             p.write_text(str(parameters.get('content', '')), encoding='utf-8')
             return {'ok': True, 'path': str(p)}
 
+        if action_id == 'ring0.ping':
+            return self.ring0.ping()
+
+        if action_id == 'ring0.status':
+            return self.ring0.status()
+
         if os.name != 'nt':
             return {'ok': False, 'error': 'Windows-only action', 'action': action_id}
 
@@ -130,6 +140,6 @@ class WindowsBroker:
                 argv.append('/F')
             return self._run(argv, 15)
 
-        # There is intentionally no generic executable, shell, raw driver,
-        # IOCTL, kernel-memory, registry-anywhere, or arbitrary service path.
+        # Ring-0 is intentionally narrow: no caller-selected executable, raw
+        # IOCTL, kernel-memory address, registry-anywhere or arbitrary service.
         raise PermissionError('Typed Windows action is not implemented: ' + action_id)
