@@ -6,11 +6,32 @@ import hmac
 import json
 import os
 import time
+from pathlib import Path
 
 
 def canonical_hash(parameters: dict) -> str:
     raw = json.dumps(parameters, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
     return hashlib.sha256(raw).hexdigest()
+
+
+def load_secret() -> str:
+    secret = os.environ.get('SARUS_BROKER_APPROVAL_SECRET', '')
+    if len(secret) >= 24:
+        return secret
+    override = os.environ.get('SARUS_BROKER_SECRET_FILE', '').strip()
+    if override:
+        path = Path(override).expanduser()
+    else:
+        local = os.environ.get('LOCALAPPDATA', '').strip()
+        path = Path(local) / 'SARUS' / 'broker' / 'approval.secret' if local else None
+    if path and path.is_file():
+        try:
+            secret = path.read_text(encoding='utf-8').strip()
+        except OSError:
+            secret = ''
+    if len(secret) < 24:
+        raise SystemExit('SARUS broker approval key is not configured. Run INSTALL-SARUS.bat first.')
+    return secret
 
 
 def main() -> int:
@@ -21,9 +42,7 @@ def main() -> int:
     ap.add_argument('--ttl', type=int, default=120, help='Approval lifetime in seconds (1-300)')
     args = ap.parse_args()
 
-    secret = os.environ.get('SARUS_BROKER_APPROVAL_SECRET', '')
-    if len(secret) < 24:
-        raise SystemExit('SARUS_BROKER_APPROVAL_SECRET must be configured with at least 24 characters.')
+    secret = load_secret()
 
     try:
         parameters = json.loads(args.parameters_json)
