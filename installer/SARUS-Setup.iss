@@ -1,5 +1,5 @@
 #define MyAppName "SARUS"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "ITCYBER TECHNOLOGIES PVT LTD"
 #define MyAppURL "https://github.com/kautukade/SARUS"
 #define MyAppExeName "SARUS.exe"
@@ -29,9 +29,10 @@ CloseApplications=no
 DirExistsWarning=no
 UsePreviousAppDir=yes
 UninstallDisplayName=SARUS Local Multi-Agent AI OS
-VersionInfoVersion=1.1.0.0
+UninstallDisplayIcon={app}\{#MyAppExeName}
+VersionInfoVersion=1.2.0.0
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription=SARUS Windows Installer
+VersionInfoDescription=SARUS One-Click Windows Installer
 VersionInfoProductName=SARUS
 VersionInfoProductVersion={#MyAppVersion}
 VersionInfoCopyright=Copyright (c) 2026 ITCYBER TECHNOLOGIES PVT LTD
@@ -43,29 +44,54 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,dist-installer\*,.sarus-venv\*,logs\*,data\*,*.pyc"
 
 [Icons]
-Name: "{autoprograms}\SARUS"; Filename: "{app}\START_SARUS.bat"; WorkingDir: "{app}"
+Name: "{autoprograms}\SARUS"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 Name: "{autoprograms}\SARUS README"; Filename: "{app}\README.md"
-Name: "{autodesktop}\SARUS"; Filename: "{app}\START_SARUS.bat"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autodesktop}\SARUS"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
 
-[Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\EXE-INSTALL.ps1"""; WorkingDir: "{app}"; StatusMsg: "Installing SARUS runtime and dependencies..."; Flags: waituntilterminated
-
 [UninstallRun]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\installer\UNINSTALL-SARUS.ps1"""; WorkingDir: "{app}"; Flags: runhidden waituntilterminated
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\installer\UNINSTALL-SARUS.ps1"""; WorkingDir: "{app}"; Flags: runhidden waituntilterminated
 
 [Code]
-function PrepareToInstall(var NeedsRestart: Boolean): String;
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  BootstrapScript: String;
+  BootstrapArgs: String;
+  LogPath: String;
 begin
-  if not FileExists(ExpandConstant('{app}\installer\EXE-INSTALL.ps1')) then
-    Result := ''
-  else
-    Result := '';
-end;
+  if CurStep = ssPostInstall then
+  begin
+    BootstrapScript := ExpandConstant('{app}\installer\EXE-INSTALL.ps1');
+    LogPath := ExpandConstant('{app}\logs\exe-install.log');
+    WizardForm.StatusLabel.Caption := 'Installing SARUS runtime, dependencies and integrations...';
 
-function GetCustomSetupExitCode(): Integer;
-begin
-  Result := 0;
+    if not FileExists(BootstrapScript) then
+    begin
+      MsgBox('SARUS installer payload is incomplete: EXE-INSTALL.ps1 is missing.', mbError, MB_OK);
+      Abort;
+    end;
+
+    BootstrapArgs := '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + BootstrapScript + '"';
+    if not Exec(
+      ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      BootstrapArgs,
+      ExpandConstant('{app}'),
+      SW_SHOW,
+      ewWaitUntilTerminated,
+      ResultCode) then
+    begin
+      MsgBox('Could not start the SARUS installation engine.', mbError, MB_OK);
+      Abort;
+    end;
+
+    if ResultCode <> 0 then
+    begin
+      MsgBox('SARUS installation engine failed. Exit code: ' + IntToStr(ResultCode) + #13#10 +
+        'See the installer log at:' + #13#10 + LogPath, mbError, MB_OK);
+      Abort;
+    end;
+  end;
 end;
