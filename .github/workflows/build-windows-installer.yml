@@ -9,21 +9,25 @@ on:
       - 'installer/**'
       - 'sarus/**'
       - 'scripts/**'
+      - 'tests/**'
       - 'config/**'
       - 'driver/**'
       - 'vendor/**'
       - 'sources/**'
-      - 'docs/FABLE-INTEGRATION.md'
+      - 'docs/**'
+      - 'BUILD_MANIFEST.json'
       - 'README.md'
       - '.github/workflows/build-windows-installer.yml'
   pull_request:
     paths:
       - 'installer/**'
       - 'sarus/**'
+      - 'tests/**'
       - 'config/**'
       - 'driver/**'
       - 'vendor/**'
-      - 'docs/FABLE-INTEGRATION.md'
+      - 'docs/**'
+      - 'BUILD_MANIFEST.json'
       - 'README.md'
       - '.github/workflows/build-windows-installer.yml'
   workflow_dispatch:
@@ -40,19 +44,26 @@ jobs:
       - name: Checkout SARUS
         uses: actions/checkout@v4
 
-      - name: Verify one-click installer payload
+      - name: Verify production installer payload
         shell: powershell
         run: |
           $required = @(
+            'BUILD_MANIFEST.json',
+            'config\production.json',
             'sarus\server.py',
+            'sarus\acceptance.py',
             'sarus\core\fable.py',
             'sarus\adapters\fable_os.py',
             'sarus\web\fable.html',
             'tests\fable_integration_test.py',
+            'tests\production_readiness_test.py',
             'docs\FABLE-INTEGRATION.md',
+            'docs\PRODUCTION-READINESS.md',
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
             'installer\SETUP-BROKER.ps1',
+            'installer\CERTIFY-SARUS.ps1',
+            'installer\SIGN-RELEASE.ps1',
             'installer\UNINSTALL-SARUS.ps1',
             'installer\SARUS-Setup.iss',
             'vendor\launcher\SARUS.exe.b64',
@@ -70,15 +81,16 @@ jobs:
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
             'installer\SETUP-BROKER.ps1',
+            'installer\CERTIFY-SARUS.ps1',
+            'installer\SIGN-RELEASE.ps1',
             'installer\UNINSTALL-SARUS.ps1',
+            'driver\SarusRing0\BUILD-RING0.ps1',
             'driver\SarusRing0\INSTALL-RING0.ps1'
           )
           foreach ($script in $powershellScripts) {
-            if (-not (Test-Path -LiteralPath $script)) { continue }
             $tokens = $null
             $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile(
-              (Resolve-Path $script), [ref]$tokens, [ref]$errors)
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $script), [ref]$tokens, [ref]$errors)
             if ($errors.Count -gt 0) {
               $messages = ($errors | ForEach-Object { $_.Message }) -join '; '
               throw "PowerShell syntax error in $script : $messages"
@@ -92,9 +104,13 @@ jobs:
           if ($iss -notmatch 'Filename:\s*"\{app\}\\\{#MyAppExeName\}"') {
             throw 'SARUS.exe shortcut was not found in the Inno Setup definition.'
           }
-          if ($iss -notmatch '#define MyAppVersion "1\.3\.0"') {
-            throw 'Installer version is not SARUS 1.3.0.'
+          if ($iss -notmatch '#define MyAppVersion "1\.3\.1"') {
+            throw 'Installer version is not SARUS 1.3.1.'
           }
+
+          $manifest = Get-Content -LiteralPath 'BUILD_MANIFEST.json' -Raw | ConvertFrom-Json
+          $production = Get-Content -LiteralPath 'config\production.json' -Raw | ConvertFrom-Json
+          if ($manifest.version -ne '1.3.1' -or $production.version -ne '1.3.1') { throw 'Version metadata is not synchronized at 1.3.1.' }
 
           $onlineSources = Get-Content -LiteralPath 'config\online_sources.json' -Raw | ConvertFrom-Json
           $fable = $onlineSources | Where-Object { $_.key -eq 'fable_os' } | Select-Object -First 1
@@ -103,7 +119,10 @@ jobs:
           if ($fable.sha -ne '1cfe17c4baa77fac128008621721823913a1335c') { throw "Unexpected Fable pin: $($fable.sha)" }
 
           python -m compileall -q sarus scripts tests
+          python tests\production_readiness_test.py
+          if ($LASTEXITCODE -ne 0) { throw 'Production readiness tests failed.' }
           python tests\fable_integration_test.py
+          if ($LASTEXITCODE -ne 0) { throw 'Fable integration tests failed.' }
 
       - name: Locate or install Inno Setup
         id: inno
@@ -151,6 +170,7 @@ jobs:
             dist-installer/SARUS-Setup.exe
             dist-installer/SHA256.txt
             README.md
+            docs/PRODUCTION-READINESS.md
           if-no-files-found: error
           compression-level: 0
           retention-days: 30

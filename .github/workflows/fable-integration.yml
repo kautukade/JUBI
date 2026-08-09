@@ -4,18 +4,39 @@ on:
   push:
     branches:
       - main
-      - agent/fable-full-integration-v1
-  pull_request:
+      - 'agent/**'
     paths:
       - 'sarus/core/fable.py'
       - 'sarus/core/app.py'
+      - 'sarus/acceptance.py'
       - 'sarus/adapters/fable_os.py'
       - 'sarus/server.py'
       - 'sarus/web/fable.html'
       - 'config/sources.json'
       - 'config/online_sources.json'
+      - 'config/production.json'
+      - 'BUILD_MANIFEST.json'
       - 'tests/fable_integration_test.py'
+      - 'tests/production_readiness_test.py'
       - 'docs/FABLE-INTEGRATION.md'
+      - 'docs/PRODUCTION-READINESS.md'
+      - '.github/workflows/fable-integration.yml'
+  pull_request:
+    paths:
+      - 'sarus/core/fable.py'
+      - 'sarus/core/app.py'
+      - 'sarus/acceptance.py'
+      - 'sarus/adapters/fable_os.py'
+      - 'sarus/server.py'
+      - 'sarus/web/fable.html'
+      - 'config/sources.json'
+      - 'config/online_sources.json'
+      - 'config/production.json'
+      - 'BUILD_MANIFEST.json'
+      - 'tests/fable_integration_test.py'
+      - 'tests/production_readiness_test.py'
+      - 'docs/FABLE-INTEGRATION.md'
+      - 'docs/PRODUCTION-READINESS.md'
       - '.github/workflows/fable-integration.yml'
 
 permissions:
@@ -27,19 +48,17 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Compile SARUS Fable integration
-        run: python -m compileall -q sarus tests/fable_integration_test.py
-
+        run: python -m compileall -q sarus tests/fable_integration_test.py tests/production_readiness_test.py
+      - name: Run production static gates
+        run: python tests/production_readiness_test.py
       - name: Run Fable integration tests
         env:
           SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}/sarus-fable-receipt.key
         run: python tests/fable_integration_test.py
-
       - name: Run existing SARUS integration regression suite
         env:
           SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
@@ -51,14 +70,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Compile SARUS Fable integration
-        run: python -m compileall -q sarus tests/fable_integration_test.py
-
+        run: python -m compileall -q sarus tests/fable_integration_test.py tests/production_readiness_test.py
+      - name: Run production static gates
+        run: python tests/production_readiness_test.py
       - name: Run Fable integration tests on Windows
         env:
           SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}\sarus-fable-receipt.key

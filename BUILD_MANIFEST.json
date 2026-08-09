@@ -1,6 +1,6 @@
 {
   "name": "SARUS",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "created": "2026-08-09",
   "source_repositories": 10,
   "indexed_original_files": 17129,
@@ -8,10 +8,11 @@
   "discovered_capability_like_files": 4803,
   "fable_integration": "native intelligence layer plus isolated QEMU research lab",
   "fable_pin": "1cfe17c4baa77fac128008621721823913a1335c",
+  "production_profile": "config/production.json",
   "notes": [
     "The source-file count is measured from the clean tracked repository checkout rather than legacy local/generated files.",
     "All 10 configured source families must be present and indexed.",
-    "Fable source completeness and pin integrity are tested independently by tests/fable_integration_test.py.",
-    "Windows hardware, optional QEMU/WSL runtime and credential-dependent features still require target-machine acceptance for physical certification."
+    "Acceptance reads this manifest instead of relying on a stale hard-coded source count.",
+    "Windows hardware, signed kernel-driver activation, public Authenticode release signing and optional Fable QEMU runtime still require target-machine or certificate-backed certification."
   ]
 }
