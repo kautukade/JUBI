@@ -25,8 +25,6 @@ jobs:
   linux-fable-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}/sarus-fable-receipt.key
     steps:
       - uses: actions/checkout@v4
 
@@ -38,18 +36,19 @@ jobs:
         run: python -m compileall -q sarus tests/fable_integration_test.py
 
       - name: Run Fable integration tests
+        env:
+          SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}/sarus-fable-receipt.key
         run: python tests/fable_integration_test.py
 
       - name: Run existing SARUS integration regression suite
         env:
           SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
+          SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}/sarus-regression-receipt.key
         run: python tests/integration_test.py
 
   windows-fable-smoke:
     runs-on: windows-latest
     timeout-minutes: 20
-    env:
-      SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}\sarus-fable-receipt.key
     steps:
       - uses: actions/checkout@v4
 
@@ -61,4 +60,6 @@ jobs:
         run: python -m compileall -q sarus tests/fable_integration_test.py
 
       - name: Run Fable integration tests on Windows
+        env:
+          SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}\sarus-fable-receipt.key
         run: python tests/fable_integration_test.py
