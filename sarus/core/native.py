@@ -6,6 +6,7 @@ class NativeRuntimeManager:
     def _exe(self,venv,name): return venv/('Scripts' if os.name=='nt' else 'bin')/(name+'.exe' if os.name=='nt' else name)
     def status(self):
         native=self.root/'native'; sara=self.app.adapters.get('sara').probe(); hv=native/'hermes'; cv=native/'cai'; hermes=self._exe(hv,'hermes'); cai=self._exe(cv,'cai'); ecc_script=self._source('ecc')/'scripts/ecc.js'
+        fable=self.app.fable.status()
         return {
             'sara':{'ready':bool(sara.details.get('native')),'mode':'SARA v7 local API','detail':sara.details},
             'hermes':{'ready':hermes.exists(),'mode':'optional native CLI + SARUS Ollama adapter','path':str(hermes)},
@@ -14,7 +15,7 @@ class NativeRuntimeManager:
             'awesome_llm_apps':{'ready':True,'mode':'local workflow-pattern runtime; individual upstream apps may require external credentials'},
             'second_brain':{'ready':True,'mode':'local skill runtime + SARUS memory'},
             'superpowers':{'ready':True,'mode':'local coding-process skill runtime'},
-            'fable_os':{'ready':True,'mode':'SARUS trusted receipt layer; bare-metal QEMU is optional lab-only'},
+            'fable_os':{'ready':bool(fable.get('integrated')),'mode':'native Fable Intelligence Layer + optional isolated WSL/QEMU lab','detail':fable.get('source',{})},
             'cai':{'ready':cai.exists(),'mode':'defensive analysis enabled; native active tooling isolated/disabled by default','path':str(cai)},
             'autoresearch':{'ready':True,'mode':'bounded experiment-design runtime; GPU training requires target GPU environment'},
         }

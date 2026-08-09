@@ -1,0 +1,21 @@
+{
+  "version": "1.3.1",
+  "required_models": [
+    "qwen2.5:7b",
+    "qwen2.5-coder:7b",
+    "qwen2.5vl:3b",
+    "nomic-embed-text-v2-moe:latest"
+  ],
+  "minimum_python": "3.11",
+  "recommended_minimum_ollama": "0.7.0",
+  "source_repositories": 10,
+  "require_fable_native_layer": true,
+  "require_sara_on_windows": true,
+  "fable_qemu": "optional-research-lab",
+  "ring0": "optional-unless-explicitly-certified",
+  "public_release": {
+    "application_authenticode": "required",
+    "kernel_driver_microsoft_signing": "required-when-bundled",
+    "sha256_artifact": "required"
+  }
+}

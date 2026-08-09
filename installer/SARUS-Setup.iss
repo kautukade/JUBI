@@ -1,5 +1,5 @@
 #define MyAppName "SARUS"
-#define MyAppVersion "1.3.0"
+#define MyAppVersion "1.3.1"
 #define MyAppPublisher "ITCYBER TECHNOLOGIES PVT LTD"
 #define MyAppURL "https://github.com/kautukade/SARUS"
 #define MyAppExeName "SARUS.exe"
@@ -30,7 +30,7 @@ DirExistsWarning=no
 UsePreviousAppDir=yes
 UninstallDisplayName=SARUS Local Multi-Agent AI OS
 UninstallDisplayIcon={app}\{#MyAppExeName}
-VersionInfoVersion=1.3.0.0
+VersionInfoVersion=1.3.1.0
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription=SARUS One-Click Windows Installer
 VersionInfoProductName=SARUS
@@ -66,7 +66,7 @@ begin
   begin
     BootstrapScript := ExpandConstant('{app}\installer\EXE-INSTALL.ps1');
     LogPath := ExpandConstant('{app}\logs\exe-install.log');
-    WizardForm.StatusLabel.Caption := 'Installing SARUS runtime, dependencies and integrations...';
+    WizardForm.StatusLabel.Caption := 'Installing SARUS runtime, local models, integrations and production checks...';
 
     if not FileExists(BootstrapScript) then
     begin

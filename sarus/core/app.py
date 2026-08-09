@@ -46,8 +46,8 @@ class Sarus:
         ads = self.adapters.connect()
         return {
             'name': 'SARUS',
-            'version': '1.3.0',
-            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1',
+            'version': '1.3.1',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+production-gates-v1',
             'adapters': [a.__dict__ for a in ads],
             'models': self.models.list_models(),
             'capabilities': self.registry.summary(),
