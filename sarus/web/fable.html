@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SARUS · Fable Lab</title>
+<style>
+:root{font-family:Inter,Segoe UI,system-ui,sans-serif;background:#070a11;color:#eef3ff;--panel:#0e1420;--line:#222b3e;--muted:#98a5c2;--ok:#6fe3a5;--bad:#ff8585;--warn:#ffd479;--accent:#a98cff}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top right,#17122b 0,#070a11 34%);color:#eef3ff}.wrap{max-width:1500px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.brand{font-size:12px;letter-spacing:4px;color:var(--accent);font-weight:900}.top h1{margin:5px 0;font-size:38px}.muted{color:var(--muted);font-size:12px;line-height:1.5}.pill{padding:8px 12px;border:1px solid #3b315a;border-radius:99px;font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:14px;margin:14px 0}.card{background:rgba(14,20,32,.94);border:1px solid var(--line);border-radius:14px;padding:16px}.span2{grid-column:span 2}.span4{grid-column:span 4}.metric{font-size:28px;font-weight:850;margin-top:6px}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.toolbar button,.btn{border:1px solid #3a4663;background:#182237;color:#eef3ff;border-radius:9px;padding:10px 13px;font-weight:750;cursor:pointer}.toolbar button.primary{background:#6e58c9;border-color:#8d76ed}.toolbar button.danger{background:#4b2027;border-color:#71313d}.toolbar button:disabled{opacity:.45;cursor:not-allowed}input,textarea,select{background:#080d16;border:1px solid #303a53;color:white;padding:11px;border-radius:9px;min-width:120px}textarea{width:100%;min-height:82px;resize:vertical}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.output{white-space:pre-wrap;word-break:break-word;background:#080d15;padding:12px;border-radius:9px;max-height:420px;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace}.row{padding:10px 0;border-bottom:1px solid #1f2838;font-size:13px}.row:last-child{border-bottom:0}.trace-verified{border-left:3px solid var(--ok);padding-left:10px}.trace-candidate{border-left:3px solid var(--warn);padding-left:10px}.trace-prose{border-left:3px solid #52617c;padding-left:10px}.back{color:#c7baff;text-decoration:none;font-weight:700}.note{padding:12px;border:1px solid #40375e;background:#131126;border-radius:10px;font-size:12px;line-height:1.5}.list{max-height:390px;overflow:auto}@media(max-width:1000px){.grid{grid-template-columns:1fr 1fr}.span4,.span2{grid-column:span 2}}@media(max-width:650px){.wrap{padding:18px}.grid{grid-template-columns:1fr}.span2,.span4{grid-column:auto}.top{flex-direction:column}.formgrid{grid-template-columns:1fr}.top h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><div class="brand">SARUS R&D</div><h1>Fable Intelligence Lab</h1><div class="muted">Original Fable source as an isolated QEMU lab + SARUS-native verified traces, learned capabilities and bounded agenda.</div></div>
+    <div><a class="back" href="/">← Command Center</a> <span id="state" class="pill">Loading…</span></div>
+  </div>
+
+  <div class="note"><b>Trust rule:</b> model explanation is not execution proof. SARUS-native verified events are signed/hash-chained receipts. Fable serial lines beginning at column zero with <code>[</code> are shown as <i>kernel candidates</i>, but imported text is never automatically promoted to SARUS-verified proof.</div>
+
+  <div class="grid">
+    <div class="card"><div class="muted">Fable Source</div><div class="metric" id="sourceState">–</div><div class="muted" id="pin"></div></div>
+    <div class="card"><div class="muted">Runtime</div><div class="metric" id="runtimeState">–</div><div class="muted" id="runtimeDetail"></div></div>
+    <div class="card"><div class="muted">Learned Capabilities</div><div class="metric" id="capCount">–</div></div>
+    <div class="card"><div class="muted">Agenda</div><div class="metric" id="agendaCount">–</div><div class="muted">max 8 active · one action/tick</div></div>
+
+    <div class="card span2">
+      <h3>Isolated Fable OS / QEMU Lab</h3>
+      <div class="toolbar">
+        <button onclick="lab('build')">BUILD</button>
+        <button onclick="lab('test_host')">HOST TESTS</button>
+        <button onclick="lab('test_qemu')">QEMU TESTS</button>
+        <button onclick="lab('test_all')">ALL TESTS</button>
+        <button onclick="lab('iso')">BUILD ISO</button>
+        <button class="primary" onclick="lab('start')">START HEADLESS</button>
+        <button class="danger" onclick="lab('stop')">STOP</button>
+      </div>
+      <div class="muted">Only fixed SARUS-defined actions are exposed. No free-form shell, make target, QEMU arguments or device addresses are accepted.</div>
+      <div id="labOut" class="output">No lab action yet.</div>
+    </div>
+
+    <div class="card span2">
+      <h3>Fable Serial / Lab Output</h3>
+      <div class="toolbar"><button onclick="loadTail()">REFRESH TAIL</button></div>
+      <div id="tail" class="output">No output.</div>
+    </div>
+
+    <div class="card span2">
+      <h3>Teach SARUS a Persistent Capability</h3>
+      <div class="formgrid"><input id="capName" placeholder="capability name"><input id="capDesc" placeholder="description"></div>
+      <textarea id="capPrompt" placeholder="The reusable SARUS task/prompt this capability performs"></textarea>
+      <div class="toolbar"><button class="primary" onclick="saveCap()">SAVE NEW VERSION</button><button onclick="loadCaps()">REFRESH</button></div>
+      <div id="caps" class="list"></div>
+    </div>
+
+    <div class="card span2">
+      <h3>Bounded Agenda</h3>
+      <div class="formgrid"><input id="agendaName" placeholder="agenda item name"><select id="agendaCap"><option value="">Select capability</option></select></div>
+      <div class="toolbar"><select id="when"><option value="once">once</option><option value="every">every</option><option value="boot">boot</option></select><input id="period" type="number" min="60" value="3600" title="period seconds"><input id="maxRuns" type="number" min="1" max="256" value="1" title="max runs"><button onclick="addAgenda()">ADD</button></div>
+      <div class="muted">Every-mode minimum period: 60 seconds · max total runs: 256 · auto-disable after 3 consecutive failures.</div>
+      <div id="agenda" class="list"></div>
+    </div>
+
+    <div class="card span4">
+      <h3>Verified Trace / Evidence Feed</h3>
+      <div class="toolbar"><button onclick="loadTraces()">REFRESH TRACE</button></div>
+      <div id="traces" class="list"></div>
+    </div>
+  </div>
+</div>
+<script>
+let tok='';
+async function j(u,o){let r=await fetch(u,o),x=await r.json();if(!r.ok)throw new Error(x.error||r.status);return x}
+async function token(){if(!tok)tok=(await j('/api/session')).token;return tok}
+async function post(u,b){return j(u,{method:'POST',headers:{'Content-Type':'application/json','X-SARUS-Token':await token()},body:JSON.stringify(b)})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function refresh(){
+ try{
+  let s=await j('/api/fable'),src=s.source;
+  sourceState.textContent=src.source_complete?'COMPLETE':'INCOMPLETE'; sourceState.className='metric '+(src.source_complete?'ok':'bad');
+  pin.textContent='pin '+(src.pinned_sha||'unknown').slice(0,12)+' · '+src.tool_source_files+' tool source files';
+  runtimeState.textContent=src.running?'RUNNING':(src.runtime_ready?'READY':'SETUP'); runtimeState.className='metric '+(src.running?'ok':(src.runtime_ready?'warn':'bad'));
+  runtimeDetail.textContent=`${src.host_platform} · make=${src.native_make} · qemu=${src.native_qemu} · wsl=${src.wsl_available}`;
+  capCount.textContent=s.learned_capabilities; agendaCount.textContent=s.agenda.items; state.textContent=src.running?'● Fable Lab Running':'Fable Integrated';
+  await Promise.all([loadCaps(),loadAgenda(),loadTraces(),loadTail()]);
+ }catch(e){state.textContent='ERROR';labOut.textContent=e.message}
+}
+async function lab(action){labOut.textContent='Running '+action+'…';try{let r=await post('/api/fable/lab',{action,timeout:3600});labOut.textContent=JSON.stringify(r,null,2);await refresh()}catch(e){labOut.textContent='ERROR: '+e.message}}
+async function loadTail(){try{let r=await j('/api/fable/lab/tail?limit=220');tail.textContent=(r.classified||[]).map(x=>(x.kind==='kernel_candidate'?'[KERNEL CANDIDATE] ':'[PROSE/OTHER] ')+x.line).join('\n')||'No Fable lab log yet.'}catch(e){tail.textContent=e.message}}
+async function saveCap(){try{let r=await post('/api/fable/capability/save',{name:capName.value,description:capDesc.value,prompt:capPrompt.value});capName.value='';capDesc.value='';capPrompt.value='';labOut.textContent='Capability saved: '+r.capability.id;await Promise.all([loadCaps(),loadTraces(),refresh()])}catch(e){labOut.textContent='ERROR: '+e.message}}
+async function runCap(id){labOut.textContent='Running capability '+id+'…';try{let r=await post('/api/fable/capability/run',{id});labOut.textContent=JSON.stringify(r,null,2);await Promise.all([loadCaps(),loadTraces()])}catch(e){labOut.textContent='ERROR: '+e.message}}
+async function toggleCap(id,enabled){try{await post('/api/fable/capability/toggle',{id,enabled});await loadCaps()}catch(e){labOut.textContent='ERROR: '+e.message}}
+async function loadCaps(){let a=await j('/api/fable/capabilities?limit=100');capCount.textContent=a.length;agendaCap.innerHTML='<option value="">Select capability</option>'+a.filter(x=>x.enabled).map(x=>`<option value="${esc(x.id)}">${esc(x.name)} v${x.version}</option>`).join('');caps.innerHTML=a.map(x=>`<div class="row"><b>${esc(x.name)} v${x.version}</b> · ${x.enabled?'<span class="ok">ENABLED</span>':'<span class="bad">DISABLED</span>'}<br><span class="muted">${esc(x.description)} · success ${x.success_count} / fail ${x.failure_count} · ${esc(x.definition_hash.slice(0,12))}</span><div class="toolbar"><button onclick="runCap('${esc(x.id)}')">RUN</button><button onclick="toggleCap('${esc(x.id)}',${!x.enabled})">${x.enabled?'DISABLE':'ENABLE'}</button></div></div>`).join('')||'<div class="muted">No learned capabilities yet.</div>'}
+async function addAgenda(){try{let r=await post('/api/fable/agenda/add',{name:agendaName.value,capability_id:agendaCap.value,when:when.value,period_seconds:Number(period.value),max_runs:Number(maxRuns.value)});labOut.textContent='Agenda added: '+r.agenda.id;agendaName.value='';await loadAgenda()}catch(e){labOut.textContent='ERROR: '+e.message}}
+async function toggleAgenda(id,enabled){try{await post('/api/fable/agenda/toggle',{id,enabled});await loadAgenda()}catch(e){labOut.textContent='ERROR: '+e.message}}
+async function loadAgenda(){let a=await j('/api/fable/agenda');agendaCount.textContent=a.length;agenda.innerHTML=a.map(x=>`<div class="row"><b>${esc(x.name)}</b> · ${esc(x.when)} · ${x.enabled?'<span class="ok">ENABLED</span>':'<span class="muted">STOPPED</span>'}<br><span class="muted">${esc(x.capability_id)} · runs ${x.run_count}/${x.max_runs} · failures ${x.consecutive_failures} · last ${esc(x.last_status)}</span><div class="toolbar"><button onclick="toggleAgenda('${esc(x.id)}',${!x.enabled})">${x.enabled?'PAUSE':'ENABLE'}</button></div></div>`).join('')||'<div class="muted">No Fable agenda items yet.</div>'}
+async function loadTraces(){let a=await j('/api/fable/traces?limit=80');traces.innerHTML=a.map(x=>{let cls=x.kind==='verified'?'trace-verified':(x.kind==='kernel_candidate'?'trace-candidate':'trace-prose');return `<div class="row ${cls}"><b>${esc(x.kind.toUpperCase())}</b> · ${esc(x.event)}<br><span class="muted">${esc(JSON.stringify(x.payload).slice(0,700))}${x.receipt_id?' · receipt '+esc(x.receipt_id):''}</span></div>`}).join('')||'<div class="muted">No Fable trace evidence yet.</div>'}
+refresh();setInterval(()=>{loadTraces();loadTail()},7000);
+</script>
+</body>
+</html>
