@@ -13,6 +13,7 @@ on:
       - 'driver/**'
       - 'vendor/**'
       - 'sources/**'
+      - 'docs/FABLE-INTEGRATION.md'
       - 'README.md'
       - '.github/workflows/build-windows-installer.yml'
   pull_request:
@@ -22,6 +23,7 @@ on:
       - 'config/**'
       - 'driver/**'
       - 'vendor/**'
+      - 'docs/FABLE-INTEGRATION.md'
       - 'README.md'
       - '.github/workflows/build-windows-installer.yml'
   workflow_dispatch:
@@ -43,6 +45,11 @@ jobs:
         run: |
           $required = @(
             'sarus\server.py',
+            'sarus\core\fable.py',
+            'sarus\adapters\fable_os.py',
+            'sarus\web\fable.html',
+            'tests\fable_integration_test.py',
+            'docs\FABLE-INTEGRATION.md',
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
             'installer\SETUP-BROKER.ps1',
@@ -52,6 +59,7 @@ jobs:
             'vendor\launcher\SHA256.txt',
             'config\models.json',
             'config\broker_allowlist.json',
+            'config\online_sources.json',
             'README.md'
           )
           foreach ($file in $required) {
@@ -84,8 +92,18 @@ jobs:
           if ($iss -notmatch 'Filename:\s*"\{app\}\\\{#MyAppExeName\}"') {
             throw 'SARUS.exe shortcut was not found in the Inno Setup definition.'
           }
+          if ($iss -notmatch '#define MyAppVersion "1\.3\.0"') {
+            throw 'Installer version is not SARUS 1.3.0.'
+          }
+
+          $onlineSources = Get-Content -LiteralPath 'config\online_sources.json' -Raw | ConvertFrom-Json
+          $fable = $onlineSources | Where-Object { $_.key -eq 'fable_os' } | Select-Object -First 1
+          if (-not $fable) { throw 'Pinned Fable source is missing from online_sources.json.' }
+          if ($fable.repo -ne 'robiot/fable-os') { throw "Unexpected Fable repository: $($fable.repo)" }
+          if ($fable.sha -ne '1cfe17c4baa77fac128008621721823913a1335c') { throw "Unexpected Fable pin: $($fable.sha)" }
 
           python -m compileall -q sarus scripts tests
+          python tests\fable_integration_test.py
 
       - name: Locate or install Inno Setup
         id: inno
