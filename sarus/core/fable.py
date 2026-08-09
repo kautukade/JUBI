@@ -170,7 +170,7 @@ class LearnedCapabilityStore:
             cid = f'{name}:v{version}'
             digest = self._digest(name, version, description, prompt, permissions)
             c.execute(
-                "INSERT INTO fable_capabilities VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO fable_capabilities VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (cid, name, version, description, prompt, json.dumps(permissions), 1,
                  now, now, digest, 0, 0, 'untested'),
             )
@@ -534,7 +534,7 @@ class FableAgendaEngine:
         for item in self.list():
             if item['enabled'] and item['when'] == 'boot' and item['run_count'] == 0:
                 results.append(self._run(item))
-                break  # one action per tick/boot pass
+                break
         return results
 
     def tick(self):
@@ -546,7 +546,7 @@ class FableAgendaEngine:
             if not item['enabled']:
                 continue
             if item['when'] in {'once', 'every'} and item['next_run'] <= now:
-                return [self._run(item)]  # one action per tick
+                return [self._run(item)]
         return []
 
     def start(self):
