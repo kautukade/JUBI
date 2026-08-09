@@ -15,7 +15,7 @@ class T(unittest.TestCase):
  def test_01_all_10_sources_connected(self):
   s=self.app.status(); self.assertEqual(len(s['adapters']),10); self.assertTrue(all(a['connected'] for a in s['adapters']))
  def test_02_registry_exact_original_file_count(self):
-  summary=self.app.registry.summary(); self.assertEqual(sum(x['files'] for x in summary.values()),17356); self.assertEqual(set(summary),set(json.loads((ROOT/'config/sources.json').read_text())))
+  summary=self.app.registry.summary(); manifest=json.loads((ROOT/'BUILD_MANIFEST.json').read_text()); self.assertEqual(sum(x['files'] for x in summary.values()),manifest['indexed_original_files']); self.assertEqual(len(summary),manifest['source_repositories']); self.assertEqual(set(summary),set(json.loads((ROOT/'config/sources.json').read_text())))
  def test_03_orchestrator_cross_repo_pipeline(self):
   steps=self.app.orchestrator.execute_dry('research leads, build website, inspect screen, remember client SOP, security audit and benchmark improvement'); src={s['source'] for s in steps}; self.assertTrue({'hermes','awesome_llm_apps','agency_agents','ecc','superpowers','sara','second_brain','cai','autoresearch','fable_os'}.issubset(src))
  def test_04_real_execution_engine_all_10_adapters(self):
