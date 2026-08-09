@@ -165,12 +165,29 @@ try {
     # 4) Provision SARA/Windows dependencies automatically.
     # ------------------------------------------------------------------
     # This legacy SARA batch is invoked internally by SARUS-Setup.exe. The user
-    # does not need to locate, double-click or execute any .bat file manually.
+    # does not locate, double-click or execute it. Input is redirected from NUL
+    # so legacy PAUSE/keypress prompts cannot block the one-click installer.
     $saraBat = Get-ChildItem -Path (Join-Path $Root 'sources') -Filter 'INSTALL-AND-START-SARA.bat' -File -Recurse | Select-Object -First 1
     if (-not $saraBat) { throw 'SARA Windows dependency installer not found.' }
-    Log 'Running bundled SARA dependency provisioning automatically.'
-    $sp = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/c',"`"$($saraBat.FullName)`"") -WorkingDirectory $saraBat.DirectoryName -Wait -PassThru
-    if ($sp.ExitCode -ne 0) { throw "SARA dependency setup failed with exit code $($sp.ExitCode)" }
+    Log 'Running bundled SARA dependency provisioning automatically in non-interactive mode.'
+
+    $oldCI = $env:CI
+    $oldNpmYes = $env:NPM_CONFIG_YES
+    $oldPipCheck = $env:PIP_DISABLE_PIP_VERSION_CHECK
+    $env:CI = '1'
+    $env:NPM_CONFIG_YES = 'true'
+    $env:PIP_DISABLE_PIP_VERSION_CHECK = '1'
+    try {
+        $escapedSaraBat = $saraBat.FullName.Replace('"', '""')
+        $cmdLine = "call `"$escapedSaraBat`" < NUL"
+        $sp = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/s','/c', $cmdLine) -WorkingDirectory $saraBat.DirectoryName -Wait -PassThru
+        if ($sp.ExitCode -ne 0) { throw "SARA dependency setup failed with exit code $($sp.ExitCode)" }
+    }
+    finally {
+        $env:CI = $oldCI
+        $env:NPM_CONFIG_YES = $oldNpmYes
+        $env:PIP_DISABLE_PIP_VERSION_CHECK = $oldPipCheck
+    }
 
     # ------------------------------------------------------------------
     # 5) Create SARUS private Python runtime and run acceptance tests.
