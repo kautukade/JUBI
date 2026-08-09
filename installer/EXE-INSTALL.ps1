@@ -30,12 +30,14 @@ function Invoke-SarusPowerShell([string]$ScriptPath, [string[]]$Arguments = @())
         '-File', "`"$ScriptPath`""
     ) + $Arguments
 
-    $process = Start-Process \
-        -FilePath $PowerShell \
-        -ArgumentList $argumentList \
-        -WorkingDirectory $Root \
-        -Wait \
-        -PassThru
+    $startParams = @{
+        FilePath = $PowerShell
+        ArgumentList = $argumentList
+        WorkingDirectory = $Root
+        Wait = $true
+        PassThru = $true
+    }
+    $process = Start-Process @startParams
 
     if ($process.ExitCode -ne 0) {
         throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode)."
