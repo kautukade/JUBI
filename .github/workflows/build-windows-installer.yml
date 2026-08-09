@@ -3,8 +3,8 @@ name: Build SARUS Windows Installer
 on:
   push:
     branches:
-      - agent/windows-exe-installer-v1
       - main
+      - 'agent/**'
     paths:
       - 'installer/**'
       - 'sarus/**'
@@ -14,13 +14,14 @@ on:
       - 'vendor/**'
       - 'sources/**'
       - 'README.md'
-      - 'START_SARUS.bat'
-      - 'INSTALL-SARUS*.bat'
-      - 'INSTALL-RING0.bat'
       - '.github/workflows/build-windows-installer.yml'
   pull_request:
     paths:
       - 'installer/**'
+      - 'sarus/**'
+      - 'config/**'
+      - 'driver/**'
+      - 'vendor/**'
       - 'README.md'
       - '.github/workflows/build-windows-installer.yml'
   workflow_dispatch:
@@ -37,20 +38,53 @@ jobs:
       - name: Checkout SARUS
         uses: actions/checkout@v4
 
-      - name: Verify installer payload
+      - name: Verify one-click installer payload
         shell: powershell
         run: |
           $required = @(
             'sarus\server.py',
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
+            'installer\SETUP-BROKER.ps1',
+            'installer\UNINSTALL-SARUS.ps1',
             'installer\SARUS-Setup.iss',
-            'START_SARUS.bat',
+            'vendor\launcher\SARUS.exe.b64',
+            'vendor\launcher\SHA256.txt',
+            'config\models.json',
+            'config\broker_allowlist.json',
             'README.md'
           )
           foreach ($file in $required) {
             if (-not (Test-Path -LiteralPath $file)) { throw "Missing installer payload: $file" }
           }
+
+          $powershellScripts = @(
+            'installer\INSTALL-SARUS.ps1',
+            'installer\EXE-INSTALL.ps1',
+            'installer\SETUP-BROKER.ps1',
+            'installer\UNINSTALL-SARUS.ps1',
+            'driver\SarusRing0\INSTALL-RING0.ps1'
+          )
+          foreach ($script in $powershellScripts) {
+            if (-not (Test-Path -LiteralPath $script)) { continue }
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $script), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $messages = ($errors | ForEach-Object { $_.Message }) -join '; '
+              throw "PowerShell syntax error in $script : $messages"
+            }
+          }
+
+          $iss = Get-Content -LiteralPath 'installer\SARUS-Setup.iss' -Raw
+          if ($iss -match 'Filename:\s*"\{app\}\\START_SARUS\.bat"') {
+            throw 'End-user installer shortcut still points to START_SARUS.bat; shortcuts must target SARUS.exe.'
+          }
+          if ($iss -notmatch 'Filename:\s*"\{app\}\\\{#MyAppExeName\}"') {
+            throw 'SARUS.exe shortcut was not found in the Inno Setup definition.'
+          }
+
           python -m compileall -q sarus scripts tests
 
       - name: Locate or install Inno Setup
@@ -98,6 +132,7 @@ jobs:
           path: |
             dist-installer/SARUS-Setup.exe
             dist-installer/SHA256.txt
+            README.md
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
