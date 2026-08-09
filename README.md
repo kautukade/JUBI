@@ -3,179 +3,455 @@
 > **SARUS — Local Multi-Agent AI Research & Windows Automation Platform**  
 > Developed for **ITCYBER TECHNOLOGIES PVT LTD**  
 > Primary platform: **Windows 10/11 x64**  
-> Installer generation: **SARUS-Setup.exe v1.2.0**
+> Current installer generation: **SARUS-Setup.exe v1.3.0**
 
-SARUS is a Windows-first local AI workspace that combines a central orchestration layer, SARA, Ollama model routing, multiple agent/research source integrations, a browser dashboard, an audited privileged Windows broker, and a controlled Windows Ring-0 driver bridge.
+SARUS is a Windows-first local AI research and automation workspace that combines local Ollama models, a central task/orchestration layer, SARA, multiple pinned agent/research source trees, persistent memory, signed execution receipts, a typed privileged Windows broker, a controlled Windows Ring-0 bridge, and the **Fable Intelligence Layer**.
 
-The normal testing-laptop installation path is intentionally simple:
+Version 1.3 adds a deep integration of the pinned `robiot/fable-os` research source without replacing the Windows host kernel. The original Fable OS remains an isolated QEMU research target, while its strongest architecture ideas are reimplemented as native SARUS services: verified execution traces, versioned learned capabilities, bounded agenda/autonomy, and a managed Fable Lab.
+
+---
+
+## 1. One-click installation
+
+The normal testing-laptop path is intentionally a **single EXE**:
 
 ```text
 Download SARUS-Setup.exe
         ↓
-Run as Administrator
+Right-click → Run as administrator
         ↓
-Installer provisions SARUS automatically
+Installer copies and provisions the complete SARUS payload
         ↓
-Desktop shortcut points directly to SARUS.exe
+Private Python environment + integrations + acceptance checks
+        ↓
+Desktop / Start Menu shortcut points directly to SARUS.exe
         ↓
 SARUS starts
 ```
 
-**The end user does not need to manually run `INSTALL-SARUS.bat`, `START_SARUS.bat`, or `INSTALL-RING0.bat` for the normal EXE installation flow.** Some legacy/internal batch files remain in the repository because SARA and developer workflows still use them internally, but the testing-laptop user-facing path is the single EXE.
-
----
-
-## 1. Quick facts
-
-| Item | Value |
-|---|---|
-| Product | SARUS |
-| Publisher | ITCYBER TECHNOLOGIES PVT LTD |
-| Main OS | Windows 10/11 x64 |
-| Recommended installer | `SARUS-Setup.exe` |
-| Current installer version | 1.2.0 |
-| Main dashboard | `http://127.0.0.1:8877` |
-| SARA dashboard | `http://127.0.0.1:3000/dashboard/command` |
-| Local model runtime | Ollama |
-| Main Python runtime | Python 3.11 private venv |
-| Privileged Windows layer | SARUS Privileged Broker |
-| Ring-0 layer | `SarusRing0.sys` controlled kernel bridge |
-| Default network exposure | localhost |
-| Main install directory | `C:\Program Files\SARUS` |
-| Main install logs | `C:\Program Files\SARUS\logs\` |
-
----
-
-## 2. What SARUS is
-
-SARUS is not simply one chatbot and it is not only one upstream open-source repository. It is a unified local AI platform around a SARUS orchestration core.
-
-Its main responsibilities are:
-
-- run local AI models through Ollama;
-- route tasks to different capabilities and source integrations;
-- provide browser-based local control and observability;
-- integrate the custom SARA Windows assistant;
-- coordinate multiple agent/research source trees;
-- expose approved Windows operations through a privileged broker;
-- keep high-risk actions typed, logged and auditable;
-- optionally communicate with a controlled Windows kernel driver;
-- run acceptance checks after installation;
-- preserve the system as a reproducible R&D/testing workspace.
-
----
-
-## 3. Main architecture
-
-```mermaid
-flowchart TD
-    U[User / Researcher] --> UI[SARUS Local Dashboard]
-    UI --> API[SARUS HTTP/API Layer]
-
-    API --> ORCH[Task & Agent Orchestrator]
-    ORCH --> MODELS[Ollama Local Model Router]
-    ORCH --> SOURCES[Source / Agent Adapters]
-    ORCH --> MEMORY[Task, Memory, Events & Receipts]
-
-    ORCH --> PB[Privileged Broker]
-    PB --> WIN[Typed Windows Actions]
-    PB --> APPROVAL[Approval / Policy Layer]
-    PB --> R0[Controlled Ring0 Bridge]
-
-    R0 --> DEV[\\.\SarusRing0]
-    DEV --> DRV[SarusRing0.sys]
-    DRV --> KERNEL[Windows Kernel]
-```
-
-### Architecture principle
-
-The local model does not receive a generic unrestricted Windows kernel handle. Requests flow through SARUS policy and typed capability boundaries.
-
----
-
-## 4. Runtime request flow
-
-A normal SARUS task follows this pattern:
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Dashboard
-    participant SARUS
-    participant Model as Ollama Model
-    participant Broker as Privileged Broker
-    participant Windows
-
-    User->>Dashboard: Give task
-    Dashboard->>SARUS: Submit request
-    SARUS->>Model: Plan / reason / generate action
-    Model-->>SARUS: Proposed typed capability
-    SARUS->>Broker: Validate typed request
-    Broker->>Broker: Policy + parameter + approval checks
-    Broker->>Windows: Execute allowed operation
-    Windows-->>Broker: Result
-    Broker-->>SARUS: Result + receipt
-    SARUS-->>Dashboard: Final result / status
-```
-
-This design keeps the reasoning layer separated from the privileged executor.
-
----
-
-## 5. Included source integrations
-
-SARUS brings together the SARUS core and the custom SARA environment with pinned source integrations.
-
-Current source families include:
-
-1. **SARA** — custom Windows local AI assistant and automation environment.
-2. **NousResearch / hermes-agent** — agent/tool workflow patterns.
-3. **ECC** — additional capability/source integration.
-4. **agency-agents** — role-based multi-agent workflow patterns.
-5. **awesome-llm-apps** — LLM application examples and adapters.
-6. **second-brain-skills** — reusable assistant and knowledge skills.
-7. **superpowers** — additional reusable agent patterns.
-8. **fable-os** — experimental AI/OS-oriented source integration.
-9. **CAI** — security-oriented agent/source material.
-10. **autoresearch** — research automation source integration.
-
-Public source versions are pinned in:
+For the normal install flow you do **not** need to manually run:
 
 ```text
-config\online_sources.json
+INSTALL-SARUS.bat
+START_SARUS.bat
+INSTALL-RING0.bat
 ```
 
-When a pinned source is already bundled in the installer, SARUS uses the local copy. When a pinned public source is missing, the installer can restore the exact configured commit from GitHub.
+Those files remain for repository development, recovery, or specialized driver workflows.
 
----
-
-## 6. Core SARUS components
-
-### 6.1 SARUS server
-
-Main local application entry point:
+Default installation directory:
 
 ```text
-sarus\server.py
+C:\Program Files\SARUS
 ```
 
-Default dashboard URL:
+Main dashboard:
 
 ```text
 http://127.0.0.1:8877
 ```
 
-### 6.2 Ollama model router
+Fable Lab dashboard:
 
-Model configuration:
+```text
+http://127.0.0.1:8877/fable.html
+```
+
+SARA dashboard when its web component is active:
+
+```text
+http://127.0.0.1:3000/dashboard/command
+```
+
+---
+
+## 2. Quick facts
+
+| Item | Current value |
+|---|---|
+| Product | SARUS |
+| Publisher | ITCYBER TECHNOLOGIES PVT LTD |
+| Version | 1.3.0 |
+| Main platform | Windows 10/11 x64 |
+| Installer | `SARUS-Setup.exe` |
+| Main dashboard | `127.0.0.1:8877` |
+| Fable dashboard | `127.0.0.1:8877/fable.html` |
+| SARA dashboard | `127.0.0.1:3000/dashboard/command` |
+| Local model runtime | Ollama |
+| Python runtime | Python 3.11 private `.sarus-venv` |
+| Source families | 10 |
+| Clean tracked source files | 17,129 |
+| Windows privileged layer | SARUS Privileged Broker |
+| Kernel bridge | `SarusRing0.sys` controlled Ring-0 bridge |
+| Fable source | `robiot/fable-os` |
+| Fable pin | `1cfe17c4baa77fac128008621721823913a1335c` |
+| Default network exposure | localhost |
+
+The reproducible clean-checkout source count and version metadata live in `BUILD_MANIFEST.json`.
+
+---
+
+# 3. What SARUS is
+
+SARUS is not one chatbot and it is not one upstream repository. It is a unified local operating/research platform with several cooperating layers.
+
+Its main responsibilities are to:
+
+- run local AI through Ollama;
+- route work between specialized source adapters;
+- coordinate multi-step research and automation tasks;
+- integrate SARA for Windows-oriented assistant functions;
+- maintain local memory and event history;
+- issue signed/hash-chained execution receipts;
+- mediate privileged Windows actions through typed policy controls;
+- communicate with a controlled Windows kernel driver when available;
+- manage persistent learned capabilities;
+- run bounded autonomous agenda items;
+- host the Fable Intelligence Layer and isolated Fable OS research lab;
+- package the complete environment into a one-click Windows installer;
+- run cross-platform CI and Windows installer validation.
+
+---
+
+# 4. Main architecture
+
+```mermaid
+flowchart TD
+    U[User / Researcher] --> UI[SARUS Dashboard]
+    UI --> API[SARUS Local HTTP API]
+
+    API --> EXEC[Execution Engine]
+    EXEC --> ORCH[Task / Agent Orchestrator]
+    ORCH --> MODELS[Ollama Model Router]
+    ORCH --> ADAPTERS[10 Source Adapters]
+    ORCH --> MEMORY[Memory + Event Bus]
+
+    EXEC --> POLICY[Policy / Approval Layer]
+    POLICY --> PB[Privileged Broker]
+    PB --> WIN[Typed Windows Actions]
+    PB --> R0[Controlled Ring-0 Bridge]
+    R0 --> DEVICE[\\.\SarusRing0]
+    DEVICE --> DRIVER[SarusRing0.sys]
+    DRIVER --> KERNEL[Windows Kernel]
+
+    EXEC --> RECEIPTS[Signed Hash-Chained Receipts]
+
+    API --> FABLE[Fable Intelligence Layer]
+    FABLE --> FTRACE[Verified Fable Trace Store]
+    FTRACE --> RECEIPTS
+    FABLE --> FCAP[Learned Capability Store]
+    FCAP --> EXEC
+    FABLE --> AGENDA[Bounded Agenda Engine]
+    AGENDA --> FCAP
+    FABLE --> LAB[Fable Lab Manager]
+    LAB --> FSRC[Pinned Fable Source]
+    LAB --> WSL[WSL / Linux Build Environment]
+    WSL --> QEMU[QEMU]
+    QEMU --> FOS[Fable OS Kernel]
+```
+
+The key architectural rule is that the AI reasoning layer and the privileged execution layer remain separate.
+
+---
+
+# 5. Normal task flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Dashboard
+    participant SARUS
+    participant Model as Ollama Model
+    participant Policy
+    participant Broker as Privileged Broker
+    participant Windows
+    participant Receipt as Receipt Store
+
+    User->>UI: Submit task
+    UI->>SARUS: Local API request
+    SARUS->>Model: Plan / reason
+    Model-->>SARUS: Proposed typed action / result
+    SARUS->>Policy: Evaluate operation
+    Policy-->>SARUS: allow / approval / deny
+    SARUS->>Broker: Execute approved typed action
+    Broker->>Windows: Windows API / controlled bridge
+    Windows-->>Broker: Actual result
+    Broker->>Receipt: Signed execution evidence
+    Broker-->>SARUS: Result + receipt
+    SARUS-->>UI: Final status
+```
+
+A model statement is not automatically considered proof that an action occurred. Privileged actions are grounded in execution results and receipts.
+
+---
+
+# 6. Included source families
+
+SARUS currently coordinates these source families:
+
+1. **SARA** — custom Windows local AI assistant/runtime.
+2. **NousResearch / hermes-agent** — agent/tool workflow concepts.
+3. **ECC** — additional capability/source integration.
+4. **agency-agents** — role-based multi-agent patterns.
+5. **awesome-llm-apps** — LLM application patterns/examples.
+6. **second-brain-skills** — knowledge and reusable assistant skills.
+7. **superpowers** — reusable agent/development patterns.
+8. **fable-os** — AI-native OS research source + native SARUS Fable integration.
+9. **CAI** — security-oriented agent/source material.
+10. **autoresearch** — automated research workflow material.
+
+Configured paths:
+
+```text
+config\sources.json
+```
+
+Public repository pins:
+
+```text
+config\online_sources.json
+```
+
+The Fable pin is intentionally tested independently by CI.
+
+---
+
+# 7. Fable Intelligence Layer
+
+Version 1.3 upgrades Fable from a source/reference adapter into a real SARUS subsystem.
+
+Implementation:
+
+```text
+sarus\core\fable.py
+sarus\adapters\fable_os.py
+sarus\web\fable.html
+docs\FABLE-INTEGRATION.md
+tests\fable_integration_test.py
+.github\workflows\fable-integration.yml
+```
+
+The integration has four major native layers.
+
+## 7.1 Verified execution traces
+
+Fable's useful trust principle is retained:
+
+```text
+model explanation != machine proof
+```
+
+SARUS native flow:
+
+```mermaid
+flowchart LR
+    ACTION[Trusted SARUS execution] --> TRACE[FableTraceStore verified event]
+    TRACE --> RECEIPT[ReceiptStore]
+    RECEIPT --> MAC[HMAC-SHA256 signature]
+    RECEIPT --> CHAIN[Hash chain]
+    RECEIPT --> RID[receipt_id]
+    RID --> TRACE
+```
+
+Trace kinds:
+
+- `verified` — created by trusted SARUS execution and linked to a signed receipt;
+- `kernel_candidate` — imported Fable serial text beginning with `[` at column zero;
+- `prose` — imported non-trace/model text.
+
+A bracketed line imported from a log or pasted text is **not** promoted to a SARUS verified event merely because it looks like a Fable trace.
+
+## 7.2 Persistent learned capabilities
+
+SARUS can save reusable task definitions as versioned learned capabilities.
+
+Each record stores:
+
+```text
+id
+name
+version
+description
+prompt
+permissions
+enabled
+created / updated
+definition_hash
+success_count
+failure_count
+last_status
+```
+
+Example version chain:
+
+```text
+system_health:v1
+system_health:v2
+system_health:v3
+```
+
+Each definition is SHA-256 hashed. Running a learned capability routes back through the normal SARUS `ExecutionEngine`; it does not bypass the existing planning/policy/broker architecture.
+
+This implementation stores declarative SARUS tasks, not arbitrary executable kernel code.
+
+## 7.3 Bounded Agenda Engine
+
+Fable-style persistent autonomous scheduling is implemented with explicit bounds.
+
+Supported modes:
+
+```text
+boot
+once
+every
+```
+
+Current limits:
+
+| Limit | Value |
+|---|---:|
+| Active agenda items | 8 |
+| Minimum `every` period | 60 seconds |
+| Maximum total runs | 256 |
+| Consecutive failure cutoff | 3 |
+| Actions per scheduler tick | 1 |
+
+Agenda entries may invoke only saved learned capabilities.
+
+## 7.4 Managed original Fable Lab
+
+The original pinned Fable source remains a separate experimental operating system target.
+
+SARUS validates that the materialized source contains core surfaces including:
+
+```text
+README.md
+README.os.md
+AGENTS.md
+Makefile
+core\
+tools\
+vm\
+compiler\
+```
+
+The lab exposes only fixed action IDs:
+
+```text
+build
+test_host
+test_qemu
+test_all
+iso
+clean
+start
+stop
+tail
+```
+
+The HTTP/UI caller cannot supply an arbitrary shell command, arbitrary make target, arbitrary QEMU arguments, raw device addresses, or an API key through the lab interface.
+
+---
+
+# 8. Fable Lab dashboard
+
+Open:
+
+```text
+http://127.0.0.1:8877/fable.html
+```
+
+The page includes:
+
+- source completeness;
+- pinned upstream commit;
+- Fable tool-source count;
+- WSL / make / QEMU readiness;
+- Fable lab running state and PID;
+- fixed build/test/start/stop controls;
+- serial/log tail classification;
+- learned capability creation, versioning, enable/disable and execution;
+- bounded agenda creation and controls;
+- signed verified trace/evidence feed.
+
+The main Command Center contains a direct **Fable Lab** navigation button.
+
+---
+
+# 9. Original Fable OS runtime on Windows
+
+The SARUS-native Fable Intelligence Layer works as part of normal SARUS without booting Fable OS.
+
+To actually compile/boot the original Fable kernel from a Windows machine, a Linux-compatible build environment is needed. SARUS detects WSL on Windows and uses a fixed WSL build path when available.
+
+The upstream Fable build expects tools such as:
+
+```text
+make
+nasm
+x86_64 ELF cross compiler / binutils
+QEMU
+```
+
+The lab status API reports whether the host is ready:
+
+```text
+GET /api/fable
+```
+
+Important fields:
+
+```text
+source.source_complete
+source.wsl_available
+source.native_make
+source.native_qemu
+source.runtime_ready
+source.running
+```
+
+`runtime_ready=false` means the optional original Fable/QEMU toolchain is not available on that machine. It does **not** mean the SARUS-native Fable integration failed.
+
+---
+
+# 10. Fable API
+
+Read endpoints:
+
+```text
+GET /api/fable
+GET /api/fable/traces
+GET /api/fable/capabilities
+GET /api/fable/agenda
+GET /api/fable/lab/tail
+```
+
+Write endpoints:
+
+```text
+POST /api/fable/lab
+POST /api/fable/capability/save
+POST /api/fable/capability/run
+POST /api/fable/capability/toggle
+POST /api/fable/agenda/add
+POST /api/fable/agenda/toggle
+```
+
+POST requests use the same SARUS session-token and same-origin protections as other local dashboard writes.
+
+---
+
+# 11. Ollama model layer
+
+Model routing configuration:
 
 ```text
 config\models.json
 ```
 
-Configured model groups currently include categories such as:
+Typical configured categories include:
 
-#### General
+### General
 
 ```text
 qwen2.5:7b
@@ -184,101 +460,77 @@ mistral:latest
 llama3:latest
 ```
 
-#### Coding
+### Coding
 
 ```text
 qwen2.5-coder:7b
 deepseek-coder:latest
 ```
 
-#### Vision
+### Vision
 
 ```text
 qwen2.5vl:3b
 ```
 
-#### Embeddings
+### Embeddings
 
 ```text
 nomic-embed-text-v2-moe:latest
 ```
 
-#### Lightweight / fast
+### Fast / lightweight
 
 ```text
 qwen2:1.5b
 gemma:2b
 ```
 
-Cloud-tagged models can remain outside the strict local route.
+Fable participates as a specialist adapter. It receives current Fable runtime status plus relevant pinned source excerpts and is instructed not to claim runtime execution without evidence.
 
-### 6.3 SARA
+---
 
-SARA provides the custom Windows-oriented assistant/runtime integrated into the larger SARUS workspace.
+# 12. Privileged Broker
 
-During installation, the verified bundled SARA source is reconstructed when needed and its dependency setup is executed automatically by the SARUS installer engine.
-
-### 6.4 Privileged Broker
-
-The privileged broker is the boundary between AI reasoning and higher-privilege Windows operations.
-
-Main configuration:
-
-```text
-config\broker_allowlist.json
-```
-
-Main implementation:
+Main files:
 
 ```text
 sarus\core\privileged_broker.py
 sarus\core\windows.py
+config\broker_allowlist.json
 ```
 
-Typical capabilities include:
-
-- process/service inspection;
-- approved workspace file operations;
-- allowlisted service actions;
-- allowlisted process actions;
-- URL opening;
-- controlled Ring-0 status/ping operations.
-
-The broker uses default-deny behavior and strict typed parameters.
-
----
-
-## 7. Privileged action architecture
-
-```mermaid
-flowchart LR
-    LLM[Local AI / Agent] --> REQ[Typed Action Request]
-    REQ --> VAL[Schema & Parameter Validation]
-    VAL --> POL[Policy Evaluation]
-    POL -->|Denied| DENY[Denied + Receipt]
-    POL -->|Approval needed| APR[Request-Bound Approval]
-    POL -->|Allowed| EXEC[Windows Executor]
-    APR --> EXEC
-    EXEC --> RES[Result]
-    RES --> AUDIT[Signed / Authenticated Receipt]
-```
-
-Important security properties include:
+Core properties include:
 
 - default deny;
 - typed action IDs;
-- parameter validation;
+- schema/parameter validation;
 - resource allowlists;
+- request-bound approval support;
 - replay-window protection;
-- request-bound approval proof support;
-- audit receipt generation;
-- redaction of sensitive payload values.
+- signed audit receipts;
+- sensitive-payload redaction.
+
+High-privilege model reasoning does not directly become a Windows command.
+
+```mermaid
+flowchart LR
+    MODEL[AI / Agent] --> REQ[Typed Request]
+    REQ --> VALIDATE[Validate]
+    VALIDATE --> POLICY[Policy]
+    POLICY -->|deny| DENIED[Denied + Receipt]
+    POLICY -->|approval| APPROVAL[Out-of-band Approval]
+    POLICY -->|allow| EXEC[Executor]
+    APPROVAL --> EXEC
+    EXEC --> RESULT[Actual Result]
+    RESULT --> RECEIPT[Signed Receipt]
+```
 
 ---
 
-## 8. Controlled Ring-0 bridge
+# 13. Controlled Ring-0 bridge
 
-SARUS contains an actual Windows kernel driver project:
+SARUS includes a Windows kernel driver project:
 
 ```text
 driver\SarusRing0\
@@ -294,702 +546,392 @@ driver\SarusRing0\BUILD-RING0.ps1
 driver\SarusRing0\INSTALL-RING0.ps1
 ```
 
-Current broker-visible Ring-0 capabilities are:
+Broker-visible controlled capabilities currently include:
 
 ```text
 ring0.ping
 ring0.status
 ```
 
-The call path is:
+Call path:
 
 ```mermaid
 flowchart TD
-    SARUS[SARUS] --> BROKER[Privileged Broker]
-    BROKER --> BRIDGE[Ring0Bridge Python Client]
-    BRIDGE --> IOCTL[Fixed DeviceIoControl Call]
+    SARUS --> BROKER[Privileged Broker]
+    BROKER --> BRIDGE[Ring0Bridge]
+    BRIDGE --> IOCTL[Fixed DeviceIoControl]
     IOCTL --> DEVICE[\\.\SarusRing0]
     DEVICE --> DRIVER[SarusRing0.sys]
-    DRIVER --> KERNEL[Windows Kernel Mode]
+    DRIVER --> KERNEL[Windows Kernel]
     KERNEL --> DRIVER
     DRIVER --> BRIDGE
     BRIDGE --> SARUS
 ```
 
-The current driver reports protocol/capability information and kernel-side telemetry such as IRQL/timing status.
+The Fable integration does not replace this Windows kernel bridge and does not expose generic arbitrary kernel primitives through the Fable Lab API.
 
-### Ring-0 signing status and the one-click installer
+---
 
-The EXE installer contains the complete SARUS application source and Ring-0 driver source project.
+# 14. Ring-0 signing behavior in the one-click installer
 
-A Windows kernel driver cannot be silently treated like a normal unsigned application binary. Therefore installer v1.2.0 behaves as follows:
+The installer contains the Ring-0 source project. Windows kernel-driver activation follows Windows trust/signature requirements.
+
+Installer logic is conceptually:
 
 ```text
 If a prebuilt SarusRing0.sys exists
-    AND its Authenticode status is Valid
-        → EXE automatically installs/starts the controlled Ring0 driver
+AND Windows reports a valid trusted signature
+    → install/start controlled Ring-0 service
 Else
-        → SARUS application installation succeeds
-        → Ring0 source remains installed
-        → kernel driver activation is skipped and logged
+    → complete normal SARUS install
+    → preserve Ring-0 source
+    → skip driver activation and log the reason
 ```
 
-The installer does **not** disable Secure Boot, Windows driver-signature enforcement, Defender, or Code Integrity.
-
-This means the **full normal SARUS application is one-click installed**, while actual kernel-driver activation still depends on having a driver binary legitimately trusted by the target Windows machine.
+The installer does not disable Secure Boot, Code Integrity, Defender, or driver-signature enforcement.
 
 ---
 
-# 9. Single-EXE installation — recommended method
+# 15. What SARUS-Setup.exe v1.3.0 contains
 
-For the dedicated testing laptop, this is the normal installation method.
+The Inno Setup build recursively packages the complete repository payload while excluding development/runtime output directories such as `.git`, local venvs, logs, data, and installer output.
 
-## What you need to do
+The Windows installer CI explicitly checks for Fable v1.3 payload files:
 
-Only these steps are required:
+```text
+sarus\core\fable.py
+sarus\adapters\fable_os.py
+sarus\web\fable.html
+tests\fable_integration_test.py
+docs\FABLE-INTEGRATION.md
+config\online_sources.json
+```
 
-1. Download `SARUS-Setup.exe`.
-2. Right-click it and choose **Run as administrator**.
-3. Accept the Windows UAC prompt.
-4. Keep internet connected during the first setup.
-5. Let the installer complete.
-6. Use the **SARUS** desktop shortcut.
-
-You do **not** need to manually run any project `.bat` file.
+It also validates the expected pinned Fable repository/SHA before producing the EXE.
 
 ---
 
-## 10. What `SARUS-Setup.exe` does automatically
-
-Installer v1.2.0 performs this chain:
+# 16. Installer pipeline
 
 ```mermaid
 flowchart TD
-    EXE[SARUS-Setup.exe] --> COPY[Copy complete SARUS payload]
-    COPY --> BROKER[Create protected broker storage]
-    BROKER --> SARA[Restore & verify bundled SARA]
-    SARA --> LAUNCHER[Reconstruct & SHA256-verify SARUS.exe]
-    LAUNCHER --> SRC[Restore missing pinned source integrations]
-    SRC --> DEPS[Run dependency provisioning internally]
-    DEPS --> PY[Locate Python 3.11]
-    PY --> VENV[Create .sarus-venv]
-    VENV --> TEST[Run sarus.acceptance]
-    TEST --> R0{Valid signed Ring0 binary bundled?}
-    R0 -->|Yes| R0I[Install controlled Ring0 service]
-    R0 -->|No| SKIP[Skip kernel activation safely]
-    R0I --> VERIFY[Final file verification]
+    EXE[SARUS-Setup.exe] --> COPY[Copy SARUS payload]
+    COPY --> BROKER[Provision broker storage]
+    BROKER --> SARA[Restore/verify bundled SARA]
+    SARA --> LAUNCHER[Restore/verify SARUS.exe launcher]
+    LAUNCHER --> SOURCES[Restore missing pinned sources]
+    SOURCES --> PY[Locate Python 3.11]
+    PY --> VENV[Create private .sarus-venv]
+    VENV --> ACCEPT[Run SARUS acceptance]
+    ACCEPT --> FABLE[Fable integration included]
+    FABLE --> R0{Valid signed Ring0 driver available?}
+    R0 -->|yes| R0I[Install controlled Ring0 service]
+    R0 -->|no| SKIP[Skip kernel activation safely]
+    R0I --> VERIFY[Final verification]
     SKIP --> VERIFY
-    VERIFY --> SHORTCUT[Create direct SARUS.exe shortcut]
-    SHORTCUT --> START[Launch SARUS.exe]
-```
-
-### Automatic steps in detail
-
-The installer:
-
-- installs files into `C:\Program Files\SARUS` by default;
-- creates/initializes protected broker storage;
-- checks that the SARUS core payload exists;
-- reconstructs the bundled SARA source when necessary;
-- validates SARA source SHA-256 before extraction;
-- reconstructs the small `SARUS.exe` launcher from the verified bundled payload;
-- validates the `SARUS.exe` SHA-256 value;
-- restores configured pinned source projects if not already present;
-- executes SARA dependency provisioning internally;
-- checks for Python 3.11;
-- creates a private `.sarus-venv` Python environment;
-- runs `python -m sarus.acceptance`;
-- detects a trusted prebuilt Ring-0 driver when one is bundled;
-- automatically installs that driver only when its signature status is valid;
-- verifies important final files;
-- creates Start Menu/Desktop shortcuts directly to `SARUS.exe`;
-- launches SARUS automatically.
-
----
-
-## 11. Internal scripts vs manual user steps
-
-The repository still contains files such as:
-
-```text
-INSTALL-SARUS.bat
-START_SARUS.bat
-INSTALL-RING0.bat
-```
-
-These are retained for repository development, debugging and backwards compatibility.
-
-### Normal testing-laptop rule
-
-```text
-DO:     SARUS-Setup.exe
-DO NOT: manually run setup BAT files unless debugging the repository
-```
-
-The EXE may internally invoke a legacy SARA batch dependency installer through `cmd.exe`. That is an implementation detail of the installer and requires no action from the user.
-
----
-
-## 12. Installation directory
-
-Default:
-
-```text
-C:\Program Files\SARUS
-```
-
-Important installed paths:
-
-```text
-C:\Program Files\SARUS\SARUS.exe
-C:\Program Files\SARUS\.sarus-venv\
-C:\Program Files\SARUS\sarus\
-C:\Program Files\SARUS\config\
-C:\Program Files\SARUS\sources\
-C:\Program Files\SARUS\driver\SarusRing0\
-C:\Program Files\SARUS\installer\
-C:\Program Files\SARUS\logs\
-C:\Program Files\SARUS\README.md
+    VERIFY --> SHORTCUT[Direct SARUS.exe shortcut]
+    SHORTCUT --> START[Launch SARUS]
 ```
 
 ---
 
-## 13. System requirements
+# 17. Installed directory structure
 
-### Required
+Typical paths:
 
-- Windows 10 or Windows 11 x64;
-- Administrator permission;
-- Windows PowerShell 5.1;
-- internet access for missing source/dependency/model downloads;
-- enough free storage for source trees and AI models.
-
-### Recommended
-
-- 25 GB or more free disk space for comfortable experimentation;
-- 16 GB RAM or more for local AI workloads;
-- SSD/NVMe storage;
-- dedicated testing machine for privileged/R&D experiments;
-- stable internet during first installation.
-
-### Components used by the environment
-
-Depending on the existing machine state, SARA/SARUS may use or provision:
-
-- Python 3.11 x64;
-- Python Launcher (`py.exe`);
-- Git for Windows;
-- Node.js/npm;
-- Ollama;
-- browser/web runtime dependencies;
-- Windows `tar.exe`.
-
-The EXE installer owns the setup flow; you normally do not need to install these manually before trying the official installer.
+```text
+C:\Program Files\SARUS\
+│
+├── SARUS.exe
+├── README.md
+├── BUILD_MANIFEST.json
+├── .sarus-venv\
+├── sarus\
+│   ├── server.py
+│   ├── core\
+│   │   ├── app.py
+│   │   ├── fable.py
+│   │   ├── privileged_broker.py
+│   │   └── ...
+│   ├── adapters\
+│   │   ├── fable_os.py
+│   │   └── ...
+│   └── web\
+│       ├── index.html
+│       └── fable.html
+├── config\
+├── sources\
+│   └── fable-os-main(3)\fable-os-main\
+├── driver\SarusRing0\
+├── docs\FABLE-INTEGRATION.md
+├── tests\
+├── installer\
+└── logs\
+```
 
 ---
 
-## 14. First launch
+# 18. Installation requirements
 
-When installation succeeds, SARUS is launched through:
+Required/recommended for normal SARUS:
+
+- Windows 10/11 x64;
+- Administrator access for installation;
+- stable internet during first provisioning when dependencies/sources/models are missing;
+- SSD/NVMe recommended;
+- 16 GB RAM or more recommended for comfortable local-model use;
+- sufficient storage for source trees and Ollama models.
+
+The installer may rely on/provision components used by SARA/SARUS such as Python 3.11, Git, Node/npm and Ollama depending on machine state.
+
+Optional for **original Fable OS build/QEMU execution**:
+
+- WSL on Windows;
+- compatible Linux toolchain inside WSL;
+- QEMU;
+- upstream Fable build prerequisites.
+
+---
+
+# 19. First launch and verification
+
+Start SARUS from the desktop/Start Menu shortcut or:
 
 ```text
 C:\Program Files\SARUS\SARUS.exe
 ```
 
-The main local dashboard is:
+Then open:
 
 ```text
 http://127.0.0.1:8877
 ```
 
-SARA's dashboard, when its web component is running, is normally:
+Fable integration:
 
 ```text
-http://127.0.0.1:3000/dashboard/command
+http://127.0.0.1:8877/fable.html
 ```
 
-If a browser opens before the local server is fully ready, refresh the page after SARUS finishes startup.
+Useful status APIs:
+
+```text
+GET /api/status
+GET /api/fable
+GET /api/broker
+GET /api/receipts
+GET /api/doctor
+```
+
+Key Fable status expectations after a complete application install:
+
+```text
+fable.integrated = true
+fable.source.source_present = true
+fable.source.source_complete = true
+fable.trace.model_prose_is_not_proof = true
+```
+
+`fable.source.runtime_ready` depends on whether the optional WSL/Fable toolchain exists.
 
 ---
 
-## 15. Startup diagram
+# 20. Testing
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Exe as SARUS.exe
-    participant Py as .sarus-venv Python
-    participant Server as sarus.server
-    participant Ollama
-    participant Browser
-
-    User->>Exe: Open SARUS shortcut
-    Exe->>Py: Start private runtime
-    Py->>Server: python -m sarus.server
-    Server->>Ollama: Check/model route
-    Server-->>Browser: Serve local dashboard :8877
-    Browser-->>User: SARUS UI
-```
-
----
-
-## 16. Verify the installation
-
-### Basic file checks
-
-Open PowerShell as Administrator:
-
-```powershell
-cd "C:\Program Files\SARUS"
-Test-Path .\SARUS.exe
-Test-Path .\.sarus-venv\Scripts\python.exe
-Test-Path .\sarus\server.py
-Test-Path .\config\models.json
-Test-Path .\config\broker_allowlist.json
-```
-
-All should return:
+## Fable integration suite
 
 ```text
-True
+python tests\fable_integration_test.py
 ```
 
-### Run acceptance checks
+Coverage includes:
 
-```powershell
-cd "C:\Program Files\SARUS"
-.\.sarus-venv\Scripts\python.exe -m sarus.acceptance
-```
+- Fable source completeness;
+- pinned repository SHA;
+- signed verified-trace linkage;
+- imported trace/prose distinction;
+- capability versioning;
+- capability definition hashes;
+- execution through SARUS;
+- success/failure statistics;
+- one-shot agenda behavior;
+- agenda active-item/period bounds;
+- rejection of free-form lab actions;
+- real materialized source probing.
 
-### Test local dashboard
-
-```powershell
-Invoke-WebRequest http://127.0.0.1:8877
-```
-
-### Check Ollama
-
-```powershell
-ollama list
-```
-
-or:
-
-```powershell
-Invoke-WebRequest http://127.0.0.1:11434/api/tags
-```
-
----
-
-## 17. Ring-0 status verification
-
-After the normal EXE install, you can inspect the controlled Ring-0 bridge from the private runtime:
-
-```powershell
-cd "C:\Program Files\SARUS"
-.\.sarus-venv\Scripts\python.exe -c "from sarus.core.ring0 import Ring0Bridge; import json; print(json.dumps(Ring0Bridge().status(), indent=2))"
-```
-
-Possible states:
-
-### Driver active
+## Existing integration regression
 
 ```text
-"ok": true
-"driver_present": true
-"protocol_version": 1
+python tests\integration_test.py
 ```
 
-### Source installed but no trusted driver loaded
+This verifies all 10 source adapters, source registry integrity, cross-repository pipelines, model configuration, receipts, workspace path guards, typed broker behavior, replay protection, and local HTTP protections.
 
-The status will report that the device/driver is unavailable. The rest of SARUS can still run.
-
----
-
-## 18. Important logs
-
-### Single-EXE bootstrap log
+## Security tests
 
 ```text
-C:\Program Files\SARUS\logs\exe-install.log
+python tests\broker_security_test.py
+python tests\ring0_bridge_test.py
 ```
 
-### Main installation engine log
+## CI workflows
 
 ```text
-C:\Program Files\SARUS\logs\github-install.log
-```
-
-If installation fails, these two files should be checked first.
-
-The EXE installer now treats a non-zero installation-engine exit code as a setup failure and shows the path of the log instead of silently pretending the installation succeeded.
-
----
-
-## 19. Common installation problems
-
-### `Python 3.11 was not found`
-
-The dependency provisioning stage did not leave Python 3.11 available through the Windows Python Launcher.
-
-Check:
-
-```powershell
-py -0p
-py -3.11 --version
-```
-
-Then retry `SARUS-Setup.exe` after correcting Python installation.
-
-### npm command fails inside SARA setup
-
-Check:
-
-```powershell
-node --version
-npm --version
-where.exe node
-where.exe npm
-```
-
-If Node/npm is broken, repair the Node installation and rerun the EXE installer.
-
-### Ollama port `11434` is already in use
-
-This usually means Ollama is already running.
-
-Check:
-
-```powershell
-Get-NetTCPConnection -LocalPort 11434 -ErrorAction SilentlyContinue
-```
-
-Do not start a second Ollama server if one is already listening.
-
-### `SARUS.exe` checksum mismatch
-
-The installer reconstructs `SARUS.exe` and verifies it against:
-
-```text
-vendor\launcher\SHA256.txt
-```
-
-If that verification fails, the installer intentionally stops.
-
-### Source download fails
-
-The official installer carries the verified SARA bundle, but missing public pinned projects can require internet access.
-
-Confirm:
-
-- internet is connected;
-- GitHub/codeload is reachable;
-- firewall/proxy is not blocking the request.
-
-### Ring-0 driver is not active
-
-This does not mean the entire SARUS install failed.
-
-Check whether a binary exists:
-
-```powershell
-Test-Path "C:\Program Files\SARUS\driver\SarusRing0\bin\Release\SarusRing0.sys"
-```
-
-If present, inspect its signature:
-
-```powershell
-Get-AuthenticodeSignature "C:\Program Files\SARUS\driver\SarusRing0\bin\Release\SarusRing0.sys"
-```
-
-The single-EXE bootstrap automatically activates the driver only when Windows reports the signature as `Valid`.
-
----
-
-## 20. Folder map
-
-```text
-SARUS\
-├── SARUS.exe                         # Direct Windows launcher created during install
-├── README.md
-├── sarus\                            # SARUS Python core
-│   ├── server.py
-│   ├── acceptance.py
-│   └── core\
-│       ├── privileged_broker.py
-│       ├── windows.py
-│       ├── ring0.py
-│       └── receipts.py
-├── config\
-│   ├── models.json
-│   ├── online_sources.json
-│   ├── broker_allowlist.json
-│   └── policy.json
-├── sources\                          # SARA + integrated/pinned source projects
-├── driver\
-│   └── SarusRing0\
-│       ├── driver.c
-│       ├── sarus_ring0_shared.h
-│       ├── SarusRing0.vcxproj
-│       ├── BUILD-RING0.ps1
-│       └── INSTALL-RING0.ps1
-├── installer\
-│   ├── SARUS-Setup.iss
-│   ├── EXE-INSTALL.ps1
-│   ├── INSTALL-SARUS.ps1
-│   ├── SETUP-BROKER.ps1
-│   └── UNINSTALL-SARUS.ps1
-├── vendor\
-│   ├── launcher\
-│   │   ├── SARUS.exe.b64
-│   │   └── SHA256.txt
-│   └── sara\
-│       └── finalparts\
-├── logs\                             # Created at install/runtime
-└── .sarus-venv\                      # Created automatically by installer
-```
-
----
-
-## 21. Installer v1.2.0 changes
-
-This release changes the Windows installation experience substantially.
-
-### Changed
-
-- Start Menu shortcut points directly to `SARUS.exe`.
-- Desktop shortcut points directly to `SARUS.exe`.
-- Normal install no longer tells the user to launch `START_SARUS.bat`.
-- `EXE-INSTALL.ps1` is fully non-interactive.
-- The installation engine now supports `-NonInteractive` and `-NoLaunch` modes for the EXE bootstrap.
-- The launcher is mandatory and SHA-256 verified.
-- The private SARUS Python environment is recreated/verified during install.
-- Acceptance tests run before the installer declares success.
-- Final required files are verified before launch.
-- A validly signed prebuilt `SarusRing0.sys`, when bundled, is automatically activated.
-- An unsigned/untrusted Ring-0 binary is skipped rather than weakening Windows security.
-- The installer engine's exit code is propagated to the Inno Setup UI.
-- CI validates PowerShell syntax and checks that user-facing shortcuts do not point to `START_SARUS.bat`.
-- The Windows build artifact includes the new README alongside the installer and SHA-256 file.
-
----
-
-## 22. Build the installer from source
-
-The Inno Setup definition is:
-
-```text
-installer\SARUS-Setup.iss
-```
-
-GitHub Actions workflow:
-
-```text
+.github\workflows\fable-integration.yml
+.github\workflows\privileged-broker-security.yml
 .github\workflows\build-windows-installer.yml
 ```
 
-Workflow name:
-
-```text
-Build SARUS Windows Installer
-```
-
-The workflow:
-
-1. checks out SARUS;
-2. validates the one-click installer payload;
-3. parses PowerShell installer scripts for syntax errors;
-4. checks that shortcuts use `SARUS.exe`;
-5. compiles Python source;
-6. locates/installs Inno Setup;
-7. builds `SARUS-Setup.exe`;
-8. verifies that the EXE was actually produced;
-9. calculates SHA-256;
-10. uploads the Windows installer artifact.
-
-Artifact name:
-
-```text
-SARUS-Windows-Installer
-```
-
-Artifact contents:
-
-```text
-SARUS-Setup.exe
-SHA256.txt
-README.md
-```
+Fable integration CI runs on Ubuntu and Windows with Python 3.11. Windows installer CI also compiles the entire Python tree, runs the Fable tests, validates the pinned Fable source, compiles Inno Setup, checks the EXE size, creates SHA-256 output and uploads the installer artifact.
 
 ---
 
-## 23. Verify downloaded installer SHA-256
+# 21. Logs and diagnostics
 
-After downloading the CI artifact:
-
-```powershell
-Get-FileHash .\SARUS-Setup.exe -Algorithm SHA256
-Get-Content .\SHA256.txt
-```
-
-The hashes should match.
-
----
-
-## 24. SmartScreen / code-signing note
-
-The GitHub-built application installer can show **Unknown publisher** when no Windows application code-signing certificate is configured in CI.
-
-That is different from the kernel-driver signing requirement.
-
-For production distribution, two signing concerns exist:
-
-1. **Application installer signing** — sign `SARUS-Setup.exe`.
-2. **Kernel driver signing** — provide a Windows-trusted signature for `SarusRing0.sys` using an appropriate Microsoft/Windows driver-signing process.
-
-Do not solve either issue by disabling Windows security enforcement.
-
----
-
-## 25. Uninstall
-
-Use normal Windows installed-app removal:
+Main installation logs:
 
 ```text
-Settings
-→ Apps
-→ Installed apps
-→ SARUS
-→ Uninstall
+C:\Program Files\SARUS\logs\exe-install.log
+C:\Program Files\SARUS\logs\github-install.log
 ```
 
-The Inno uninstaller automatically invokes:
+Fable Lab log:
+
+```text
+C:\Program Files\SARUS\logs\fable-lab.log
+```
+
+Fable lab state:
+
+```text
+C:\Program Files\SARUS\data\fable\lab-state.json
+```
+
+Runtime SQLite state is stored under the SARUS `data` directory, including receipts, Fable traces, learned capabilities and agenda rows.
+
+---
+
+# 22. Trust and safety boundaries
+
+Several upstream Fable OS implementation choices are intentionally **not** transplanted into the Windows host architecture.
+
+Not exposed as SARUS host features:
+
+- RWX-everywhere Windows host memory design;
+- caller-selected arbitrary kernel memory operations;
+- unsandboxed host DMA control surface;
+- caller-supplied raw QEMU/device arguments;
+- caller-supplied arbitrary shell/make commands through Fable APIs;
+- autonomous arbitrary live Windows-kernel patching.
+
+The original Fable OS can still be studied as a separate QEMU research target. Windows privileged execution remains mediated by SARUS's own broker/controlled Ring-0 architecture.
+
+---
+
+# 23. Fable integration vs Fable kernel
+
+These are different things:
+
+```text
+SARUS-native Fable Intelligence Layer
+    ├── verified traces
+    ├── learned capabilities
+    ├── bounded agenda
+    └── managed lab APIs/UI
+
+Original Fable OS
+    └── separate x86_64 kernel built/booted in optional QEMU lab
+```
+
+Therefore a testing laptop can have a successful SARUS/Fable integration even before WSL/QEMU is installed. In that state, Fable source reasoning, traces, capabilities and agenda work natively; only original Fable kernel build/boot controls report that runtime setup is still required.
+
+---
+
+# 24. Source/reuse note
+
+The upstream Fable source is pinned for research/reference and isolated lab use. Before redistributing upstream source outside the private research context, confirm the redistribution rights applicable to the exact upstream snapshot.
+
+SARUS's native Fable integration in `sarus/core/fable.py` is an architectural implementation built for SARUS rather than a direct transplant of the Fable kernel.
+
+---
+
+# 25. Updating SARUS
+
+Repository updates should preserve:
+
+- the configured source pins;
+- Fable integration tests;
+- Privileged Broker default-deny properties;
+- receipt-chain verification;
+- installer payload validation;
+- single-EXE end-user install path.
+
+When the Fable upstream pin is intentionally changed, update the pin, integration tests, documentation and installer validation together and run both Fable CI and the SARUS regression suite.
+
+---
+
+# 26. Uninstall
+
+The Windows installer registers a normal uninstall entry. The repository also contains:
 
 ```text
 installer\UNINSTALL-SARUS.ps1
 ```
 
-The cleanup logic removes the SARUS shortcut and controlled Ring-0 service/driver file when present.
-
-By default, user state under local application-data locations may be preserved depending on the cleanup mode so research state is not destroyed accidentally.
+The uninstall workflow handles SARUS application removal and controlled driver-service cleanup as configured. Persistent local data handling should be chosen deliberately when using developer/manual uninstall options.
 
 ---
 
-## 26. Updating SARUS
+# 27. Version 1.3.0 changes
 
-For the testing laptop, the cleanest upgrade path is:
+Compared with the previous installer generation, v1.3.0 adds:
+
+- native `FableIntegration` service;
+- managed original Fable source/lab status;
+- fixed-action Fable build/test/QEMU controller;
+- signed Fable verified-trace layer;
+- explicit separation of model prose vs proof;
+- versioned persistent learned capabilities;
+- SHA-256 capability definitions and execution statistics;
+- bounded `boot` / `once` / `every` agenda engine;
+- dedicated Fable local APIs;
+- dedicated `fable.html` dashboard;
+- direct Fable Lab navigation from Command Center;
+- Windows + Linux Fable integration CI;
+- installer payload enforcement for Fable files/pin;
+- refreshed reproducible clean-checkout source manifest;
+- installer version bump to 1.3.0.
+
+For subsystem-level detail see:
 
 ```text
-Build new SARUS-Setup.exe
-        ↓
-Verify SHA-256
-        ↓
-Run new installer as Administrator
-        ↓
-Installer reuses the SARUS application directory
-        ↓
-Runtime and source checks run again
-```
-
-The installer uses the same application ID so a newer build upgrades the existing SARUS installation rather than creating a completely unrelated application entry.
-
----
-
-## 27. R&D / testing-laptop recommendations
-
-For privileged Windows and kernel research, use SARUS on an intentionally prepared testing machine.
-
-Recommended lab controls:
-
-- maintain a restorable system image;
-- keep project/research data backed up outside the OS disk;
-- use dedicated test credentials rather than personal accounts;
-- keep the machine on an authorized test network;
-- record experiment IDs and results;
-- preserve crash dumps for failed kernel experiments;
-- version driver builds;
-- keep a known-good driver build available for rollback;
-- retain installer and runtime logs;
-- avoid mixing uncontrolled production workloads with kernel-driver experiments.
-
----
-
-## 28. Security boundaries
-
-Current SARUS privileged design intentionally keeps several operations outside the generic broker surface.
-
-The broker does not provide a caller-controlled arbitrary shell or a generic raw kernel interface.
-
-Examples of intentionally blocked generic primitives include:
-
-```text
-arbitrary_exec
-driver.raw_ioctl
-kernel.read_memory
-kernel.write_memory
-kernel.map_physical_memory
-security.disable_controls
-audit.disable
-```
-
-The controlled Ring-0 bridge uses fixed explicit capabilities compiled into the driver/client protocol.
-
----
-
-## 29. Installation troubleshooting checklist
-
-If `SARUS-Setup.exe` fails:
-
-1. Confirm you accepted the UAC Administrator prompt.
-2. Confirm Windows is x64.
-3. Keep internet connected.
-4. Confirm enough free disk space.
-5. Open:
-   `C:\Program Files\SARUS\logs\exe-install.log`
-6. Open:
-   `C:\Program Files\SARUS\logs\github-install.log`
-7. Check `py -3.11 --version`.
-8. Check `node --version` and `npm --version` if SARA dependency setup failed.
-9. Check `ollama --version` if model runtime setup failed.
-10. Re-run the same official `SARUS-Setup.exe` after fixing the identified dependency.
-
----
-
-## 30. Testing-laptop success checklist
-
-A normal successful installation should leave:
-
-```text
-[✓] C:\Program Files\SARUS\SARUS.exe
-[✓] C:\Program Files\SARUS\.sarus-venv\Scripts\python.exe
-[✓] C:\Program Files\SARUS\sarus\server.py
-[✓] C:\Program Files\SARUS\config\models.json
-[✓] C:\Program Files\SARUS\config\broker_allowlist.json
-[✓] Desktop SARUS shortcut → SARUS.exe
-[✓] SARUS acceptance checks passed
-[✓] Main dashboard available on 127.0.0.1:8877 after startup
-```
-
-Ring-0 is a separate status item:
-
-```text
-[✓] Ring0 source installed with SARUS
-[✓/optional] Trusted SarusRing0.sys present
-[✓/optional] SarusRing0 service running
+docs\FABLE-INTEGRATION.md
 ```
 
 ---
 
-# Final installation summary
+## Final operating model
 
-For a normal dedicated SARUS testing laptop, the intended workflow is now:
+```mermaid
+flowchart TB
+    RESEARCHER[Researcher] --> SARUS[SARUS 1.3]
+    SARUS --> OLLAMA[Local Ollama Intelligence]
+    SARUS --> AGENTS[Multi-Agent Source Network]
+    SARUS --> FABLE[Fable Intelligence Layer]
+    SARUS --> WINDOWS[Windows Control Plane]
 
-```text
-1. Get SARUS-Setup.exe
-2. Run as Administrator
-3. Let it finish
-4. Open SARUS desktop shortcut
-5. Use http://127.0.0.1:8877
+    FABLE --> EVIDENCE[Verified Evidence]
+    FABLE --> LEARN[Learned Capabilities]
+    FABLE --> AUTO[Bounded Agenda]
+    FABLE --> QEMULAB[Optional Fable QEMU Lab]
+
+    WINDOWS --> BROKER[Privileged Broker]
+    BROKER --> USERMODE[Typed User-Mode Actions]
+    BROKER --> RING0[Controlled Ring-0 Bridge]
+
+    EVIDENCE --> RECEIPTS[Signed Receipt Chain]
+    USERMODE --> RECEIPTS
+    RING0 --> RECEIPTS
 ```
 
-**No manual project BAT-file installation step is required in the normal v1.2.0 EXE flow.**
+**Normal user installation remains one `SARUS-Setup.exe`; Fable becomes part of the installed SARUS platform, while original Fable kernel execution remains an optional isolated research runtime.**

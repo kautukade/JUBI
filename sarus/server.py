@@ -78,6 +78,18 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.memory.search(q.get('q', [''])[0], q.get('namespace', [None])[0], int(q.get('limit', ['25'])[0])))
             if p == '/api/automations':
                 return self._json(APP.scheduler.list())
+
+            # Fable Intelligence / Research Lab API.
+            if p == '/api/fable':
+                return self._json(APP.fable.status())
+            if p == '/api/fable/traces':
+                return self._json(APP.fable.traces.recent(int(q.get('limit', ['100'])[0]), q.get('kind', [None])[0] or None))
+            if p == '/api/fable/capabilities':
+                return self._json(APP.fable.capabilities.list(int(q.get('limit', ['100'])[0])))
+            if p == '/api/fable/agenda':
+                return self._json(APP.fable.agenda.list())
+            if p == '/api/fable/lab/tail':
+                return self._json(APP.fable.lab.tail(int(q.get('limit', ['200'])[0])))
             return super().do_GET()
         except Exception as e:
             return self._json({'error': str(e), 'trace': traceback.format_exc(limit=2)}, 500)
@@ -137,11 +149,62 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/automation/toggle':
                 APP.scheduler.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
                 return self._json({'ok': True})
+
+            if p == '/api/fable/lab':
+                action = str(data.get('action', 'status'))
+                if action == 'status':
+                    return self._json(APP.fable.lab.status())
+                if action == 'start':
+                    return self._json(APP.fable.lab.start())
+                if action == 'stop':
+                    return self._json(APP.fable.lab.stop())
+                if action in APP.fable.lab.ACTION_TARGETS:
+                    return self._json(APP.fable.lab.run_action(action, int(data.get('timeout', 1800))))
+                return self._json({'error': 'unsupported Fable lab action'}, 400)
+            if p == '/api/fable/capability/save':
+                cap = APP.fable.capabilities.save(
+                    str(data.get('name', '')),
+                    str(data.get('description', '')),
+                    str(data.get('prompt', '')),
+                    data.get('permissions') or [],
+                )
+                trace = APP.fable.traces.verified(
+                    'capability.save',
+                    {'capability_id': cap['id'], 'definition_hash': cap['definition_hash']},
+                )
+                return self._json({'ok': True, 'capability': cap, 'trace': trace})
+            if p == '/api/fable/capability/run':
+                return self._json(APP.fable.run_capability(str(data.get('id', ''))))
+            if p == '/api/fable/capability/toggle':
+                cap = APP.fable.capabilities.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
+                return self._json({'ok': True, 'capability': cap})
+            if p == '/api/fable/agenda/add':
+                cid = str(data.get('capability_id', ''))
+                cap = APP.fable.capabilities.get(cid)
+                if not cap:
+                    return self._json({'error': 'Fable capability not found'}, 404)
+                if not cap['enabled']:
+                    return self._json({'error': 'Fable capability is disabled'}, 403)
+                item = APP.fable.agenda.add(
+                    str(data.get('name', cap['name'])),
+                    str(data.get('when', 'once')),
+                    cid,
+                    int(data.get('period_seconds', 3600)),
+                    int(data.get('max_runs', 1)),
+                )
+                return self._json({'ok': True, 'agenda': item})
+            if p == '/api/fable/agenda/toggle':
+                item = APP.fable.agenda.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
+                return self._json({'ok': True, 'agenda': item})
             return self._json({'error': 'not found'}, 404)
         except ValueError as e:
             return self._json({'error': str(e)}, 400)
+        except KeyError as e:
+            return self._json({'error': str(e)}, 404)
         except PermissionError as e:
             return self._json({'error': str(e)}, 403)
+        except RuntimeError as e:
+            return self._json({'error': str(e)}, 409)
         except Exception as e:
             return self._json({'error': str(e), 'trace': traceback.format_exc(limit=3)}, 500)
 
@@ -149,7 +212,7 @@ class H(SimpleHTTPRequestHandler):
 def run(port=None):
     port = int(port or os.environ.get('SARUS_PORT', '8877'))
     host = os.environ.get('SARUS_HOST', '127.0.0.1')
-    print(f'SARUS v1.1 dashboard: http://{host}:{port}')
+    print(f'SARUS v1.3 dashboard: http://{host}:{port}')
     ThreadingHTTPServer((host, port), H).serve_forever()
 
 

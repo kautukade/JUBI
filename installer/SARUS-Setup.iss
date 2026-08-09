@@ -1,5 +1,5 @@
 #define MyAppName "SARUS"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "ITCYBER TECHNOLOGIES PVT LTD"
 #define MyAppURL "https://github.com/kautukade/SARUS"
 #define MyAppExeName "SARUS.exe"
@@ -30,7 +30,7 @@ DirExistsWarning=no
 UsePreviousAppDir=yes
 UninstallDisplayName=SARUS Local Multi-Agent AI OS
 UninstallDisplayIcon={app}\{#MyAppExeName}
-VersionInfoVersion=1.2.0.0
+VersionInfoVersion=1.3.0.0
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription=SARUS One-Click Windows Installer
 VersionInfoProductName=SARUS
