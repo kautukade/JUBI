@@ -1,11 +1,14 @@
-param()
+param(
+    [switch]$NonInteractive,
+    [switch]$NoLaunch
+)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $Root = Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path (Join-Path $Root 'sarus\server.py'))) {
-    throw 'Run this installer from the extracted SARUS GitHub repository.'
+    throw 'SARUS payload is incomplete. Run the official SARUS-Setup.exe or execute this script from the SARUS repository.'
 }
 
 $LogDir = Join-Path $Root 'logs'
@@ -19,13 +22,18 @@ function IsAdmin {
 }
 
 if (-not (IsAdmin)) {
+    if ($NonInteractive) {
+        throw 'Administrator permission is required. Start SARUS-Setup.exe with its normal UAC prompt.'
+    }
     Log 'Requesting Administrator permission...'
-    $p = Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$PSCommandPath`"") -Wait -PassThru
+    $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$PSCommandPath`"")
+    if ($NoLaunch) { $args += '-NoLaunch' }
+    $p = Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList $args -Wait -PassThru
     exit $p.ExitCode
 }
 
 try {
-    Log 'SARUS GitHub installer started.'
+    Log "SARUS installation engine started. Mode=$($env:SARUS_INSTALL_MODE) NonInteractive=$NonInteractive NoLaunch=$NoLaunch"
 
     # ------------------------------------------------------------------
     # 1) Restore the custom SARA source.
@@ -48,7 +56,7 @@ try {
 
         if ($parts.Count -eq 24) {
             if (-not (Test-Path $hashFile)) { throw 'FINAL-SHA256.txt is missing.' }
-            Log 'Reconstructing the verified public SARA source bundle...'
+            Log 'Reconstructing the verified bundled SARA source...'
             $sb = New-Object Text.StringBuilder
             foreach ($part in $parts) {
                 [void]$sb.Append((Get-Content -LiteralPath $part.FullName -Raw).Trim())
@@ -73,19 +81,18 @@ try {
             Remove-Item $saraArchive -Force -ErrorAction SilentlyContinue
         }
         else {
-            # Owner fallback: the SARA source already exists in the user's GitHub account.
-            # This does not publish the private repository; Git Credential Manager may ask
-            # the owner to authenticate in the browser on first use.
-            Log "Verified bundled SARA source is not complete ($($parts.Count)/24 parts). Trying authenticated GitHub SARA source fallback..."
+            # Owner fallback only. The normal release installer carries the verified
+            # bundled source, so end users should not need to perform this step.
+            Log "Verified bundled SARA source is incomplete ($($parts.Count)/24 parts). Trying authenticated GitHub owner fallback..."
             $git = Get-Command git.exe -ErrorAction SilentlyContinue
             if (-not $git) {
-                throw 'The verified SARA bundle is incomplete and Git is not installed for the authenticated SARA fallback.'
+                throw 'The verified SARA bundle is incomplete and Git is unavailable for the authenticated owner fallback.'
             }
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $saraTarget) | Out-Null
             if (Test-Path $saraTarget) { Remove-Item $saraTarget -Recurse -Force }
             & $git.Source clone --depth 1 'https://github.com/kautukade/SARA-AI-OS.git' $saraTarget
             if ($LASTEXITCODE -ne 0) {
-                throw 'Could not obtain SARA source. Complete the verified finalparts bundle or authenticate Git for kautukade/SARA-AI-OS.'
+                throw 'Could not obtain SARA source. Use an official installer containing the verified finalparts bundle.'
             }
         }
 
@@ -96,31 +103,31 @@ try {
                 $saraTarget = $foundSaraInstaller.DirectoryName
             }
             else {
-                throw 'SARA Windows installer was not found after source restoration.'
+                throw 'SARA Windows dependency installer was not found after source restoration.'
             }
         }
     }
 
     # ------------------------------------------------------------------
-    # 2) Restore the small Windows SARUS launcher and verify it.
+    # 2) Restore the Windows SARUS launcher and verify it.
     # ------------------------------------------------------------------
     $launcherB64 = Join-Path $Root 'vendor\launcher\SARUS.exe.b64'
-    if (Test-Path $launcherB64) {
-        $launcher = Join-Path $Root 'SARUS.exe'
-        [IO.File]::WriteAllBytes($launcher, [Convert]::FromBase64String((Get-Content $launcherB64 -Raw).Trim()))
-        $launcherHashFile = Join-Path $Root 'vendor\launcher\SHA256.txt'
-        if (Test-Path $launcherHashFile) {
-            $launcherExpected = ((Get-Content $launcherHashFile -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
-            $launcherActual = (Get-FileHash -Algorithm SHA256 $launcher).Hash.ToLowerInvariant()
-            if ($launcherActual -ne $launcherExpected) {
-                throw "SARUS.exe checksum mismatch. Expected $launcherExpected got $launcherActual"
-            }
-        }
-        Log 'SARUS.exe reconstructed and verified.'
+    $launcherHashFile = Join-Path $Root 'vendor\launcher\SHA256.txt'
+    if (-not (Test-Path -LiteralPath $launcherB64)) { throw 'vendor\launcher\SARUS.exe.b64 is missing.' }
+    if (-not (Test-Path -LiteralPath $launcherHashFile)) { throw 'vendor\launcher\SHA256.txt is missing.' }
+
+    $launcher = Join-Path $Root 'SARUS.exe'
+    [IO.File]::WriteAllBytes($launcher, [Convert]::FromBase64String((Get-Content $launcherB64 -Raw).Trim()))
+    $launcherExpected = ((Get-Content $launcherHashFile -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+    $launcherActual = (Get-FileHash -Algorithm SHA256 $launcher).Hash.ToLowerInvariant()
+    if ($launcherActual -ne $launcherExpected) {
+        Remove-Item -LiteralPath $launcher -Force -ErrorAction SilentlyContinue
+        throw "SARUS.exe checksum mismatch. Expected $launcherExpected got $launcherActual"
     }
+    Log "SARUS.exe reconstructed and verified: $launcherActual"
 
     # ------------------------------------------------------------------
-    # 3) Restore the 9 pinned public upstream projects.
+    # 3) Restore pinned public upstream projects when they are not bundled.
     # ------------------------------------------------------------------
     $manifest = Join-Path $Root 'config\online_sources.json'
     if (-not (Test-Path $manifest)) { throw 'config\online_sources.json is missing.' }
@@ -155,57 +162,82 @@ try {
     }
 
     # ------------------------------------------------------------------
-    # 4) Run the SARA Windows dependency setup.
+    # 4) Provision SARA/Windows dependencies automatically.
     # ------------------------------------------------------------------
+    # This legacy SARA batch is invoked internally by SARUS-Setup.exe. The user
+    # does not need to locate, double-click or execute any .bat file manually.
     $saraBat = Get-ChildItem -Path (Join-Path $Root 'sources') -Filter 'INSTALL-AND-START-SARA.bat' -File -Recurse | Select-Object -First 1
-    if (-not $saraBat) { throw 'SARA Windows installer not found.' }
-    Log 'Running SARA Windows setup. First install may take time...'
+    if (-not $saraBat) { throw 'SARA Windows dependency installer not found.' }
+    Log 'Running bundled SARA dependency provisioning automatically.'
     $sp = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/c',"`"$($saraBat.FullName)`"") -WorkingDirectory $saraBat.DirectoryName -Wait -PassThru
-    if ($sp.ExitCode -ne 0) { throw "SARA setup failed with exit code $($sp.ExitCode)" }
+    if ($sp.ExitCode -ne 0) { throw "SARA dependency setup failed with exit code $($sp.ExitCode)" }
 
     # ------------------------------------------------------------------
-    # 5) Create the SARUS Python runtime and run acceptance.
+    # 5) Create SARUS private Python runtime and run acceptance tests.
     # ------------------------------------------------------------------
     $py = $null
     try {
         $v = & py.exe -3.11 -c 'import sys; print(sys.executable)' 2>$null
         if ($LASTEXITCODE -eq 0) { $py = ($v | Select-Object -Last 1).Trim() }
     } catch {}
-    if (-not $py) { throw 'Python 3.11 was not found after SARA setup.' }
+    if (-not $py) { throw 'Python 3.11 was not found after dependency provisioning.' }
 
     $venv = Join-Path $Root '.sarus-venv'
+    if (Test-Path -LiteralPath $venv) {
+        Log 'Refreshing existing SARUS private Python environment.'
+        Remove-Item -LiteralPath $venv -Recurse -Force
+    }
     & $py -m venv $venv
-    if ($LASTEXITCODE -ne 0) { throw 'Could not create SARUS runtime.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Could not create SARUS private Python runtime.' }
     $runtimePy = Join-Path $venv 'Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $runtimePy)) { throw 'SARUS private Python runtime is incomplete.' }
+
     Push-Location $Root
-    & $runtimePy -m sarus.acceptance
-    $accept = $LASTEXITCODE
-    Pop-Location
+    try {
+        & $runtimePy -m sarus.acceptance
+        $accept = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
     if ($accept -ne 0) { throw "SARUS acceptance failed with exit code $accept" }
+    Log 'SARUS acceptance checks passed.'
 
     # ------------------------------------------------------------------
-    # 6) Desktop shortcut and launch.
+    # 6) Create direct SARUS.exe desktop shortcut. No user-facing BAT launcher.
     # ------------------------------------------------------------------
     $shell = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath('Desktop')
     $lnk = $shell.CreateShortcut((Join-Path $desktop 'SARUS.lnk'))
-    if (Test-Path (Join-Path $Root 'SARUS.exe')) { $lnk.TargetPath = Join-Path $Root 'SARUS.exe' }
-    else { $lnk.TargetPath = Join-Path $Root 'START_SARUS.bat' }
+    $lnk.TargetPath = $launcher
     $lnk.WorkingDirectory = $Root
     $lnk.Description = 'SARUS Local Multi-Agent AI OS'
     $lnk.Save()
 
-    Log 'SARUS GitHub installation completed.'
-    if (Test-Path (Join-Path $Root 'SARUS.exe')) { Start-Process (Join-Path $Root 'SARUS.exe') -WorkingDirectory $Root }
-    else { Start-Process (Join-Path $Root 'START_SARUS.bat') -WorkingDirectory $Root }
+    $finalRequired = @(
+        $launcher,
+        $runtimePy,
+        (Join-Path $Root 'README.md'),
+        (Join-Path $Root 'sarus\server.py'),
+        (Join-Path $Root 'config\models.json'),
+        (Join-Path $Root 'config\broker_allowlist.json')
+    )
+    foreach ($path in $finalRequired) {
+        if (-not (Test-Path -LiteralPath $path)) { throw "Final installation verification failed: $path is missing." }
+    }
+
+    Log 'SARUS installation engine completed and verified.'
+    if (-not $NoLaunch) {
+        Start-Process -FilePath $launcher -WorkingDirectory $Root
+    }
 
     Write-Host "`nSARUS INSTALL COMPLETE" -ForegroundColor Green
-    Read-Host 'Press Enter to close'
+    if (-not $NonInteractive) { Read-Host 'Press Enter to close' | Out-Null }
     exit 0
 }
 catch {
     Log "INSTALL FAILED: $($_.Exception.Message)"
     Write-Host "`nSARUS INSTALL FAILED`n$($_.Exception.Message)`nLog: $Log" -ForegroundColor Red
-    Read-Host 'Press Enter to close'
+    if (-not $NonInteractive) { Read-Host 'Press Enter to close' | Out-Null }
     exit 1
 }
