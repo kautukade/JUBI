@@ -13,6 +13,7 @@ from .doctor import Doctor
 from .execution import ExecutionEngine
 from .workflows import WorkflowScheduler
 from .native import NativeRuntimeManager
+from .fable import FableIntegration
 
 
 class Sarus:
@@ -35,6 +36,7 @@ class Sarus:
             self.receipts,
         )
         self.execution = ExecutionEngine(self)
+        self.fable = FableIntegration(self)
         self.native = NativeRuntimeManager(self)
         self.doctor = Doctor(self)
         self.scheduler = WorkflowScheduler(root / 'data/sarus.db', self.execution.run)
@@ -44,8 +46,8 @@ class Sarus:
         ads = self.adapters.connect()
         return {
             'name': 'SARUS',
-            'version': '1.1.0',
-            'runtime': 'zero-trust-broker-v1',
+            'version': '1.3.0',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1',
             'adapters': [a.__dict__ for a in ads],
             'models': self.models.list_models(),
             'capabilities': self.registry.summary(),
@@ -53,5 +55,6 @@ class Sarus:
             'pending_approvals': len(self.execution.approvals()),
             'windows_broker': self.windows.available(),
             'privileged_broker': self.privileged.status(),
+            'fable': self.fable.status(),
             'native_runtimes': self.native.status(),
         }
