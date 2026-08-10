@@ -162,7 +162,8 @@ jobs:
           Write-Host "Installer size: $([math]::Round($item.Length / 1MB, 2)) MB"
           Write-Host "SHA256: $hash"
 
-      - name: Upload Windows installer
+      - name: Upload canonical Windows installer
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: SARUS-Windows-Installer
@@ -174,3 +175,72 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
+
+  cleanup-old-installers:
+    name: Keep only current installer artifact
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-installer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Delete older SARUS Windows installer artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          repo = os.environ['REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          current_run = str(os.environ['CURRENT_RUN_ID'])
+          headers = {
+              'Authorization': f'Bearer {token}',
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+          }
+
+          def request(url, method='GET'):
+              req = urllib.request.Request(url, method=method, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  body = response.read()
+                  return json.loads(body) if body else None
+
+          page = 1
+          artifacts = []
+          while True:
+              data = request(f'https://api.github.com/repos/{repo}/actions/artifacts?per_page=100&page={page}')
+              batch = data.get('artifacts', [])
+              artifacts.extend(batch)
+              if len(batch) < 100:
+                  break
+              page += 1
+
+          current = []
+          old = []
+          for artifact in artifacts:
+              if artifact.get('name') != 'SARUS-Windows-Installer':
+                  continue
+              run_id = str((artifact.get('workflow_run') or {}).get('id', ''))
+              if run_id == current_run:
+                  current.append(artifact)
+              else:
+                  old.append(artifact)
+
+          if len(current) != 1:
+              raise SystemExit(f'Expected exactly one installer artifact for current run {current_run}, found {len(current)}')
+
+          for artifact in old:
+              artifact_id = artifact['id']
+              request(f'https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}', method='DELETE')
+              print(f'Deleted old installer artifact {artifact_id}')
+
+          print(f'Canonical installer artifact kept: {current[0]["id"]}; deleted: {len(old)}')
+          PY
