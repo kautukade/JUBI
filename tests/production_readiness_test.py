@@ -88,6 +88,15 @@ class ProductionReadinessTest(unittest.TestCase):
             self.assertNotIn('trycloudflare.com', text, path.name)
             self.assertNotRegex(text, re.compile(r'permissions:\s*\n\s*contents:\s*write'), path.name)
 
+    def test_installer_workflow_keeps_one_canonical_artifact(self):
+        text = (ROOT / '.github/workflows/build-windows-installer.yml').read_text(encoding='utf-8')
+        self.assertIn("if: github.event_name == 'push' && github.ref == 'refs/heads/main'", text)
+        self.assertIn('cleanup-old-installers:', text)
+        self.assertIn('actions: write', text)
+        self.assertIn("artifact.get('name') != 'SARUS-Windows-Installer'", text)
+        self.assertIn('Expected exactly one installer artifact for current run', text)
+        self.assertIn("method='DELETE'", text)
+
     def test_no_security_disable_in_release_scripts(self):
         combined = '\n'.join(
             (ROOT / p).read_text(encoding='utf-8').lower()
