@@ -12,6 +12,7 @@ PAGES = {
     'chat.html': 'chat',
     'tasks.html': 'tasks',
     'brain.html': 'brain',
+    'providers.html': 'providers',
     'models.html': 'models',
     'agents.html': 'agents',
     'development.html': 'development',
@@ -26,9 +27,17 @@ PAGES = {
 
 REQUIRED_IDS = {
     'overview': {'metric-sources', 'metric-models', 'metric-units', 'metric-approvals', 'metric-files', 'metric-chain', 'sources-list', 'recent-tasks', 'recent-events'},
-    'chat': {'chat-messages', 'chat-input', 'chat-model', 'chat-type', 'chat-send', 'chat-route-info'},
+    'chat': {'chat-messages', 'chat-input', 'chat-provider', 'chat-model', 'chat-type', 'chat-send', 'chat-route-info', 'chat-provider-mode'},
     'tasks': {'task-input', 'task-plan', 'task-run', 'task-output', 'tasks-table', 'task-approvals'},
     'brain': {'brain-mode', 'brain-models', 'brain-pairs', 'brain-decisions', 'brain-route-text', 'brain-route', 'brain-route-output', 'brain-performance', 'brain-history'},
+    'providers': {
+        'providers-refresh', 'provider-mode', 'provider-mode-save', 'provider-ollama-status',
+        'provider-cloud-count', 'provider-request-count', 'provider-vault',
+        'provider-key-openrouter', 'provider-key-nvidia', 'provider-key-huggingface',
+        'provider-model-provider', 'provider-default-task', 'provider-default-model',
+        'provider-default-save', 'provider-model-refresh', 'provider-model-table',
+        'provider-performance', 'provider-history'
+    },
     'models': {'model-count', 'model-online', 'model-table', 'model-select', 'model-test'},
     'agents': {'agent-sources', 'cap-query', 'cap-source', 'cap-list', 'cap-detail', 'cap-run-btn'},
     'development': {'dev-input', 'dev-plan', 'dev-run', 'dev-output', 'dev-history'},
@@ -69,6 +78,8 @@ class UnifiedDashboardTests(unittest.TestCase):
         js = (WEB / 'assets/app.js').read_text(encoding='utf-8')
         for endpoint in (
             '/api/status', '/api/models', '/api/chat', '/api/brain', '/api/brain/route',
+            '/api/providers', '/api/providers/models', '/api/providers/mode', '/api/provider/credential',
+            '/api/provider/credential/delete', '/api/provider/validate', '/api/provider/default-model',
             '/api/plan', '/api/task', '/api/tasks', '/api/capabilities', '/api/capability/run',
             '/api/memory', '/api/automations', '/api/automation/toggle', '/api/system/action',
             '/api/approvals', '/api/approval', '/api/receipts', '/api/broker', '/api/doctor',
@@ -78,6 +89,7 @@ class UnifiedDashboardTests(unittest.TestCase):
             self.assertIn(endpoint, js)
         self.assertIn('X-JUBI-Token', js)
         self.assertIn('Smart auto-select', js)
+        self.assertIn('DPAPI', (WEB / 'providers.html').read_text(encoding='utf-8'))
         self.assertNotIn('example response', js.lower())
         self.assertNotIn('fake response', js.lower())
 
@@ -94,6 +106,16 @@ class UnifiedDashboardTests(unittest.TestCase):
         self.assertIn("'X-JUBI-Token'", server)
         self.assertIn("'/api/brain'", server)
         self.assertIn("'/api/brain/route'", server)
+        self.assertIn("'/api/providers'", server)
+        self.assertIn("'/api/provider/credential'", server)
+        self.assertIn('APP.providers.generate', server)
+
+    def test_provider_page_never_renders_a_secret_value_from_status(self):
+        js = (WEB / 'assets/app.js').read_text(encoding='utf-8')
+        server = (ROOT / 'sarus/server.py').read_text(encoding='utf-8')
+        self.assertNotIn("['api_key']", js)
+        self.assertNotIn('.api_key', js)
+        self.assertNotIn("credentials.get", server)
 
 
 if __name__ == '__main__':
