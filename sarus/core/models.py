@@ -66,6 +66,8 @@ class OllamaRouter:
             if model in installed_set:
                 return model
 
+        # Never return a configured-but-missing model. Fallback is restricted to
+        # a model that Ollama actually reports as installed and role-compatible.
         desired_kind = {
             'coding': 'coding',
             'vision': 'vision',
