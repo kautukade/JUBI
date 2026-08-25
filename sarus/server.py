@@ -90,6 +90,17 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.brain.recent_decisions(int(q.get('limit', ['50'])[0])))
             if p == '/api/brain/performance':
                 return self._json(APP.brain.performance())
+            if p == '/api/providers':
+                validate = str(q.get('validate', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
+                return self._json(APP.providers.status(validate=validate))
+            if p == '/api/providers/models':
+                provider = q.get('provider', [''])[0]
+                force = str(q.get('force', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
+                return self._json(APP.providers.models(provider, force=force))
+            if p == '/api/providers/performance':
+                return self._json(APP.providers.performance())
+            if p == '/api/providers/requests':
+                return self._json(APP.providers.recent_requests(int(q.get('limit', ['50'])[0])))
             if p == '/api/broker':
                 return self._json(APP.privileged.status())
             if p == '/api/doctor':
@@ -151,6 +162,8 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/fable/lab/tail':
                 return self._json(APP.fable.lab.tail(int(q.get('limit', ['200'])[0])))
             return super().do_GET()
+        except ValueError as exc:
+            return self._json(self._safe_error(exc), 400)
         except Exception as exc:
             APP.bus.emit('HTTP_ERROR', {'method': 'GET', 'path': p, 'error': str(exc)[:1000]})
             return self._json(self._safe_error(exc), 500)
@@ -184,12 +197,42 @@ class H(SimpleHTTPRequestHandler):
                         data.get('model'),
                     )
                 )
+            if p == '/api/provider/route':
+                return self._json(
+                    APP.providers.route_preview(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        str(data.get('provider', 'auto')),
+                    )
+                )
+            if p == '/api/providers/mode':
+                return self._json(APP.providers.set_mode(str(data.get('mode', 'local_only'))))
+            if p == '/api/provider/credential':
+                return self._json(
+                    APP.providers.save_credential(
+                        str(data.get('provider', '')),
+                        str(data.get('api_key', '')),
+                    )
+                )
+            if p == '/api/provider/credential/delete':
+                return self._json(APP.providers.delete_credential(str(data.get('provider', ''))))
+            if p == '/api/provider/validate':
+                return self._json(APP.providers.validate(str(data.get('provider', ''))))
+            if p == '/api/provider/default-model':
+                return self._json(
+                    APP.providers.set_default_model(
+                        str(data.get('provider', '')),
+                        str(data.get('task_type', 'general')),
+                        str(data.get('model', '')),
+                    )
+                )
             if p == '/api/chat':
                 return self._json(
-                    APP.brain.generate(
+                    APP.providers.generate(
                         str(data.get('text', '')),
                         str(data.get('task_type', 'auto')),
                         model=data.get('model'),
+                        provider=str(data.get('provider', 'auto')),
                     )
                 )
             if p == '/api/capability/run':
@@ -330,7 +373,7 @@ def run(port=None):
     port = int(port or _env('JUBI_PORT', 'SARUS_PORT', '8877'))
     host = _env('JUBI_HOST', 'SARUS_HOST', '127.0.0.1')
     if host == '0.0.0.0':
-        raise RuntimeError('Jubi is localhost-only in Phase 1; JUBI_HOST=0.0.0.0 is not permitted')
+        raise RuntimeError('Jubi is localhost-only; JUBI_HOST=0.0.0.0 is not permitted')
     print(f'Jubi v{APP.VERSION} dashboard: http://{host}:{port}')
     httpd = ThreadingHTTPServer((host, port), H)
     try:
