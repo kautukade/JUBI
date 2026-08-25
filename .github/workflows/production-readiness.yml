@@ -50,6 +50,8 @@ jobs:
           node --check sarus/web/assets/research.js
           node --check sarus/web/assets/network.js
           node --check sarus/web/assets/vision.js
+          node --check sarus/web/assets/operator.js
+          node --check sarus/web/assets/shell-extension.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
@@ -130,6 +132,8 @@ jobs:
           node --check sarus/web/assets/research.js
           node --check sarus/web/assets/network.js
           node --check sarus/web/assets/vision.js
+          node --check sarus/web/assets/operator.js
+          node --check sarus/web/assets/shell-extension.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
