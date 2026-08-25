@@ -49,7 +49,6 @@ class OllamaRouter:
                 items.append(item)
             return {
                 'online': True,
-                # Preserve the legacy list shape used by existing code/tests/UI.
                 'models': [x['name'] for x in items],
                 'items': items,
             }
@@ -67,8 +66,6 @@ class OllamaRouter:
             if model in installed_set:
                 return model
 
-        # Never return a configured-but-missing model. Fall back only to an
-        # actually installed model that is sensible for the requested role.
         desired_kind = {
             'coding': 'coding',
             'vision': 'vision',
@@ -90,6 +87,7 @@ class OllamaRouter:
         system='You are Jubi, a local AI orchestrator.',
         model=None,
         timeout=300,
+        images=None,
     ):
         model = model or self.choose(task_type)
         if not model:
@@ -102,12 +100,15 @@ class OllamaRouter:
                 f'No installed Ollama model is compatible with task type {task_type!r}. '
                 'Refresh the model list or install/configure a suitable model.'
             )
+        payload = {'model': model, 'prompt': prompt, 'system': system, 'stream': False}
+        if images:
+            if task_type != 'vision':
+                raise ValueError('image inputs are only supported for vision tasks')
+            if not isinstance(images, list) or len(images) > 4:
+                raise ValueError('images must be a list with at most 4 items')
+            payload['images'] = [str(x) for x in images]
         try:
-            return self._json(
-                '/api/generate',
-                {'model': model, 'prompt': prompt, 'system': system, 'stream': False},
-                timeout,
-            )
+            return self._json('/api/generate', payload, timeout)
         except urllib.error.HTTPError as exc:
             if exc.code == 404:
                 raise RuntimeError(
