@@ -31,7 +31,7 @@ class ExecutionEngine:
 
     def __init__(self, app):
         self.app = app
-        self.db = app.root / 'data/sarus.db'
+        self.db = app.db_path
         self._approval_lock = threading.Lock()
         with transaction(self.db) as c:
             c.execute(
@@ -236,7 +236,10 @@ class ExecutionEngine:
 
     @staticmethod
     def _task_payload(state: dict, status: str):
+        # ``id`` is retained as a compatibility alias for the SARUS-era Fable
+        # code while ``task_id`` is the canonical identifier going forward.
         return {
+            'id': state['task_id'],
             'task_id': state['task_id'],
             'request': state['request'],
             'status': status,
@@ -272,8 +275,6 @@ class ExecutionEngine:
                     'ok': False,
                     'status': 'error',
                     'error': str(exc),
-                    # Stored for local debugging/evidence, but the HTTP layer
-                    # decides whether detailed traces are exposed to the UI.
                     'trace': traceback.format_exc(limit=3),
                 }
 
@@ -328,8 +329,6 @@ class ExecutionEngine:
                 )
                 return payload
 
-            # Approval is scoped to one exact step. Once used, no later step can
-            # inherit it implicitly.
             use_approval = approved_step_id == step.id
             if use_approval:
                 approved_step_id = None
@@ -341,9 +340,6 @@ class ExecutionEngine:
                 idx, state['results'], state['context'], 'running',
             )
 
-            # _execute_step re-evaluates policy for normal deny/isolation rules.
-            # For the exact approved high-risk step we execute it directly while
-            # preserving the original policy record as approval evidence.
             if use_approval and policy['decision'] == 'approval':
                 try:
                     adapter = self.app.adapters.get(step.source)
@@ -413,7 +409,7 @@ class ExecutionEngine:
         if not request:
             raise ValueError('task request cannot be empty')
         tid = str(uuid.uuid4())
-        self._save_task(tid, request, 'planning', {'task_id': tid}, source)
+        self._save_task(tid, request, 'planning', {'id': tid, 'task_id': tid}, source)
         self.app.bus.emit('TASK_STARTED', {'task_id': tid, 'request': request, 'source': source})
         steps = self.app.orchestrator.plan(request)
         serialized = [asdict(step) for step in steps]
