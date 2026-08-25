@@ -16,6 +16,7 @@ from sarus.core.app import Jubi
 APP = Jubi(ROOT)
 SESSION_TOKEN = secrets.token_urlsafe(32)
 MAX_HTTP_BODY = 2 * 1024 * 1024
+MAX_VISION_BODY = 12 * 1024 * 1024
 
 
 def _env(primary: str, legacy: str, default: str) -> str:
@@ -51,22 +52,25 @@ class H(SimpleHTTPRequestHandler):
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'")
+        self.send_header(
+            'Content-Security-Policy',
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:'",
+        )
         self.send_header('Content-Length', str(len(b)))
         self.end_headers()
         self.wfile.write(b)
 
-    def _body(self):
+    def _body(self, max_bytes=MAX_HTTP_BODY):
         n = int(self.headers.get('Content-Length', '0'))
-        if n < 0 or n > MAX_HTTP_BODY:
-            raise ValueError('request body exceeds 2 MiB limit')
+        if n < 0 or n > int(max_bytes):
+            raise ValueError(f'request body exceeds {int(max_bytes) // (1024 * 1024)} MiB limit')
         try:
             return json.loads(self.rfile.read(n) or b'{}')
         except json.JSONDecodeError as exc:
             raise ValueError('invalid JSON body') from exc
 
     @staticmethod
-    def _safe_error(exc: Exception, *, conflict=False):
+    def _safe_error(exc: Exception):
         payload = {'error': str(exc)}
         if DEBUG:
             payload['trace'] = traceback.format_exc(limit=4)
@@ -93,6 +97,14 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.supervisor.recent(int(q.get('limit', ['30'])[0])))
             if p == '/api/research':
                 return self._json(APP.research.recent(int(q.get('limit', ['30'])[0])))
+            if p == '/api/network':
+                return self._json(APP.network.status())
+            if p == '/api/network/devices':
+                return self._json(APP.network.list_devices())
+            if p == '/api/network/observations':
+                return self._json(APP.network.recent_observations(int(q.get('limit', ['100'])[0])))
+            if p == '/api/vision':
+                return self._json(APP.vision.status())
             if p == '/api/providers':
                 validate = str(q.get('validate', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
                 return self._json(APP.providers.status(validate=validate))
@@ -107,17 +119,36 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/knowledge/status':
                 return self._json(APP.knowledge.status())
             if p == '/api/knowledge/documents':
-                return self._json(APP.knowledge.documents(q.get('namespace', [None])[0] or None, int(q.get('limit', ['100'])[0])))
+                return self._json(
+                    APP.knowledge.documents(
+                        q.get('namespace', [None])[0] or None,
+                        int(q.get('limit', ['100'])[0]),
+                    )
+                )
             if p == '/api/knowledge/search':
-                return self._json(APP.knowledge.search(q.get('q', [''])[0], q.get('namespace', [None])[0] or None, int(q.get('limit', ['8'])[0])))
+                return self._json(
+                    APP.knowledge.search(
+                        q.get('q', [''])[0],
+                        q.get('namespace', [None])[0] or None,
+                        int(q.get('limit', ['8'])[0]),
+                    )
+                )
             if p == '/api/experience':
                 success_raw = str(q.get('success', [''])[0]).lower()
-                success = True if success_raw in {'1', 'true', 'yes'} else (False if success_raw in {'0', 'false', 'no'} else None)
+                success = True if success_raw in {'1', 'true', 'yes'} else (
+                    False if success_raw in {'0', 'false', 'no'} else None
+                )
                 return self._json(APP.experience.recent(int(q.get('limit', ['100'])[0]), success=success))
             if p == '/api/experience/stats':
                 return self._json(APP.experience.stats())
             if p == '/api/experience/similar':
-                return self._json(APP.experience.similar(q.get('q', [''])[0], q.get('task_type', [None])[0] or None, int(q.get('limit', ['6'])[0])))
+                return self._json(
+                    APP.experience.similar(
+                        q.get('q', [''])[0],
+                        q.get('task_type', [None])[0] or None,
+                        int(q.get('limit', ['6'])[0]),
+                    )
+                )
             if p == '/api/broker':
                 return self._json(APP.privileged.status())
             if p == '/api/doctor':
@@ -129,25 +160,51 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/capabilities':
                 if 'limit' in q or q.get('q', [''])[0] or q.get('source', [''])[0] or q.get('kind', [''])[0]:
                     kinds = [x for x in q.get('kind', []) if x] or None
-                    return self._json(APP.registry.search(q.get('q', [''])[0], q.get('source', [None])[0], kinds, int(q.get('limit', ['50'])[0])))
+                    return self._json(
+                        APP.registry.search(
+                            q.get('q', [''])[0],
+                            q.get('source', [None])[0],
+                            kinds,
+                            int(q.get('limit', ['50'])[0]),
+                        )
+                    )
                 return self._json(APP.registry.summary())
             if p == '/api/capability':
                 cid = q.get('id', [''])[0]
-                return self._json(APP.registry.read(cid) or {'error': 'not found'}, 200 if APP.registry.get(cid) else 404)
+                return self._json(
+                    APP.registry.read(cid) or {'error': 'not found'},
+                    200 if APP.registry.get(cid) else 404,
+                )
             if p == '/api/tasks':
                 return self._json(APP.execution.recent_tasks(int(q.get('limit', ['50'])[0])))
             if p == '/api/approvals':
                 return self._json(APP.execution.approvals(q.get('status', ['pending'])[0]))
             if p == '/api/receipts':
-                return self._json({'chain': APP.receipts.verify_chain(), 'items': APP.receipts.recent(int(q.get('limit', ['100'])[0]))})
+                return self._json(
+                    {
+                        'chain': APP.receipts.verify_chain(),
+                        'items': APP.receipts.recent(int(q.get('limit', ['100'])[0])),
+                    }
+                )
             if p == '/api/memory':
-                return self._json(APP.memory.search(q.get('q', [''])[0], q.get('namespace', [None])[0], int(q.get('limit', ['25'])[0])))
+                return self._json(
+                    APP.memory.search(
+                        q.get('q', [''])[0],
+                        q.get('namespace', [None])[0],
+                        int(q.get('limit', ['25'])[0]),
+                    )
+                )
             if p == '/api/automations':
                 return self._json(APP.scheduler.list())
             if p == '/api/fable':
                 return self._json(APP.fable.status())
             if p == '/api/fable/traces':
-                return self._json(APP.fable.traces.recent(int(q.get('limit', ['100'])[0]), q.get('kind', [None])[0] or None))
+                return self._json(
+                    APP.fable.traces.recent(
+                        int(q.get('limit', ['100'])[0]),
+                        q.get('kind', [None])[0] or None,
+                    )
+                )
             if p == '/api/fable/capabilities':
                 return self._json(APP.fable.capabilities.list(int(q.get('limit', ['100'])[0])))
             if p == '/api/fable/agenda':
@@ -175,41 +232,129 @@ class H(SimpleHTTPRequestHandler):
         if origin and origin not in {f'http://{host}', f'https://{host}'}:
             return self._json({'error': 'cross-origin request blocked'}, 403)
         try:
-            data = self._body()
+            data = self._body(MAX_VISION_BODY if p == '/api/vision/analyze' else MAX_HTTP_BODY)
             if p == '/api/plan':
                 return self._json({'steps': APP.orchestrator.execute_dry(str(data.get('text', '')))})
             if p == '/api/task':
-                return self._json(APP.execution.run(str(data.get('text', '')), str(data.get('source', 'user')), data.get('capability_id')))
+                return self._json(
+                    APP.execution.run(
+                        str(data.get('text', '')),
+                        str(data.get('source', 'user')),
+                        data.get('capability_id'),
+                    )
+                )
             if p == '/api/brain/route':
-                return self._json(APP.brain.route(str(data.get('text', '')), str(data.get('task_type', 'auto')), data.get('model')))
+                return self._json(
+                    APP.brain.route(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        data.get('model'),
+                    )
+                )
             if p == '/api/council/run':
-                return self._json(APP.council.run(str(data.get('text', '')), str(data.get('task_type', 'auto')), int(data.get('max_members', 4)), str(data.get('judge_provider', 'auto'))))
+                return self._json(
+                    APP.council.run(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        int(data.get('max_members', 4)),
+                        str(data.get('judge_provider', 'auto')),
+                    )
+                )
             if p == '/api/supervisor/plan':
-                return self._json(APP.supervisor.plan(str(data.get('text', '')), str(data.get('task_type', 'auto')), str(data.get('provider', 'auto'))))
+                return self._json(
+                    APP.supervisor.plan(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        str(data.get('provider', 'auto')),
+                    )
+                )
             if p == '/api/supervisor/run':
-                return self._json(APP.supervisor.run(str(data.get('text', '')), str(data.get('task_type', 'auto')), str(data.get('provider', 'auto'))))
+                return self._json(
+                    APP.supervisor.run(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        str(data.get('provider', 'auto')),
+                    )
+                )
             if p == '/api/research/search':
                 return self._json(APP.research.search(str(data.get('query', '')), int(data.get('limit', 8))))
             if p == '/api/research/fetch':
                 return self._json(APP.research.fetch(str(data.get('url', '')), int(data.get('timeout', 20))))
             if p == '/api/research/run':
-                return self._json(APP.research.research(str(data.get('query', '')), int(data.get('max_sources', 5)), str(data.get('provider', 'auto'))))
+                return self._json(
+                    APP.research.research(
+                        str(data.get('query', '')),
+                        int(data.get('max_sources', 5)),
+                        str(data.get('provider', 'auto')),
+                    )
+                )
+            if p == '/api/network/discover':
+                return self._json(APP.network.passive_discover())
+            if p == '/api/network/device':
+                return self._json(
+                    APP.network.register(
+                        str(data.get('host', '')),
+                        str(data.get('label', '')),
+                        data.get('services') or [],
+                        str(data.get('notes', '')),
+                    )
+                )
+            if p == '/api/network/check':
+                return self._json(
+                    APP.network.check(
+                        str(data.get('id', '')),
+                        float(data.get('timeout', 1.5)),
+                    )
+                )
+            if p == '/api/network/delete':
+                return self._json(APP.network.delete(str(data.get('id', ''))))
+            if p == '/api/vision/analyze':
+                return self._json(
+                    APP.vision.analyze(
+                        str(data.get('image', '')),
+                        str(data.get('prompt', '')),
+                        data.get('model'),
+                        int(data.get('timeout', 300)),
+                    )
+                )
             if p == '/api/provider/route':
-                return self._json(APP.providers.route_preview(str(data.get('text', '')), str(data.get('task_type', 'auto')), str(data.get('provider', 'auto'))))
+                return self._json(
+                    APP.providers.route_preview(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        str(data.get('provider', 'auto')),
+                    )
+                )
             if p == '/api/providers/mode':
                 return self._json(APP.providers.set_mode(str(data.get('mode', 'local_only'))))
             if p == '/api/provider/credential':
-                return self._json(APP.providers.save_credential(str(data.get('provider', '')), str(data.get('api_key', ''))))
+                return self._json(
+                    APP.providers.save_credential(
+                        str(data.get('provider', '')),
+                        str(data.get('api_key', '')),
+                    )
+                )
             if p == '/api/provider/credential/delete':
                 return self._json(APP.providers.delete_credential(str(data.get('provider', ''))))
             if p == '/api/provider/validate':
                 return self._json(APP.providers.validate(str(data.get('provider', ''))))
             if p == '/api/provider/default-model':
-                return self._json(APP.providers.set_default_model(str(data.get('provider', '')), str(data.get('task_type', 'general')), str(data.get('model', ''))))
+                return self._json(
+                    APP.providers.set_default_model(
+                        str(data.get('provider', '')),
+                        str(data.get('task_type', 'general')),
+                        str(data.get('model', '')),
+                    )
+                )
             if p == '/api/chat':
                 text = str(data.get('text', ''))
                 try:
-                    result = APP.providers.generate(text, str(data.get('task_type', 'auto')), model=data.get('model'), provider=str(data.get('provider', 'auto')))
+                    result = APP.providers.generate(
+                        text,
+                        str(data.get('task_type', 'auto')),
+                        model=data.get('model'),
+                        provider=str(data.get('provider', 'auto')),
+                    )
                     try:
                         APP.experience.record_chat(text, result, True)
                     except Exception as learn_exc:
@@ -218,20 +363,64 @@ class H(SimpleHTTPRequestHandler):
                 except Exception as exc:
                     try:
                         classification = APP.brain.classify(text, str(data.get('task_type', 'auto')))
-                        APP.experience.record(text, str(exc), False, task_type=classification['task_type'], kind='chat', lesson='This route failed; use successful alternatives for similar work.')
+                        APP.experience.record(
+                            text,
+                            str(exc),
+                            False,
+                            task_type=classification['task_type'],
+                            kind='chat',
+                            lesson='This route failed; use successful alternatives for similar work.',
+                        )
                     except Exception:
                         pass
                     raise
             if p == '/api/knowledge/ingest':
-                return self._json(APP.knowledge.ingest(str(data.get('content', '')), str(data.get('title', '')), str(data.get('namespace', 'general')), str(data.get('source', 'manual')), data.get('metadata') or {}))
+                return self._json(
+                    APP.knowledge.ingest(
+                        str(data.get('content', '')),
+                        str(data.get('title', '')),
+                        str(data.get('namespace', 'general')),
+                        str(data.get('source', 'manual')),
+                        data.get('metadata') or {},
+                    )
+                )
             if p == '/api/knowledge/search':
-                return self._json(APP.knowledge.search(str(data.get('query', data.get('q', ''))), str(data.get('namespace', '')).strip() or None, int(data.get('limit', 8)), float(data.get('min_score', 0.0))))
+                return self._json(
+                    APP.knowledge.search(
+                        str(data.get('query', data.get('q', ''))),
+                        str(data.get('namespace', '')).strip() or None,
+                        int(data.get('limit', 8)),
+                        float(data.get('min_score', 0.0)),
+                    )
+                )
             if p == '/api/knowledge/ask':
-                return self._json(APP.knowledge.answer(str(data.get('question', '')), str(data.get('namespace', '')).strip() or None, int(data.get('limit', 6)), str(data.get('provider', 'auto')), data.get('model')))
+                return self._json(
+                    APP.knowledge.answer(
+                        str(data.get('question', '')),
+                        str(data.get('namespace', '')).strip() or None,
+                        int(data.get('limit', 6)),
+                        str(data.get('provider', 'auto')),
+                        data.get('model'),
+                    )
+                )
             if p == '/api/knowledge/delete':
                 return self._json(APP.knowledge.delete_document(str(data.get('id', ''))))
             if p == '/api/experience':
-                return self._json(APP.experience.record(str(data.get('request', '')), str(data.get('outcome', '')), bool(data.get('success', True)), task_type=str(data.get('task_type', 'general')), kind=str(data.get('kind', 'manual')), provider=str(data.get('provider', '')), model=str(data.get('model', '')), tool=str(data.get('tool', '')), latency_ms=float(data.get('latency_ms', 0)), lesson=str(data.get('lesson', '')), metadata=data.get('metadata') or {}))
+                return self._json(
+                    APP.experience.record(
+                        str(data.get('request', '')),
+                        str(data.get('outcome', '')),
+                        bool(data.get('success', True)),
+                        task_type=str(data.get('task_type', 'general')),
+                        kind=str(data.get('kind', 'manual')),
+                        provider=str(data.get('provider', '')),
+                        model=str(data.get('model', '')),
+                        tool=str(data.get('tool', '')),
+                        latency_ms=float(data.get('latency_ms', 0)),
+                        lesson=str(data.get('lesson', '')),
+                        metadata=data.get('metadata') or {},
+                    )
+                )
             if p == '/api/experience/delete':
                 return self._json(APP.experience.delete(str(data.get('id', ''))))
             if p == '/api/capability/run':
@@ -240,25 +429,64 @@ class H(SimpleHTTPRequestHandler):
                 if not cap:
                     return self._json({'error': 'capability not found'}, 404)
                 adapter = APP.adapters.get(cap['source'])
-                out = adapter.execute(str(data.get('text', 'Use this capability for its intended purpose.')), APP, capability_id=cid)
-                receipt = APP.receipts.create('direct-capability', cid, cap['source'], 'completed' if out.get('ok') else 'failed', out)
+                out = adapter.execute(
+                    str(data.get('text', 'Use this capability for its intended purpose.')),
+                    APP,
+                    capability_id=cid,
+                )
+                receipt = APP.receipts.create(
+                    'direct-capability',
+                    cid,
+                    cap['source'],
+                    'completed' if out.get('ok') else 'failed',
+                    out,
+                )
                 return self._json({'capability': cap, 'result': out, 'receipt': receipt})
             if p == '/api/memory':
-                return self._json(APP.memory.add(str(data.get('content', '')), str(data.get('title', '')), str(data.get('namespace', 'general')), data.get('metadata') or {}))
+                return self._json(
+                    APP.memory.add(
+                        str(data.get('content', '')),
+                        str(data.get('title', '')),
+                        str(data.get('namespace', 'general')),
+                        data.get('metadata') or {},
+                    )
+                )
             if p == '/api/approval':
-                return self._json(APP.execution.set_approval(str(data.get('id', '')), str(data.get('status', 'rejected'))))
+                return self._json(
+                    APP.execution.set_approval(
+                        str(data.get('id', '')),
+                        str(data.get('status', 'rejected')),
+                    )
+                )
             if p == '/api/system/action':
                 if 'action_id' not in data:
-                    safe_legacy = {'list_processes': 'system.processes.list', 'list_services': 'system.services.list', 'read_file': 'workspace.file.read', 'write_file': 'workspace.file.write', 'open_url': 'url.open'}
+                    safe_legacy = {
+                        'list_processes': 'system.processes.list',
+                        'list_services': 'system.services.list',
+                        'read_file': 'workspace.file.read',
+                        'write_file': 'workspace.file.write',
+                        'open_url': 'url.open',
+                    }
                     old_name = str(data.get('name', ''))
                     if old_name in safe_legacy:
                         data = {'action_id': safe_legacy[old_name], 'parameters': data.get('args') or {}}
                 proof = self.headers.get('X-JUBI-Approval') or self.headers.get('X-SARUS-Approval')
                 out = APP.privileged.handle(data, source='local-api', approval_proof=proof)
-                code = 423 if out.get('status') == 'approval_required' else (403 if out.get('status') == 'denied' else (400 if out.get('status') == 'invalid' else 200))
+                code = 423 if out.get('status') == 'approval_required' else (
+                    403 if out.get('status') == 'denied' else (
+                        400 if out.get('status') == 'invalid' else 200
+                    )
+                )
                 return self._json(out, code)
             if p == '/api/automation':
-                return self._json(APP.scheduler.add(str(data.get('name', 'Automation')), str(data.get('prompt', '')), int(data.get('interval_seconds', 3600)), bool(data.get('enabled', True))))
+                return self._json(
+                    APP.scheduler.add(
+                        str(data.get('name', 'Automation')),
+                        str(data.get('prompt', '')),
+                        int(data.get('interval_seconds', 3600)),
+                        bool(data.get('enabled', True)),
+                    )
+                )
             if p == '/api/automation/toggle':
                 APP.scheduler.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
                 return self._json({'ok': True})
@@ -274,13 +502,24 @@ class H(SimpleHTTPRequestHandler):
                     return self._json(APP.fable.lab.run_action(action, int(data.get('timeout', 1800))))
                 return self._json({'error': 'unsupported Fable lab action'}, 400)
             if p == '/api/fable/capability/save':
-                cap = APP.fable.capabilities.save(str(data.get('name', '')), str(data.get('description', '')), str(data.get('prompt', '')), data.get('permissions') or [])
-                trace = APP.fable.traces.verified('capability.save', {'capability_id': cap['id'], 'definition_hash': cap['definition_hash']})
+                cap = APP.fable.capabilities.save(
+                    str(data.get('name', '')),
+                    str(data.get('description', '')),
+                    str(data.get('prompt', '')),
+                    data.get('permissions') or [],
+                )
+                trace = APP.fable.traces.verified(
+                    'capability.save',
+                    {'capability_id': cap['id'], 'definition_hash': cap['definition_hash']},
+                )
                 return self._json({'ok': True, 'capability': cap, 'trace': trace})
             if p == '/api/fable/capability/run':
                 return self._json(APP.fable.run_capability(str(data.get('id', ''))))
             if p == '/api/fable/capability/toggle':
-                cap = APP.fable.capabilities.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
+                cap = APP.fable.capabilities.set_enabled(
+                    str(data.get('id', '')),
+                    bool(data.get('enabled')),
+                )
                 return self._json({'ok': True, 'capability': cap})
             if p == '/api/fable/agenda/add':
                 cid = str(data.get('capability_id', ''))
@@ -289,10 +528,19 @@ class H(SimpleHTTPRequestHandler):
                     return self._json({'error': 'Fable capability not found'}, 404)
                 if not cap['enabled']:
                     return self._json({'error': 'Fable capability is disabled'}, 403)
-                item = APP.fable.agenda.add(str(data.get('name', cap['name'])), str(data.get('when', 'once')), cid, int(data.get('period_seconds', 3600)), int(data.get('max_runs', 1)))
+                item = APP.fable.agenda.add(
+                    str(data.get('name', cap['name'])),
+                    str(data.get('when', 'once')),
+                    cid,
+                    int(data.get('period_seconds', 3600)),
+                    int(data.get('max_runs', 1)),
+                )
                 return self._json({'ok': True, 'agenda': item})
             if p == '/api/fable/agenda/toggle':
-                item = APP.fable.agenda.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
+                item = APP.fable.agenda.set_enabled(
+                    str(data.get('id', '')),
+                    bool(data.get('enabled')),
+                )
                 return self._json({'ok': True, 'agenda': item})
             return self._json({'error': 'not found'}, 404)
         except ValueError as exc:

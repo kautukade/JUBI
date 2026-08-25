@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Vision & Voice · Jubi</title><link rel="stylesheet" href="/assets/styles.css"></head>
+<body data-page="vision"><main class="page">
+<div class="hero"><div><h1>Vision & Voice</h1><p>Analyze screenshots and images with your installed local Ollama vision model. Optional browser voice controls provide click-to-talk dictation and read-aloud.</p></div><button id="vision-refresh" class="btn">Refresh</button></div>
+<div class="grid">
+<div class="card metric-card span-3"><div class="metric-label">Vision runtime</div><div id="vision-online" class="metric-value" style="font-size:17px">—</div><div class="metric-note">Local Ollama only</div></div>
+<div class="card metric-card span-5"><div class="metric-label">Selected model</div><div id="vision-model-name" class="metric-value" style="font-size:16px">—</div><div class="metric-note">No image cloud upload in this feature</div></div>
+<div class="card metric-card span-4"><div class="metric-label">Browser speech</div><div id="voice-status" class="metric-value" style="font-size:17px">—</div><div class="metric-note">Availability depends on your browser/OS</div></div>
+</div>
+<div class="grid" style="margin-top:16px">
+<div class="card span-6"><div class="card-head"><div><div class="card-title">Local image analysis</div><div class="card-sub">PNG, JPEG or WebP · maximum 8 MiB</div></div></div><div class="card-body stack">
+<div class="field"><label>Image</label><input id="vision-file" class="input" type="file" accept="image/png,image/jpeg,image/webp"></div>
+<div class="card" style="padding:12px;min-height:220px;display:flex;align-items:center;justify-content:center"><img id="vision-preview" alt="Selected preview" style="max-width:100%;max-height:360px;display:none;border-radius:10px"><div id="vision-no-preview" class="muted">Choose an image to preview it locally.</div></div>
+<div class="field"><label>Vision model</label><select id="vision-model" class="select"><option>Loading…</option></select></div>
+<div class="field"><label>Question / instruction</label><textarea id="vision-prompt" class="textarea" placeholder="Explain the error in this screenshot, describe this UI, summarize this chart…"></textarea></div>
+<div class="actions"><button id="voice-dictate" class="btn">🎙 Dictate</button><button id="vision-analyze" class="btn primary">Analyze locally</button></div>
+</div></div>
+<div class="card span-6"><div class="card-head"><div><div class="card-title">Analysis result</div><div class="card-sub">Response comes from local Ollama vision inference</div></div><button id="voice-read" class="btn small">🔊 Read aloud</button></div><div class="card-body stack"><div id="vision-answer" style="white-space:pre-wrap;min-height:220px">Waiting for an image.</div><pre id="vision-details" class="codebox">No analysis yet.</pre></div></div>
+</div>
+<div class="notice" style="margin-top:16px"><b>Voice boundary:</b> this page uses browser speech APIs when available. It is click-to-talk/read-aloud, not a background wake-word service, and offline speech recognition is not guaranteed by Jubi. A native “Hey Jubi” voice service remains a separate production feature.</div>
+</main><script src="/assets/app.js"></script><script src="/assets/shell-extension.js"></script><script src="/assets/vision.js"></script></body></html>

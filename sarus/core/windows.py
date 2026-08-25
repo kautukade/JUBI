@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import webbrowser
 from pathlib import Path
@@ -12,9 +13,9 @@ from sarus.core.ring0 import Ring0Bridge
 class WindowsBroker:
     """Low-level executor for already-authorized typed actions.
 
-    This class has no arbitrary PowerShell/cmd/exec primitive. Ring-0 access is
-    available only through fixed Ring0Bridge methods whose IOCTLs are compiled
-    into SARUS; callers cannot provide raw IOCTL numbers or kernel addresses.
+    There is deliberately no arbitrary shell/PowerShell/cmd primitive. Workspace
+    operations are confined to configured roots, apps/services/processes are
+    resource allowlisted, and Ring-0 remains limited to compiled fixed methods.
     """
 
     _BLOCKED_LEGACY = {'powershell', 'stop_process', 'service_control', 'open_app'}
@@ -37,15 +38,18 @@ class WindowsBroker:
         return os.name == 'nt'
 
     def _ensure_workspace(self, p):
-        path = Path(p).expanduser().resolve()
+        path = Path(p).expanduser()
+        if not path.is_absolute():
+            path = self.root / path
+        path = path.resolve()
         if not self.file_roots:
-            raise PermissionError('No SARUS broker workspace roots are configured')
+            raise PermissionError('No Jubi broker workspace roots are configured')
         if not any(path == base or base in path.parents for base in self.file_roots):
-            raise PermissionError('Path is outside approved SARUS broker workspaces')
+            raise PermissionError('Path is outside approved Jubi broker workspaces')
         return path
 
     @staticmethod
-    def _run(argv: list[str], timeout: int):
+    def _run(argv: list[str], timeout: int, cwd: Path | None = None):
         cp = subprocess.run(
             argv,
             capture_output=True,
@@ -54,6 +58,7 @@ class WindowsBroker:
             encoding='utf-8',
             errors='replace',
             shell=False,
+            cwd=str(cwd) if cwd else None,
         )
         return {
             'ok': cp.returncode == 0,
@@ -63,11 +68,6 @@ class WindowsBroker:
         }
 
     def action(self, name: str, args: dict | None = None, approved=False):
-        """Backward-compatible low-risk API.
-
-        Old privileged names remain disabled. Ring-0 access uses typed action
-        IDs instead of a generic driver-control primitive.
-        """
         args = args or {}
         if name in self._BLOCKED_LEGACY:
             raise PermissionError('Legacy privileged action disabled; use the typed PrivilegedBroker API')
@@ -97,6 +97,8 @@ class WindowsBroker:
 
         if action_id == 'workspace.file.read':
             p = self._ensure_workspace(parameters['path'])
+            if not p.is_file():
+                raise FileNotFoundError(str(p))
             return {
                 'ok': True,
                 'path': str(p),
@@ -107,7 +109,76 @@ class WindowsBroker:
             p = self._ensure_workspace(parameters['path'])
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(str(parameters.get('content', '')), encoding='utf-8')
+            return {'ok': True, 'path': str(p), 'bytes': p.stat().st_size}
+
+        if action_id == 'workspace.path.stat':
+            p = self._ensure_workspace(parameters['path'])
+            if not p.exists():
+                return {'ok': True, 'path': str(p), 'exists': False}
+            st = p.stat()
+            return {
+                'ok': True, 'path': str(p), 'exists': True, 'is_file': p.is_file(),
+                'is_dir': p.is_dir(), 'size': st.st_size, 'modified': st.st_mtime,
+            }
+
+        if action_id == 'workspace.directory.list':
+            p = self._ensure_workspace(parameters['path'])
+            if not p.is_dir():
+                raise NotADirectoryError(str(p))
+            items = []
+            for child in sorted(p.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))[:500]:
+                try:
+                    st = child.stat()
+                    items.append(
+                        {
+                            'name': child.name,
+                            'path': str(child),
+                            'is_dir': child.is_dir(),
+                            'size': st.st_size if child.is_file() else None,
+                            'modified': st.st_mtime,
+                        }
+                    )
+                except OSError:
+                    continue
+            return {'ok': True, 'path': str(p), 'items': items, 'truncated': len(items) >= 500}
+
+        if action_id == 'workspace.directory.create':
+            p = self._ensure_workspace(parameters['path'])
+            p.mkdir(parents=bool(parameters.get('parents', True)), exist_ok=True)
             return {'ok': True, 'path': str(p)}
+
+        if action_id in {'workspace.file.copy', 'workspace.file.move'}:
+            src = self._ensure_workspace(parameters['source_path'])
+            dst = self._ensure_workspace(parameters['destination_path'])
+            if not src.is_file():
+                raise FileNotFoundError(str(src))
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            if dst.exists() and not bool(parameters.get('overwrite', False)):
+                raise FileExistsError(str(dst))
+            if action_id.endswith('.copy'):
+                shutil.copy2(src, dst)
+            else:
+                if dst.exists():
+                    dst.unlink()
+                shutil.move(str(src), str(dst))
+            return {'ok': True, 'source_path': str(src), 'destination_path': str(dst)}
+
+        if action_id == 'workspace.file.delete':
+            p = self._ensure_workspace(parameters['path'])
+            if not p.is_file():
+                raise FileNotFoundError(str(p))
+            size = p.stat().st_size
+            p.unlink()
+            return {'ok': True, 'path': str(p), 'deleted_bytes': size}
+
+        if action_id in {'development.git.status', 'development.git.log'}:
+            p = self._ensure_workspace(parameters['path'])
+            if not p.is_dir():
+                raise NotADirectoryError(str(p))
+            if action_id.endswith('.status'):
+                return self._run(['git', 'status', '--short', '--branch'], 20, cwd=p)
+            limit = max(1, min(int(parameters.get('limit', 20)), 100))
+            return self._run(['git', 'log', f'-{limit}', '--oneline', '--decorate'], 20, cwd=p)
 
         if action_id == 'ring0.ping':
             return self.ring0.ping()
@@ -140,6 +211,15 @@ class WindowsBroker:
                 argv.append('/F')
             return self._run(argv, 15)
 
-        # Ring-0 is intentionally narrow: no caller-selected executable, raw
-        # IOCTL, kernel-memory address, registry-anywhere or arbitrary service.
+        if action_id == 'app.launch':
+            argv = resolved.get('argv')
+            if not isinstance(argv, list) or not argv or not all(isinstance(x, str) and x for x in argv):
+                raise ValueError('invalid allowlisted app mapping')
+            command = list(argv)
+            workspace_path = str(parameters.get('workspace_path') or '').strip()
+            if workspace_path:
+                command.append(str(self._ensure_workspace(workspace_path)))
+            proc = subprocess.Popen(command, shell=False, cwd=str(self.root))
+            return {'ok': True, 'pid': proc.pid, 'resource_id': resolved.get('resource_id')}
+
         raise PermissionError('Typed Windows action is not implemented: ' + action_id)
