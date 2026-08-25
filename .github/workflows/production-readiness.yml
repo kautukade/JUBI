@@ -48,6 +48,8 @@ jobs:
           node --check sarus/web/assets/knowledge.js
           node --check sarus/web/assets/council.js
           node --check sarus/web/assets/research.js
+          node --check sarus/web/assets/network.js
+          node --check sarus/web/assets/vision.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
@@ -62,6 +64,12 @@ jobs:
         run: |
           python tests/jubi_research_test.py
           python tests/jubi_research_ui_test.py
+      - name: Computer operator, LAN and Vision tests
+        run: |
+          python tests/jubi_operator_test.py
+          python tests/jubi_network_test.py
+          python tests/jubi_vision_test.py
+          python tests/jubi_network_vision_ui_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
@@ -120,6 +128,8 @@ jobs:
           node --check sarus/web/assets/knowledge.js
           node --check sarus/web/assets/council.js
           node --check sarus/web/assets/research.js
+          node --check sarus/web/assets/network.js
+          node --check sarus/web/assets/vision.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
@@ -134,6 +144,12 @@ jobs:
         run: |
           python tests/jubi_research_test.py
           python tests/jubi_research_ui_test.py
+      - name: Computer operator, LAN and Vision tests
+        run: |
+          python tests/jubi_operator_test.py
+          python tests/jubi_network_test.py
+          python tests/jubi_vision_test.py
+          python tests/jubi_network_vision_ui_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
