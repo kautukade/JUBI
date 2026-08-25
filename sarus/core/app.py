@@ -3,6 +3,7 @@ from pathlib import Path
 from .events import EventBus
 from .models import OllamaRouter
 from .brain import BrainRouter
+from .providers import ProviderManager
 from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry
 from .adapters import AdapterManager
@@ -19,13 +20,15 @@ from .fable import FableIntegration
 
 
 class Jubi:
-    """Jubi local AI runtime.
+    """Jubi local-first AI runtime.
 
-    Jubi Phase 1 adds the Advanced Local Brain on top of the stabilized SARUS
-    foundation: automatic intent classification, local model ranking, measured
-    performance history and bounded local fallback. Internal ``sarus`` module
-    paths remain during this compatibility stage so installer/source/driver
-    behavior is not broken by a cosmetic package migration.
+    The Advanced Local Brain remains the privacy-preserving foundation. The
+    Provider Manager adds optional OpenRouter, NVIDIA NIM and Hugging Face
+    Inference Providers behind explicit local-only/hybrid/cloud-boost modes.
+    Cloud credentials never live in the repository or Jubi SQLite database.
+
+    Internal ``sarus`` module paths remain during this compatibility stage so
+    installer/source/driver behavior is not broken by a cosmetic package move.
     """
 
     VERSION = '0.1.0'
@@ -39,6 +42,12 @@ class Jubi:
         self.bus = EventBus(self.db_path)
         self.models = OllamaRouter(root / 'config/models.json')
         self.brain = BrainRouter(self.db_path, self.models, root / 'config/brain.json', self.bus)
+        self.providers = ProviderManager(
+            self.db_path,
+            self.brain,
+            root / 'config/providers.json',
+            self.bus,
+        )
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.adapters = AdapterManager(root, root / 'config/sources.json')
@@ -65,6 +74,8 @@ class Jubi:
                 'version': self.VERSION,
                 'foundation': self.FOUNDATION_VERSION,
                 'brain': 'advanced-local-router-v1',
+                'provider_manager': 'provider-manager-v1',
+                'provider_mode': self.providers.mode(),
             },
         )
 
@@ -88,19 +99,23 @@ class Jubi:
     def status(self):
         ads = self.adapters.connect()
         models = self.models.list_models()
+        provider_status = self.providers.status(validate=False)
         return {
             'name': 'Jubi',
             'version': self.VERSION,
             'foundation': self.FOUNDATION_VERSION,
-            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1',
             'adapters': [a.__dict__ for a in ads],
             'models': models,
             'brain': {
                 'mode': self.brain.cfg.get('mode', 'local-first'),
-                'automatic_cloud_escalation': bool(
-                    self.brain.cfg.get('allow_cloud_through_ollama_by_default', False)
-                ),
+                'automatic_cloud_escalation': self.providers.mode() != 'local_only',
                 'tracked_model_task_pairs': len(self.brain.performance()),
+            },
+            'providers': {
+                'mode': provider_status['mode'],
+                'local': provider_status['local'],
+                'cloud': provider_status['cloud'],
             },
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
