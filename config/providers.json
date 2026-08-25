@@ -1,0 +1,66 @@
+{
+  "mode": "local_only",
+  "provider_order": [
+    "nvidia",
+    "openrouter",
+    "huggingface"
+  ],
+  "hybrid_cloud_complexity_threshold": 4,
+  "max_cloud_provider_attempts": 3,
+  "max_models_per_provider_attempt": 2,
+  "model_cache_seconds": 300,
+  "allow_high_privacy_cloud": false,
+  "providers": {
+    "openrouter": {
+      "enabled": true,
+      "base_url": "https://openrouter.ai/api/v1",
+      "models": {
+        "general": ["openrouter/free"],
+        "coding": ["openrouter/free"],
+        "research": ["openrouter/free"],
+        "planning": ["openrouter/free"],
+        "document": ["openrouter/free"],
+        "system": ["openrouter/free"],
+        "vision": ["openrouter/free"]
+      }
+    },
+    "nvidia": {
+      "enabled": true,
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "models": {
+        "general": [
+          "nvidia/nemotron-3-super-120b-a12b",
+          "meta/llama-3.3-70b-instruct"
+        ],
+        "coding": [
+          "qwen/qwen3-coder-480b-a35b-instruct",
+          "nvidia/nemotron-3-super-120b-a12b"
+        ],
+        "research": ["nvidia/nemotron-3-super-120b-a12b"],
+        "planning": ["nvidia/nemotron-3-super-120b-a12b"],
+        "document": [
+          "meta/llama-3.3-70b-instruct",
+          "nvidia/nemotron-3-super-120b-a12b"
+        ],
+        "system": ["nvidia/nemotron-3-super-120b-a12b"],
+        "vision": []
+      }
+    },
+    "huggingface": {
+      "enabled": true,
+      "base_url": "https://router.huggingface.co/v1",
+      "models": {
+        "general": ["openai/gpt-oss-20b:fastest"],
+        "coding": [
+          "Qwen/Qwen3-Coder-480B-A35B-Instruct:fastest",
+          "openai/gpt-oss-20b:fastest"
+        ],
+        "research": ["openai/gpt-oss-20b:fastest"],
+        "planning": ["openai/gpt-oss-20b:fastest"],
+        "document": ["openai/gpt-oss-20b:fastest"],
+        "system": ["openai/gpt-oss-20b:fastest"],
+        "vision": []
+      }
+    }
+  }
+}

@@ -48,6 +48,8 @@ jobs:
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
         run: python tests/jubi_brain_test.py
+      - name: Provider Manager tests
+        run: python tests/jubi_provider_manager_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
@@ -106,6 +108,8 @@ jobs:
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
         run: python tests/jubi_brain_test.py
+      - name: Provider Manager tests
+        run: python tests/jubi_provider_manager_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
