@@ -6,6 +6,7 @@ from .brain import BrainRouter
 from .providers import ProviderManager
 from .knowledge import SemanticKnowledge
 from .experience import ExperienceEngine
+from .council import AICouncil, MultiAgentSupervisor
 from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry
 from .adapters import AdapterManager
@@ -27,11 +28,9 @@ class Jubi:
     The Advanced Local Brain remains the privacy-preserving foundation. The
     Provider Manager adds optional OpenRouter, NVIDIA NIM and Hugging Face
     Inference Providers behind explicit local-only/hybrid/cloud-boost modes.
-    Semantic Knowledge adds local Ollama embeddings + RAG, while Experience
-    Memory records bounded outcomes without uncontrolled model-weight changes.
-
-    Internal ``sarus`` module paths remain during this compatibility stage so
-    installer/source/driver behavior is not broken by a cosmetic package move.
+    Semantic Knowledge adds local Ollama embeddings + RAG, Experience Memory
+    records bounded outcomes, and Council/Supervisor provide multi-model and
+    multi-agent reasoning without bypassing Jubi's tool/broker boundaries.
     """
 
     VERSION = '0.1.0'
@@ -39,8 +38,6 @@ class Jubi:
 
     def __init__(self, root: Path):
         self.root = root
-        # Keep the existing database filename for compatibility while Jubi owns
-        # the state schema. A later tested migration can rename the physical file.
         self.db_path = root / 'data/sarus.db'
         self.bus = EventBus(self.db_path)
         self.models = OllamaRouter(root / 'config/models.json')
@@ -53,6 +50,10 @@ class Jubi:
         )
         self.knowledge = SemanticKnowledge(self.db_path, self.models, self.providers, self.bus)
         self.experience = ExperienceEngine(self.db_path, self.models, self.bus)
+        self.council = AICouncil(self.db_path, self.brain, self.providers, self.bus)
+        self.supervisor = MultiAgentSupervisor(
+            self.db_path, self.brain, self.providers, self.knowledge, self.experience, self.bus
+        )
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.adapters = AdapterManager(root, root / 'config/sources.json')
@@ -83,6 +84,8 @@ class Jubi:
                 'provider_mode': self.providers.mode(),
                 'semantic_knowledge': 'local-embedding-rag-v1',
                 'experience_memory': 'bounded-experience-v1',
+                'council': 'multi-model-council-v1',
+                'supervisor': 'reasoning-supervisor-v1',
             },
         )
 
@@ -113,7 +116,7 @@ class Jubi:
             'name': 'Jubi',
             'version': self.VERSION,
             'foundation': self.FOUNDATION_VERSION,
-            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1+semantic-knowledge-v1+experience-v1',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1+semantic-knowledge-v1+experience-v1+council-v1+supervisor-v1',
             'adapters': [a.__dict__ for a in ads],
             'models': models,
             'brain': {
@@ -132,6 +135,8 @@ class Jubi:
                 'success_rate': experience_stats['success_rate'],
                 'embedded': experience_stats['embedded'],
             },
+            'council': {'recent_runs': len(self.council.recent(20))},
+            'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
@@ -142,6 +147,4 @@ class Jubi:
         }
 
 
-# Backward-compatible import for the SARUS-era installer/tests while Jubi is
-# being stabilized. There is one runtime implementation, not two forks.
 Sarus = Jubi
