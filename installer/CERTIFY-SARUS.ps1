@@ -5,27 +5,30 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $Root = Split-Path -Parent $PSScriptRoot
+# Legacy physical venv path retained during Jubi Phase 0 compatibility.
 $Python = Join-Path $Root '.sarus-venv\Scripts\python.exe'
 $LogDir = Join-Path $Root 'logs'
 $ReportPath = Join-Path $LogDir 'production-certification.json'
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
 if (-not (Test-Path -LiteralPath $Python)) {
-    throw "SARUS private Python runtime is missing: $Python"
+    throw "Jubi private Python runtime is missing: $Python"
 }
 
 Push-Location $Root
 try {
-    $args = @('-m', 'sarus.acceptance', '--full')
+    $args = @('-m', 'jubi.acceptance', '--full')
     if ($RequireRing0) { $args += '--require-ring0' }
     $acceptanceText = (& $Python @args 2>&1) -join "`n"
     $acceptanceExit = $LASTEXITCODE
     try { $acceptance = $acceptanceText | ConvertFrom-Json } catch { $acceptance = @{ ok = $false; parse_error = $_.Exception.Message; raw = $acceptanceText } }
 
-    $appPath = Join-Path $Root 'SARUS.exe'
+    $appPath = Join-Path $Root 'Jubi.exe'
     $appSignature = if (Test-Path -LiteralPath $appPath) { Get-AuthenticodeSignature -LiteralPath $appPath } else { $null }
     $appSigned = $appSignature -and $appSignature.Status -eq 'Valid'
 
+    # The controlled driver keeps its SARUS-era ABI/name during Phase 0 so
+    # device paths and signing behavior are not changed as part of a branding migration.
     $driverPath = Join-Path $Root 'driver\SarusRing0\bin\Release\SarusRing0.sys'
     $driverSignature = if (Test-Path -LiteralPath $driverPath) { Get-AuthenticodeSignature -LiteralPath $driverPath } else { $null }
     $driverBundled = Test-Path -LiteralPath $driverPath
@@ -35,12 +38,14 @@ try {
     try { $ring0 = $ring0Text | ConvertFrom-Json } catch { $ring0 = @{ ok = $false; raw = $ring0Text } }
 
     $requiredFiles = @(
-        'SARUS.exe',
+        'Jubi.exe',
         'README.md',
         'BUILD_MANIFEST.json',
         'config\production.json',
         'config\models.json',
         'config\broker_allowlist.json',
+        'jubi\server.py',
+        'jubi\acceptance.py',
         'sarus\server.py',
         'sarus\core\fable.py',
         'sarus\web\fable.html'
@@ -53,7 +58,9 @@ try {
     if ($RequireRing0) { $strictReady = $strictReady -and [bool]$ring0.ok -and [bool]$driverSigned }
 
     $report = [ordered]@{
-        name = 'SARUS Production Certification'
+        name = 'Jubi Production Certification'
+        version = '0.1.0'
+        foundation = 'SARUS 1.3.1'
         generated_at = (Get-Date).ToUniversalTime().ToString('o')
         root = $Root
         core_ready = [bool]$coreReady
@@ -73,17 +80,19 @@ try {
             path = $driverPath
             signature_status = if ($driverSignature) { [string]$driverSignature.Status } else { 'NotBundled' }
             signer = if ($driverSignature -and $driverSignature.SignerCertificate) { $driverSignature.SignerCertificate.Subject } else { $null }
+            compatibility_name = 'SarusRing0.sys'
         }
         missing_required_files = $missingFiles
         notes = @(
-            'core_ready certifies the installed SARUS application checks on this machine.',
-            'public_release_ready also requires a valid Authenticode application signature and, when a driver binary is bundled, a valid driver signature.',
-            'Original Fable QEMU readiness is reported by SARUS Doctor/Fable status and is optional for the normal Windows host runtime.'
+            'core_ready certifies the installed Jubi application checks on this machine.',
+            'public_release_ready also requires a valid Authenticode signature on Jubi.exe and, when a driver binary is bundled, a valid driver signature.',
+            'The SarusRing0 driver name is a legacy compatibility ABI retained during Jubi Phase 0.',
+            'Original Fable QEMU readiness is reported by Jubi Doctor/Fable status and is optional for the normal Windows host runtime.'
         )
     }
 
     $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
-    Write-Host "SARUS production certification report: $ReportPath"
+    Write-Host "Jubi production certification report: $ReportPath"
     Write-Host "Core ready: $coreReady"
     Write-Host "Public release ready: $($report.public_release_ready)"
 

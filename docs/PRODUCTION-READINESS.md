@@ -1,110 +1,127 @@
-# SARUS v1.3.1 Production Readiness
+# Jubi v0.1.0 Production Readiness
 
 ## Purpose
 
-SARUS v1.3.1 is the stabilization release after the Fable v1.3 integration. This document separates what can be proven in CI from what must be certified on the real Windows research laptop or through an external code-signing authority.
+Jubi v0.1.0 is the Phase 0 stabilization/migration release evolved from the SARUS v1.3.1 foundation. This document separates what can be proven in CI from what still must be validated on the real Windows laptop or by a code-signing authority.
 
 ## Release gates
 
-A source revision is release-candidate ready only when all of these pass:
+A revision is release-candidate ready only when all relevant checks pass:
 
-1. Python compile checks.
-2. Production-readiness static tests.
-3. All 10 source-adapter integration/regression tests.
-4. Fable integration tests on Windows and Linux.
-5. Privileged Broker and controlled Ring0 policy tests.
-6. Windows PowerShell syntax validation for installer/certification/driver scripts.
-7. Inno Setup compilation of `SARUS-Setup.exe`.
-8. SHA-256 generation for the final EXE artifact.
+1. Python compile checks for Jubi and the compatibility foundation.
+2. Jubi Phase 0 persistence/approval regression tests.
+3. Production-readiness static tests.
+4. Existing ten-source integration/regression tests.
+5. Fable integration tests on Windows and Linux.
+6. Privileged Broker and controlled Ring0 policy tests.
+7. Windows PowerShell syntax validation for installer/certification/driver scripts.
+8. Inno Setup compilation of `Jubi-Setup.exe`.
+9. SHA-256 generation for the final installer artifact.
 
-The build workflow uses read-only repository permissions.
+Repository contents remain read-only to normal CI gates; only the dedicated artifact-cleanup job requires Actions write permission.
 
-## Fixed in v1.3.1
+## Phase 0 reliability repairs
+
+### Explicit SQLite persistence
+
+Jubi uses explicit transactions for memory, events, task state, approvals and automations. SQLite connections use WAL mode and a busy timeout to reduce contention from the HTTP server and background workers.
+
+### Resumable approval state
+
+The execution plan, step cursor, results and context are persisted before an approval pause. After restart, an approved task resumes the same pending step rather than re-planning a different task. Rejected/resolved approvals cannot silently execute or be reused.
+
+### Safer Ollama routing
+
+Jubi discovers the actual Ollama model list and never returns a configured-but-missing model as a valid fallback. Required production models are defined in `config/production.json`.
 
 ### Manifest-driven acceptance
 
-`sarus.acceptance` reads `BUILD_MANIFEST.json` and `config/production.json`. It no longer contains the legacy `17,356` file-count assertion. The reproducible current clean-checkout count is defined only in the build manifest.
+`jubi.acceptance` delegates to the maintained foundation acceptance implementation, which reads `BUILD_MANIFEST.json` and `config/production.json`. The expected indexed-source count is defined by the manifest rather than a stale hard-coded number.
 
-### Explicit Ollama model provisioning
+## Ollama provisioning
 
-During the official EXE install, `SARUS_INSTALL_MODE=exe` causes acceptance to:
+During the official EXE installation, `JUBI_INSTALL_MODE=exe` (plus the temporary legacy compatibility variable) causes acceptance to:
 
 - verify the local Ollama service;
-- attempt to start `ollama serve` when the executable is present but the service is offline;
-- download any missing required local models using Ollama's local `/api/pull` endpoint;
-- verify all required model names after provisioning;
-- fail installation rather than silently completing with a missing required model.
+- attempt to start `ollama serve` when possible;
+- download missing required local models through Ollama's local API;
+- verify required models after provisioning;
+- fail clearly instead of pretending an incomplete install succeeded.
 
-Required models are defined in `config/production.json`, not duplicated in the installer.
+## Target-machine certification
 
-### Target-machine certification report
-
-`installer/CERTIFY-SARUS.ps1` runs the full acceptance suite on the installed machine and writes:
+The compatibility-named script:
 
 ```text
-C:\Program Files\SARUS\logs\production-certification.json
+installer\CERTIFY-SARUS.ps1
+```
+
+now certifies **Jubi** and runs:
+
+```powershell
+python -m jubi.acceptance --full
+```
+
+It writes:
+
+```text
+C:\Program Files\Jubi\logs\production-certification.json
 ```
 
 It reports:
 
-- core acceptance result;
-- required file completeness;
-- application Authenticode status;
-- controlled Ring0 runtime status;
+- Jubi acceptance result;
+- required-file completeness;
+- `Jubi.exe` Authenticode status;
+- controlled legacy Ring0 compatibility status;
 - bundled driver signature status;
 - Doctor/model/Fable status.
 
-The default internal certification does not pretend an unsigned internal build is a publicly signed release. Use `-RequireSignedApp` and/or `-RequireRing0` for stricter certification.
-
-### Production workflow cleanup
-
-Old one-time source-transfer/materialization workflows, trigger marker files and stale source-count status files were removed from the release tree. These workflows were not runtime features and are not needed to install or operate SARUS.
-
-Active release workflows should not have repository write permission and should not post source status to transient external endpoints.
+Use `-RequireSignedApp` and/or `-RequireRing0` only for stricter target certification.
 
 ## Production status levels
 
 ### CI release-candidate ready
 
-Means source, security, integration and installer build gates pass in GitHub Actions.
+Source, security, integration and installer-build gates are green in GitHub Actions.
 
 ### Windows target certified
 
-Means the generated installer was run on the actual target laptop and `production-certification.json` reports `core_ready: true`.
+`Jubi-Setup.exe` has been clean-installed on the actual target Windows laptop and `production-certification.json` reports `core_ready: true`.
 
-This cannot be inferred from cloud CI because camera/audio hardware, SARA native integration, local Ollama state, device drivers and optional WSL/QEMU availability depend on the target laptop.
+Cloud CI cannot prove local camera/audio hardware, SARA runtime, real Ollama inference performance, GPU/driver behavior or optional WSL/QEMU readiness.
 
 ### Public release signed
 
-Means the application installer/launcher have valid organization Authenticode signatures and any bundled kernel driver satisfies current Microsoft kernel-driver signing requirements.
+`Jubi.exe` and `Jubi-Setup.exe` have valid organization Authenticode signatures, and any bundled kernel driver satisfies the applicable Microsoft driver-signing requirements.
 
-`installer/SIGN-RELEASE.ps1` supports normal SHA-256 Authenticode signing and RFC3161 timestamping for the application launcher/installer when an organization certificate is available. No private key is stored in the repository.
+`installer/SIGN-RELEASE.ps1` signs the Jubi launcher/installer with SHA-256 and RFC3161 timestamping when an organization signing certificate is available. No private signing key is stored in the repository.
 
-The controlled `SarusRing0.sys` public distribution path is separate. A locally built `.sys` is not treated as publicly production-signed merely because it was compiled successfully.
+## Controlled Ring0 compatibility boundary
 
-## Ring0 release behavior
+The legacy driver/device ABI remains named `SarusRing0` during Phase 0. This is intentional because renaming a Windows kernel driver/device is a compatibility and signing change, not normal product branding.
 
-The normal SARUS application remains installable without an active kernel driver. When a prebuilt driver is bundled, the EXE bootstrap checks Windows Authenticode status and activates it only when Windows reports the signature as valid.
+The normal Jubi host remains usable without an active kernel driver. When a prebuilt driver is bundled, activation occurs only if Windows reports a valid signature.
 
-No release script disables Secure Boot, Code Integrity, Defender or driver-signature enforcement.
+No release script disables Secure Boot, Code Integrity, HVCI, Defender or driver-signature enforcement.
 
-For a research laptop where controlled Ring0 is required, run:
+Strict compatibility-driver certification, only when a correctly signed driver is intentionally being tested:
 
 ```powershell
-& "C:\Program Files\SARUS\installer\CERTIFY-SARUS.ps1" -RequireRing0
+& "C:\Program Files\Jubi\installer\CERTIFY-SARUS.ps1" -RequireRing0
 ```
 
-A public signed application certification can be requested with:
+Signed application certification:
 
 ```powershell
-& "C:\Program Files\SARUS\installer\CERTIFY-SARUS.ps1" -RequireSignedApp
+& "C:\Program Files\Jubi\installer\CERTIFY-SARUS.ps1" -RequireSignedApp
 ```
 
 ## Fable production boundary
 
-The SARUS-native Fable Intelligence Layer is part of the normal application acceptance. The original Fable x86_64 kernel remains an optional isolated QEMU research lab. Missing WSL/QEMU therefore does not make the normal SARUS host installation fail.
+The Jubi-integrated Fable Intelligence Layer remains part of normal application acceptance. The original Fable x86_64 kernel is an optional isolated WSL/QEMU research lab. Missing WSL/QEMU therefore does not make the normal Jubi host installation fail.
 
-When Fable QEMU research is required, install the upstream-compatible WSL/Linux toolchain and verify readiness from:
+Fable Lab:
 
 ```text
 http://127.0.0.1:8877/fable.html
@@ -112,24 +129,27 @@ http://127.0.0.1:8877/fable.html
 
 ## Release procedure
 
-1. Merge only after Production Readiness, Fable Integration, Privileged Broker Security and Windows Installer checks are green.
-2. Obtain the `SARUS-Windows-Installer` artifact from the `main` workflow.
-3. Verify its SHA-256 file.
-4. For public distribution, sign the application artifacts with the company signing certificate and verify them.
-5. If a kernel driver is bundled publicly, complete the Microsoft driver-signing process and verify the returned driver/package on the target Windows version.
-6. Clean-install on the actual test laptop.
-7. Preserve `logs/production-certification.json` as the hardware acceptance record.
-8. Test launch, reboot, update/reinstall and uninstall behavior.
+1. Merge only after Jubi Production Readiness, Fable Integration, Privileged Broker Security and Windows Installer checks are green.
+2. Build the canonical `Jubi-Windows-Installer` artifact from `main`.
+3. Verify the provided SHA-256.
+4. Clean-install on the actual test laptop.
+5. Run `python -m jubi.acceptance --full` and preserve `logs/production-certification.json`.
+6. Test dashboard launch, local Ollama chat, persistence, approval/resume, reboot/relaunch and uninstall behavior.
+7. For public distribution, sign Jubi application artifacts with the organization certificate and verify the signatures.
+8. If a kernel driver is distributed publicly, complete the required Microsoft driver-signing process separately.
 
 ## What CI cannot certify
 
 CI cannot truthfully certify:
 
 - the user's physical microphone/camera/audio devices;
-- target GPU/driver behavior;
-- a Microsoft-signed Ring0 binary that has not been supplied;
+- real target GPU/driver performance;
+- real local Ollama inference on the user's exact laptop;
+- SARA credentials/runtime on that laptop;
+- a Microsoft-signed driver binary that has not been supplied;
 - a company Authenticode certificate that has not been supplied;
-- physical Windows reboot persistence;
-- optional Fable QEMU/WSL hardware/runtime readiness on the target laptop.
+- physical reboot persistence;
+- optional Fable QEMU/WSL readiness on the target laptop;
+- the full installed `Jubi.exe` launcher behavior until clean-installed on Windows.
 
-Those are represented explicitly as target/certificate-backed gates rather than being marked complete without evidence.
+Those remain explicit target/certificate-backed gates rather than being marked complete without evidence.

@@ -1,4 +1,4 @@
-name: Production Readiness
+name: Jubi Production Readiness
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
       - 'agent/**'
     paths:
+      - 'jubi/**'
       - 'sarus/**'
       - 'config/**'
       - 'installer/**'
@@ -16,6 +17,7 @@ on:
       - '.github/workflows/**'
   pull_request:
     paths:
+      - 'jubi/**'
       - 'sarus/**'
       - 'config/**'
       - 'installer/**'
@@ -39,14 +41,16 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile Python
-        run: python -m compileall -q sarus tests scripts
+        run: python -m compileall -q jubi sarus tests scripts
+      - name: Jubi Phase 0 regression tests
+        run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
         run: python tests/production_readiness_test.py
       - name: Fable integration tests
         env:
           SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}/sarus-fable-receipt.key
         run: python tests/fable_integration_test.py
-      - name: SARUS integration regression
+      - name: Foundation integration regression
         env:
           SARUS_BROKER_APPROVAL_SECRET: ci-only-approval-secret-not-for-production
           SARUS_RECEIPT_SIGNING_KEY_FILE: ${{ runner.temp }}/sarus-regression-receipt.key
@@ -89,7 +93,9 @@ jobs:
             }
           }
       - name: Compile Python
-        run: python -m compileall -q sarus tests scripts
+        run: python -m compileall -q jubi sarus tests scripts
+      - name: Jubi Phase 0 regression tests
+        run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
         run: python tests/production_readiness_test.py
       - name: Fable Windows tests

@@ -8,7 +8,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from .core.app import Sarus
+from .core.app import Jubi
 
 
 def _load_json(path: Path) -> dict:
@@ -30,7 +30,7 @@ def _find_ollama() -> str | None:
     return None
 
 
-def _wait_for_ollama(app: Sarus, seconds: int = 30) -> bool:
+def _wait_for_ollama(app: Jubi, seconds: int = 30) -> bool:
     deadline = time.time() + seconds
     while time.time() < deadline:
         if app.models.list_models().get('online'):
@@ -39,7 +39,7 @@ def _wait_for_ollama(app: Sarus, seconds: int = 30) -> bool:
     return False
 
 
-def _start_ollama_for_install(app: Sarus) -> bool:
+def _start_ollama_for_install(app: Jubi) -> bool:
     if app.models.list_models().get('online'):
         return True
     exe = _find_ollama()
@@ -56,7 +56,7 @@ def _start_ollama_for_install(app: Sarus) -> bool:
     return _wait_for_ollama(app)
 
 
-def _provision_required_models(app: Sarus, required: list[str]) -> dict:
+def _provision_required_models(app: Jubi, required: list[str]) -> dict:
     status = app.models.list_models()
     if not status.get('online'):
         return {'ok': False, 'error': status.get('error', 'Ollama is offline'), 'pulled': []}
@@ -74,10 +74,22 @@ def _provision_required_models(app: Sarus, required: list[str]) -> dict:
     return {'ok': not missing, 'pulled': pulled, 'missing': missing}
 
 
-def run_acceptance(root: Path, *, full: bool = False, provision_models: bool = False, require_ring0: bool = False) -> dict:
+def _install_mode() -> bool:
+    current = os.environ.get('JUBI_INSTALL_MODE', '').lower()
+    legacy = os.environ.get('SARUS_INSTALL_MODE', '').lower()
+    return current == 'exe' or legacy == 'exe'
+
+
+def run_acceptance(
+    root: Path,
+    *,
+    full: bool = False,
+    provision_models: bool = False,
+    require_ring0: bool = False,
+) -> dict:
     manifest = _load_json(root / 'BUILD_MANIFEST.json')
     production = _load_json(root / 'config' / 'production.json')
-    app = Sarus(root)
+    app = Jubi(root)
     checks: list[dict] = []
 
     def check(name, fn, required=True):
@@ -92,16 +104,28 @@ def run_acceptance(root: Path, *, full: bool = False, provision_models: bool = F
             checks.append({'name': name, 'ok': False, 'detail': str(exc), 'required': required})
 
     check('manifest version matches production profile', lambda: manifest['version'] == production['version'])
-    check('10 source adapters', lambda: len(app.adapters.connect()) == manifest['source_repositories'] and all(x.connected for x in app.adapters.connect()))
-    check('capability registry matches manifest', lambda: sum(x['files'] for x in app.registry.summary().values()) == manifest['indexed_original_files'])
+    check('Jubi product metadata synchronized', lambda: manifest.get('name') == 'Jubi' and production.get('name') == 'Jubi')
+    check(
+        '10 source adapters',
+        lambda: len(app.adapters.connect()) == manifest['source_repositories']
+        and all(x.connected for x in app.adapters.connect()),
+    )
+    check(
+        'capability registry matches manifest',
+        lambda: sum(x['files'] for x in app.registry.summary().values()) == manifest['indexed_original_files'],
+    )
     check('receipt chain', lambda: app.receipts.verify_chain()['ok'])
 
     def memory_roundtrip():
         token = 'accept-' + str(time.time())
-        app.memory.add(token, 'acceptance', 'test')
-        return bool(app.memory.search(token, 'test', 5))
+        saved = app.memory.add(token, 'acceptance', 'test')
+        # Reopen a new store to prove the write is committed, not merely visible
+        # through one connection/object.
+        from .core.memory import MemoryStore
+        reopened = MemoryStore(app.db_path)
+        return {'ok': any(x['id'] == saved['id'] for x in reopened.search(token, 'test', 5))}
 
-    check('memory write/search', memory_roundtrip)
+    check('memory write/reopen/search', memory_roundtrip)
     check('policy approval gate', lambda: app.policy.evaluate('privileged_system_action', 5, 'core')['decision'] == 'approval')
     check('CAI isolation', lambda: app.policy.evaluate('active_test', 2, 'cai')['decision'] == 'isolated')
 
@@ -111,7 +135,7 @@ def run_acceptance(root: Path, *, full: bool = False, provision_models: bool = F
     check('Fable proof boundary', lambda: bool(fable.get('trace', {}).get('model_prose_is_not_proof')))
 
     required_models = list(production.get('required_models', []))
-    install_mode = os.environ.get('SARUS_INSTALL_MODE', '').lower() == 'exe'
+    install_mode = _install_mode()
     should_provision = provision_models or install_mode
     if should_provision and not app.models.list_models().get('online'):
         check('Ollama auto-start for installer', lambda: _start_ollama_for_install(app), required=True)
@@ -125,32 +149,54 @@ def run_acceptance(root: Path, *, full: bool = False, provision_models: bool = F
         check('model ' + model, lambda model=model: model in installed, required=True)
 
     if full and doctor['models'].get('online') and required_models:
+        chat_model = app.models.choose('general')
         check(
             'Ollama generation',
-            lambda: bool(app.models.generate_text('Reply exactly SARUS_OK', 'general', model=required_models[0])[:100]),
+            lambda: bool(chat_model and app.models.generate_text('Reply exactly JUBI_OK', 'general', model=chat_model)[:100]),
             required=True,
         )
 
     if os.name == 'nt':
         check('Windows process broker', lambda: app.windows.action('list_processes').get('ok'), required=True)
-        check('SARA v7 native API bridge', lambda: app.native.status()['sara']['ready'], required=bool(production.get('require_sara_on_windows', True)))
+        check(
+            'SARA v7 native API bridge',
+            lambda: app.native.status()['sara']['ready'],
+            required=bool(production.get('require_sara_on_windows', True)),
+        )
         check('ECC native runtime', lambda: app.native.status()['ecc']['ready'], required=False)
         check('Hermes native CLI', lambda: app.native.status()['hermes']['ready'], required=False)
         ring0 = app.windows.ring0.status()
-        checks.append({'name': 'Controlled Ring0 bridge', 'ok': bool(ring0.get('ok')), 'detail': ring0, 'required': require_ring0})
+        checks.append(
+            {
+                'name': 'Controlled legacy Ring0 compatibility bridge',
+                'ok': bool(ring0.get('ok')),
+                'detail': ring0,
+                'required': require_ring0,
+            }
+        )
     else:
-        checks.append({'name': 'Windows target acceptance', 'ok': False, 'detail': 'run acceptance on the target Windows laptop for physical certification', 'required': False})
+        checks.append(
+            {
+                'name': 'Windows target acceptance',
+                'ok': False,
+                'detail': 'run acceptance on the target Windows laptop for physical certification',
+                'required': False,
+            }
+        )
 
     ok = all(c['ok'] for c in checks if c['required'])
-    return {
-        'name': 'SARUS Production Acceptance',
+    out = {
+        'name': 'Jubi Production Acceptance',
         'version': production['version'],
+        'foundation': production.get('foundation'),
         'ok': ok,
         'target': 'windows' if os.name == 'nt' else os.name,
         'install_mode': install_mode,
         'checks': checks,
         'doctor': doctor,
     }
+    app.shutdown()
+    return out
 
 
 def main():
@@ -161,7 +207,12 @@ def main():
     parser.add_argument('--require-ring0', action='store_true')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    out = run_acceptance(root, full=args.full, provision_models=args.provision_models, require_ring0=args.require_ring0)
+    out = run_acceptance(
+        root,
+        full=args.full,
+        provision_models=args.provision_models,
+        require_ring0=args.require_ring0,
+    )
     print(json.dumps(out, ensure_ascii=False, indent=2))
     raise SystemExit(0 if out['ok'] else 2)
 

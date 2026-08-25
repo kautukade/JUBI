@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SARUS · Fable Lab</title>
+<title>Jubi · Fable Lab</title>
 <style>
 :root{font-family:Inter,Segoe UI,system-ui,sans-serif;background:#070a11;color:#eef3ff;--panel:#0e1420;--line:#222b3e;--muted:#98a5c2;--ok:#6fe3a5;--bad:#ff8585;--warn:#ffd479;--accent:#a98cff}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top right,#17122b 0,#070a11 34%);color:#eef3ff}.wrap{max-width:1500px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px}.brand{font-size:12px;letter-spacing:4px;color:var(--accent);font-weight:900}.top h1{margin:5px 0;font-size:38px}.muted{color:var(--muted);font-size:12px;line-height:1.5}.pill{padding:8px 12px;border:1px solid #3b315a;border-radius:99px;font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:14px;margin:14px 0}.card{background:rgba(14,20,32,.94);border:1px solid var(--line);border-radius:14px;padding:16px}.span2{grid-column:span 2}.span4{grid-column:span 4}.metric{font-size:28px;font-weight:850;margin-top:6px}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.toolbar button,.btn{border:1px solid #3a4663;background:#182237;color:#eef3ff;border-radius:9px;padding:10px 13px;font-weight:750;cursor:pointer}.toolbar button.primary{background:#6e58c9;border-color:#8d76ed}.toolbar button.danger{background:#4b2027;border-color:#71313d}.toolbar button:disabled{opacity:.45;cursor:not-allowed}input,textarea,select{background:#080d16;border:1px solid #303a53;color:white;padding:11px;border-radius:9px;min-width:120px}textarea{width:100%;min-height:82px;resize:vertical}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.output{white-space:pre-wrap;word-break:break-word;background:#080d15;padding:12px;border-radius:9px;max-height:420px;overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace}.row{padding:10px 0;border-bottom:1px solid #1f2838;font-size:13px}.row:last-child{border-bottom:0}.trace-verified{border-left:3px solid var(--ok);padding-left:10px}.trace-candidate{border-left:3px solid var(--warn);padding-left:10px}.trace-prose{border-left:3px solid #52617c;padding-left:10px}.back{color:#c7baff;text-decoration:none;font-weight:700}.note{padding:12px;border:1px solid #40375e;background:#131126;border-radius:10px;font-size:12px;line-height:1.5}.list{max-height:390px;overflow:auto}@media(max-width:1000px){.grid{grid-template-columns:1fr 1fr}.span4,.span2{grid-column:span 2}}@media(max-width:650px){.wrap{padding:18px}.grid{grid-template-columns:1fr}.span2,.span4{grid-column:auto}.top{flex-direction:column}.formgrid{grid-template-columns:1fr}.top h1{font-size:30px}}
 </style>
@@ -11,11 +11,11 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <div><div class="brand">SARUS R&D</div><h1>Fable Intelligence Lab</h1><div class="muted">Original Fable source as an isolated QEMU lab + SARUS-native verified traces, learned capabilities and bounded agenda.</div></div>
+    <div><div class="brand">JUBI R&D</div><h1>Fable Intelligence Lab</h1><div class="muted">Original Fable source as an isolated QEMU lab + Jubi verified traces, learned capabilities and bounded agenda.</div></div>
     <div><a class="back" href="/">← Command Center</a> <span id="state" class="pill">Loading…</span></div>
   </div>
 
-  <div class="note"><b>Trust rule:</b> model explanation is not execution proof. SARUS-native verified events are signed/hash-chained receipts. Fable serial lines beginning at column zero with <code>[</code> are shown as <i>kernel candidates</i>, but imported text is never automatically promoted to SARUS-verified proof.</div>
+  <div class="note"><b>Trust rule:</b> model explanation is not execution proof. Jubi verified events are signed/hash-chained receipts. Fable serial lines beginning at column zero with <code>[</code> are shown as <i>kernel candidates</i>, but imported text is never automatically promoted to Jubi-verified proof.</div>
 
   <div class="grid">
     <div class="card"><div class="muted">Fable Source</div><div class="metric" id="sourceState">–</div><div class="muted" id="pin"></div></div>
@@ -34,7 +34,7 @@
         <button class="primary" onclick="lab('start')">START HEADLESS</button>
         <button class="danger" onclick="lab('stop')">STOP</button>
       </div>
-      <div class="muted">Only fixed SARUS-defined actions are exposed. No free-form shell, make target, QEMU arguments or device addresses are accepted.</div>
+      <div class="muted">Only fixed Jubi-defined compatibility actions are exposed. No free-form shell, make target, QEMU arguments or device addresses are accepted.</div>
       <div id="labOut" class="output">No lab action yet.</div>
     </div>
 
@@ -45,9 +45,9 @@
     </div>
 
     <div class="card span2">
-      <h3>Teach SARUS a Persistent Capability</h3>
+      <h3>Teach Jubi a Persistent Capability</h3>
       <div class="formgrid"><input id="capName" placeholder="capability name"><input id="capDesc" placeholder="description"></div>
-      <textarea id="capPrompt" placeholder="The reusable SARUS task/prompt this capability performs"></textarea>
+      <textarea id="capPrompt" placeholder="The reusable Jubi task/prompt this capability performs"></textarea>
       <div class="toolbar"><button class="primary" onclick="saveCap()">SAVE NEW VERSION</button><button onclick="loadCaps()">REFRESH</button></div>
       <div id="caps" class="list"></div>
     </div>
@@ -71,7 +71,7 @@
 let tok='';
 async function j(u,o){let r=await fetch(u,o),x=await r.json();if(!r.ok)throw new Error(x.error||r.status);return x}
 async function token(){if(!tok)tok=(await j('/api/session')).token;return tok}
-async function post(u,b){return j(u,{method:'POST',headers:{'Content-Type':'application/json','X-SARUS-Token':await token()},body:JSON.stringify(b)})}
+async function post(u,b){return j(u,{method:'POST',headers:{'Content-Type':'application/json','X-JUBI-Token':await token()},body:JSON.stringify(b)})}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 async function refresh(){
  try{
