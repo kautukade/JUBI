@@ -8,6 +8,8 @@ from .knowledge import SemanticKnowledge
 from .experience import ExperienceEngine
 from .council import AICouncil, MultiAgentSupervisor
 from .research import PublicWebResearch
+from .network import NetworkManager
+from .vision import VisionEngine
 from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry
 from .adapters import AdapterManager
@@ -24,7 +26,7 @@ from .fable import FableIntegration
 
 
 class Jubi:
-    """Jubi local-first AI runtime with bounded optional web research."""
+    """Jubi local-first AI runtime with bounded optional web/LAN capabilities."""
 
     VERSION = '0.1.0'
     FOUNDATION_VERSION = 'SARUS 1.3.1'
@@ -43,6 +45,8 @@ class Jubi:
             self.db_path, self.brain, self.providers, self.knowledge, self.experience, self.bus
         )
         self.research = PublicWebResearch(self.db_path, self.providers, self.bus)
+        self.network = NetworkManager(self.db_path, self.bus)
+        self.vision = VisionEngine(self.models, self.bus)
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.adapters = AdapterManager(root, root / 'config/sources.json')
@@ -70,6 +74,8 @@ class Jubi:
                 'council': 'multi-model-council-v1',
                 'supervisor': 'reasoning-supervisor-v1',
                 'web_research': 'public-web-untrusted-evidence-v1',
+                'network': 'authorized-lan-passive-registry-v1',
+                'vision': 'local-ollama-vision-v1',
             },
         )
 
@@ -99,7 +105,7 @@ class Jubi:
             'name': 'Jubi',
             'version': self.VERSION,
             'foundation': self.FOUNDATION_VERSION,
-            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1+semantic-knowledge-v1+experience-v1+council-v1+supervisor-v1+web-research-v1',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1+semantic-knowledge-v1+experience-v1+council-v1+supervisor-v1+web-research-v1+authorized-lan-v1+local-vision-v1',
             'adapters': [a.__dict__ for a in ads],
             'models': models,
             'brain': {
@@ -107,12 +113,26 @@ class Jubi:
                 'automatic_cloud_escalation': self.providers.mode() != 'local_only',
                 'tracked_model_task_pairs': len(self.brain.performance()),
             },
-            'providers': {'mode': provider_status['mode'], 'local': provider_status['local'], 'cloud': provider_status['cloud']},
+            'providers': {
+                'mode': provider_status['mode'],
+                'local': provider_status['local'],
+                'cloud': provider_status['cloud'],
+            },
             'knowledge': knowledge_status,
-            'experience': {'total': experience_stats['total'], 'success_rate': experience_stats['success_rate'], 'embedded': experience_stats['embedded']},
+            'experience': {
+                'total': experience_stats['total'],
+                'success_rate': experience_stats['success_rate'],
+                'embedded': experience_stats['embedded'],
+            },
             'council': {'recent_runs': len(self.council.recent(20))},
             'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
-            'research': {'recent_runs': len(self.research.recent(20)), 'network_scope': 'public-http-https-only', 'web_content_trusted': False},
+            'research': {
+                'recent_runs': len(self.research.recent(20)),
+                'network_scope': 'public-http-https-only',
+                'web_content_trusted': False,
+            },
+            'network': self.network.status(),
+            'vision': self.vision.status(),
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
