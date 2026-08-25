@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from sarus.core.windows import WindowsBroker
 
@@ -53,7 +58,7 @@ class TypedOperatorTests(unittest.TestCase):
             self.broker.execute_typed('workspace.file.read', {'path': '../outside.txt'}, {})
 
     def test_config_keeps_arbitrary_shell_forbidden_and_delete_approved(self):
-        cfg = json.loads((Path(__file__).resolve().parents[1] / 'config' / 'broker_allowlist.json').read_text(encoding='utf-8'))
+        cfg = json.loads((ROOT / 'config' / 'broker_allowlist.json').read_text(encoding='utf-8'))
         for forbidden in ('powershell', 'cmd', 'shell', 'arbitrary_exec', 'driver.raw_ioctl', 'kernel.write_memory'):
             self.assertIn(forbidden, cfg['forbidden_actions'])
         delete = cfg['actions']['workspace.file.delete']
