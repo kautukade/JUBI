@@ -1,25 +1,26 @@
-#define MyAppName "SARUS"
-#define MyAppVersion "1.3.1"
+#define MyAppName "Jubi"
+#define MyAppVersion "0.1.0"
 #define MyAppPublisher "ITCYBER TECHNOLOGIES PVT LTD"
 #define MyAppURL "https://github.com/kautukade/SARUS"
-#define MyAppExeName "SARUS.exe"
+#define MyAppExeName "Jubi.exe"
 
 [Setup]
-AppId={{DFB4068A-8D99-42A5-A915-1940D16C0C6B}
+; New AppId keeps the Jubi Phase 0 install separate from an existing SARUS install.
+AppId={{8AF94329-2DB2-46E3-B227-98D5619E01E4}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={autopf}\SARUS
-DefaultGroupName=SARUS
+DefaultDirName={autopf}\Jubi
+DefaultGroupName=Jubi
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist-installer
-OutputBaseFilename=SARUS-Setup
+OutputBaseFilename=Jubi-Setup
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -28,12 +29,12 @@ RestartIfNeededByRun=no
 CloseApplications=no
 DirExistsWarning=no
 UsePreviousAppDir=yes
-UninstallDisplayName=SARUS Local Multi-Agent AI OS
+UninstallDisplayName=Jubi Local AI Agent Platform
 UninstallDisplayIcon={app}\{#MyAppExeName}
-VersionInfoVersion=1.3.1.0
+VersionInfoVersion=0.1.0.0
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription=SARUS One-Click Windows Installer
-VersionInfoProductName=SARUS
+VersionInfoDescription=Jubi One-Click Windows Installer
+VersionInfoProductName=Jubi
 VersionInfoProductVersion={#MyAppVersion}
 VersionInfoCopyright=Copyright (c) 2026 ITCYBER TECHNOLOGIES PVT LTD
 
@@ -44,14 +45,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,dist-installer\*,.sarus-venv\*,logs\*,data\*,*.pyc"
 
 [Icons]
-Name: "{autoprograms}\SARUS"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
-Name: "{autoprograms}\SARUS README"; Filename: "{app}\README.md"
-Name: "{autodesktop}\SARUS"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{autoprograms}\Jubi"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+Name: "{autoprograms}\Jubi README"; Filename: "{app}\README.md"
+Name: "{autodesktop}\Jubi"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
 
 [UninstallRun]
+; Legacy script filename is retained for Phase 0 compatibility.
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\installer\UNINSTALL-SARUS.ps1"""; WorkingDir: "{app}"; Flags: runhidden waituntilterminated
 
 [Code]
@@ -66,11 +68,11 @@ begin
   begin
     BootstrapScript := ExpandConstant('{app}\installer\EXE-INSTALL.ps1');
     LogPath := ExpandConstant('{app}\logs\exe-install.log');
-    WizardForm.StatusLabel.Caption := 'Installing SARUS runtime, local models, integrations and production checks...';
+    WizardForm.StatusLabel.Caption := 'Installing Jubi runtime, local models, integrations and production checks...';
 
     if not FileExists(BootstrapScript) then
     begin
-      MsgBox('SARUS installer payload is incomplete: EXE-INSTALL.ps1 is missing.', mbError, MB_OK);
+      MsgBox('Jubi installer payload is incomplete: EXE-INSTALL.ps1 is missing.', mbError, MB_OK);
       Abort;
     end;
 
@@ -83,13 +85,13 @@ begin
       ewWaitUntilTerminated,
       ResultCode) then
     begin
-      MsgBox('Could not start the SARUS installation engine.', mbError, MB_OK);
+      MsgBox('Could not start the Jubi installation engine.', mbError, MB_OK);
       Abort;
     end;
 
     if ResultCode <> 0 then
     begin
-      MsgBox('SARUS installation engine failed. Exit code: ' + IntToStr(ResultCode) + #13#10 +
+      MsgBox('Jubi installation engine failed. Exit code: ' + IntToStr(ResultCode) + #13#10 +
         'See the installer log at:' + #13#10 + LogPath, mbError, MB_OK);
       Abort;
     end;
