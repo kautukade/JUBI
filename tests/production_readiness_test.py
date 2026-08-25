@@ -55,6 +55,14 @@ class ProductionReadinessTest(unittest.TestCase):
         self.assertIn("SARUS_INSTALL_MODE", acceptance)
         self.assertIn("'stream': False", acceptance)
 
+    def test_legacy_pe_launcher_script_routes_to_jubi(self):
+        launcher_script = (ROOT / 'SARUS-script.pyw').read_text(encoding='utf-8')
+        self.assertIn("'-m', 'jubi.server'", launcher_script)
+        self.assertIn("ROOT / '.sarus-venv' / 'Scripts' / 'pythonw.exe'", launcher_script)
+        self.assertIn("JUBI_PORT", launcher_script)
+        exe = (ROOT / 'installer/EXE-INSTALL.ps1').read_text(encoding='utf-8')
+        self.assertIn("$lnk.TargetPath = $JubiLauncher", exe)
+
     def test_model_router_never_returns_missing_configured_model(self):
         text = (ROOT / 'sarus/core/models.py').read_text(encoding='utf-8')
         self.assertIn('Never return a configured-but-missing model', text)
@@ -86,11 +94,14 @@ class ProductionReadinessTest(unittest.TestCase):
         self.assertIn('/tr $TimestampUrl', text)
         self.assertIn('/td SHA256', text)
         self.assertIn('signtool.exe', text)
+        self.assertIn('Jubi.exe', text)
+        self.assertIn('Jubi-Setup.exe', text)
 
     def test_obsolete_transfer_automation_is_removed(self):
         obsolete = [
             '.github/workflows/cleanup-source-transfer.yml',
             '.github/workflows/final-17356-gate.yml',
+            '.github/workflows/finalize-exact-17356.yml',
             '.github/workflows/finalize-exact-source-snapshot.yml',
             '.github/workflows/materialize-all-17356.yml',
             '.github/workflows/materialize-sara-private-v4.yml',
