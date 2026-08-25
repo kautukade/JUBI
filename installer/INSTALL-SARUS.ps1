@@ -8,7 +8,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 $Root = Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path (Join-Path $Root 'sarus\server.py'))) {
-    throw 'SARUS payload is incomplete. Run the official SARUS-Setup.exe or execute this script from the SARUS repository.'
+    throw 'Jubi foundation payload is incomplete. Run the official Jubi-Setup.exe or execute this compatibility script from the repository.'
 }
 
 $LogDir = Join-Path $Root 'logs'
@@ -23,7 +23,7 @@ function IsAdmin {
 
 if (-not (IsAdmin)) {
     if ($NonInteractive) {
-        throw 'Administrator permission is required. Start SARUS-Setup.exe with its normal UAC prompt.'
+        throw 'Administrator permission is required. Start Jubi-Setup.exe with its normal UAC prompt.'
     }
     Log 'Requesting Administrator permission...'
     $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$PSCommandPath`"")
@@ -33,7 +33,7 @@ if (-not (IsAdmin)) {
 }
 
 try {
-    Log "SARUS installation engine started. Mode=$($env:SARUS_INSTALL_MODE) NonInteractive=$NonInteractive NoLaunch=$NoLaunch"
+    Log "Jubi installation engine started. Mode=$($env:JUBI_INSTALL_MODE) LegacyMode=$($env:SARUS_INSTALL_MODE) NonInteractive=$NonInteractive NoLaunch=$NoLaunch"
 
     # ------------------------------------------------------------------
     # 1) Restore the custom SARA source.
@@ -109,8 +109,10 @@ try {
     }
 
     # ------------------------------------------------------------------
-    # 2) Restore the Windows SARUS launcher and verify it.
+    # 2) Restore and verify the legacy native launcher payload.
     # ------------------------------------------------------------------
+    # Jubi Phase 0 reuses the byte-identical verified launcher binary. The outer
+    # EXE bootstrap copies this to Jubi.exe after SHA-256 equality verification.
     $launcherB64 = Join-Path $Root 'vendor\launcher\SARUS.exe.b64'
     $launcherHashFile = Join-Path $Root 'vendor\launcher\SHA256.txt'
     if (-not (Test-Path -LiteralPath $launcherB64)) { throw 'vendor\launcher\SARUS.exe.b64 is missing.' }
@@ -122,9 +124,9 @@ try {
     $launcherActual = (Get-FileHash -Algorithm SHA256 $launcher).Hash.ToLowerInvariant()
     if ($launcherActual -ne $launcherExpected) {
         Remove-Item -LiteralPath $launcher -Force -ErrorAction SilentlyContinue
-        throw "SARUS.exe checksum mismatch. Expected $launcherExpected got $launcherActual"
+        throw "Launcher checksum mismatch. Expected $launcherExpected got $launcherActual"
     }
-    Log "SARUS.exe reconstructed and verified: $launcherActual"
+    Log "Verified compatibility launcher reconstructed: $launcherActual"
 
     # ------------------------------------------------------------------
     # 3) Restore pinned public upstream projects when they are not bundled.
@@ -145,7 +147,7 @@ try {
             continue
         }
 
-        $work = Join-Path $env:TEMP ('sarus-source-' + [guid]::NewGuid().ToString('N'))
+        $work = Join-Path $env:TEMP ('jubi-source-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Force -Path $work | Out-Null
         $zip = Join-Path $work 'src.zip'
         $x = Join-Path $work 'x'
@@ -164,9 +166,6 @@ try {
     # ------------------------------------------------------------------
     # 4) Provision SARA/Windows dependencies automatically.
     # ------------------------------------------------------------------
-    # This legacy SARA batch is invoked internally by SARUS-Setup.exe. The user
-    # does not locate, double-click or execute it. Input is redirected from NUL
-    # so legacy PAUSE/keypress prompts cannot block the one-click installer.
     $saraBat = Get-ChildItem -Path (Join-Path $Root 'sources') -Filter 'INSTALL-AND-START-SARA.bat' -File -Recurse | Select-Object -First 1
     if (-not $saraBat) { throw 'SARA Windows dependency installer not found.' }
     Log 'Running bundled SARA dependency provisioning automatically in non-interactive mode.'
@@ -190,7 +189,7 @@ try {
     }
 
     # ------------------------------------------------------------------
-    # 5) Create SARUS private Python runtime and run acceptance tests.
+    # 5) Create private Python runtime and run Jubi acceptance tests.
     # ------------------------------------------------------------------
     $py = $null
     try {
@@ -199,42 +198,46 @@ try {
     } catch {}
     if (-not $py) { throw 'Python 3.11 was not found after dependency provisioning.' }
 
+    # Legacy physical venv path retained for Phase 0 compatibility.
     $venv = Join-Path $Root '.sarus-venv'
     if (Test-Path -LiteralPath $venv) {
-        Log 'Refreshing existing SARUS private Python environment.'
+        Log 'Refreshing existing private Python environment.'
         Remove-Item -LiteralPath $venv -Recurse -Force
     }
     & $py -m venv $venv
-    if ($LASTEXITCODE -ne 0) { throw 'Could not create SARUS private Python runtime.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Could not create Jubi private Python runtime.' }
     $runtimePy = Join-Path $venv 'Scripts\python.exe'
-    if (-not (Test-Path -LiteralPath $runtimePy)) { throw 'SARUS private Python runtime is incomplete.' }
+    if (-not (Test-Path -LiteralPath $runtimePy)) { throw 'Jubi private Python runtime is incomplete.' }
 
     Push-Location $Root
     try {
-        & $runtimePy -m sarus.acceptance
+        & $runtimePy -m jubi.acceptance
         $accept = $LASTEXITCODE
     }
     finally {
         Pop-Location
     }
-    if ($accept -ne 0) { throw "SARUS acceptance failed with exit code $accept" }
-    Log 'SARUS acceptance checks passed.'
+    if ($accept -ne 0) { throw "Jubi acceptance failed with exit code $accept" }
+    Log 'Jubi acceptance checks passed.'
 
     # ------------------------------------------------------------------
-    # 6) Create direct SARUS.exe desktop shortcut. No user-facing BAT launcher.
+    # 6) Create a Jubi-branded direct shortcut for compatibility installs.
     # ------------------------------------------------------------------
+    # The official Inno Setup package creates a Jubi.exe shortcut itself. This
+    # shortcut is mainly useful when this compatibility script is run directly.
     $shell = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath('Desktop')
-    $lnk = $shell.CreateShortcut((Join-Path $desktop 'SARUS.lnk'))
+    $lnk = $shell.CreateShortcut((Join-Path $desktop 'Jubi.lnk'))
     $lnk.TargetPath = $launcher
     $lnk.WorkingDirectory = $Root
-    $lnk.Description = 'SARUS Local Multi-Agent AI OS'
+    $lnk.Description = 'Jubi Local AI Agent Platform'
     $lnk.Save()
 
     $finalRequired = @(
         $launcher,
         $runtimePy,
         (Join-Path $Root 'README.md'),
+        (Join-Path $Root 'jubi\server.py'),
         (Join-Path $Root 'sarus\server.py'),
         (Join-Path $Root 'config\models.json'),
         (Join-Path $Root 'config\broker_allowlist.json')
@@ -243,18 +246,18 @@ try {
         if (-not (Test-Path -LiteralPath $path)) { throw "Final installation verification failed: $path is missing." }
     }
 
-    Log 'SARUS installation engine completed and verified.'
+    Log 'Jubi compatibility installation engine completed and verified.'
     if (-not $NoLaunch) {
         Start-Process -FilePath $launcher -WorkingDirectory $Root
     }
 
-    Write-Host "`nSARUS INSTALL COMPLETE" -ForegroundColor Green
+    Write-Host "`nJUBI INSTALL COMPLETE" -ForegroundColor Green
     if (-not $NonInteractive) { Read-Host 'Press Enter to close' | Out-Null }
     exit 0
 }
 catch {
     Log "INSTALL FAILED: $($_.Exception.Message)"
-    Write-Host "`nSARUS INSTALL FAILED`n$($_.Exception.Message)`nLog: $Log" -ForegroundColor Red
+    Write-Host "`nJUBI INSTALL FAILED`n$($_.Exception.Message)`nLog: $Log" -ForegroundColor Red
     if (-not $NonInteractive) { Read-Host 'Press Enter to close' | Out-Null }
     exit 1
 }
