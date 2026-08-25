@@ -34,7 +34,7 @@ class Jubi:
     installer/source/driver behavior is not broken by a cosmetic package move.
     """
 
-    VERSION = '0.5.0'
+    VERSION = '0.1.0'
     FOUNDATION_VERSION = 'SARUS 1.3.1'
 
     def __init__(self, root: Path):
