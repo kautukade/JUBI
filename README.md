@@ -1,192 +1,92 @@
-# SARUS
+# Jubi
 
-> **SARUS — Local Multi-Agent AI Research & Windows Automation Platform**  
+> **Jubi — Local AI Agent & Windows Automation Platform**  
 > Developed for **ITCYBER TECHNOLOGIES PVT LTD**  
 > Primary platform: **Windows 10/11 x64**  
-> Current stabilization release: **SARUS v1.3.1**
+> Current migration release: **Jubi v0.1.0**  
+> Foundation: **SARUS v1.3.1**
 
-SARUS is a Windows-first local AI research and automation platform that combines local Ollama models, SARA, ten pinned research/source families, multi-agent orchestration, local memory, signed execution receipts, a typed privileged Windows broker, a controlled Ring-0 bridge, and the Fable Intelligence Layer.
+Jubi is the next evolution of the SARUS local AI research and Windows automation platform. The Phase 0 migration deliberately keeps the proven SARUS internals that are expensive and risky to rename blindly — source adapters, installer helper filenames, the controlled Ring0 driver ABI, and selected environment-variable compatibility — while moving the user-facing product, runtime identity, dashboard, installer artifact, tests and new entry points to **Jubi**.
 
-Version **1.3.1** is the production-stabilization release after the Fable v1.3 integration. It removes stale transfer automation, makes installation acceptance manifest-driven, explicitly provisions required local Ollama models during the official EXE installation, adds target-machine certification reports, adds release-signing helpers, and makes production/security/installer checks first-class CI gates.
-
----
-
-## 1. One-click Windows installation
-
-The normal testing-laptop installation path is a single EXE:
-
-```text
-SARUS-Setup.exe
-      ↓
-Run as Administrator
-      ↓
-Copy verified SARUS payload
-      ↓
-Provision protected broker keys
-      ↓
-Restore SARA + pinned source integrations
-      ↓
-Create private Python 3.11 environment
-      ↓
-Start/check local Ollama
-      ↓
-Pull missing required local models
-      ↓
-Run SARUS production acceptance
-      ↓
-Activate controlled Ring0 only when a valid signed driver is bundled
-      ↓
-Run target-machine certification
-      ↓
-Create direct SARUS.exe shortcut
-      ↓
-Launch SARUS
-```
-
-The normal user does **not** need to manually run `INSTALL-SARUS.bat`, `START_SARUS.bat`, or `INSTALL-RING0.bat`.
-
-Default installation path:
-
-```text
-C:\Program Files\SARUS
-```
-
-Main dashboard:
-
-```text
-http://127.0.0.1:8877
-```
-
-Fable Lab:
-
-```text
-http://127.0.0.1:8877/fable.html
-```
-
-SARA dashboard when its web runtime is active:
-
-```text
-http://127.0.0.1:3000/dashboard/command
-```
+The goal of this release is **stability first**: persistence, task recovery, approval correctness, model discovery, lifecycle cleanup and regression coverage. It does **not** yet add the future NVIDIA/OpenRouter/Hugging Face provider layer, LAN management, semantic vector memory, advanced planner, or AI Council.
 
 ---
 
-## 2. Quick facts
+## 1. What changed in Jubi v0.1.0
 
-| Item | Value |
-|---|---|
-| Product | SARUS |
-| Version | 1.3.1 |
-| Publisher | ITCYBER TECHNOLOGIES PVT LTD |
-| Primary OS | Windows 10/11 x64 |
-| End-user installer | `SARUS-Setup.exe` |
-| Main runtime | Python 3.11 private `.sarus-venv` |
-| Model runtime | Local Ollama |
-| Source families | 10 |
-| Reproducible indexed source files | 17,129 |
-| Privileged execution | Typed Privileged Broker |
-| Kernel layer | Controlled `SarusRing0.sys` bridge |
-| Fable integration | Native Fable Intelligence Layer + optional isolated QEMU lab |
-| Main network exposure | localhost |
-| Build manifest | `BUILD_MANIFEST.json` |
-| Production profile | `config/production.json` |
+The migration fixes several foundation issues before advanced features are added:
 
----
+- SQLite writes now use explicit transactions instead of relying on connection close behavior.
+- SQLite connections use WAL mode, a busy timeout and short per-operation connections to reduce locking under HTTP/background threads.
+- Memory, events, tasks, approvals and automations are persistence-safe.
+- Task plans are serialized to SQLite so an approval-required task can survive a Jubi restart.
+- Approval is bound to the exact persisted task step; approving one step cannot silently approve later steps.
+- Rejected approvals do not execute the pending action.
+- Ollama routing no longer returns a configured model that is not actually installed.
+- Ollama model discovery now exposes useful model metadata and basic role classification.
+- Jubi Doctor reads the required model list from `config/production.json` instead of duplicating it in Python.
+- The HTTP API uses Jubi branding, safe default error responses and localhost-only binding.
+- The dashboard is Jubi-branded and includes real Approve / Reject controls for pending pipeline approvals.
+- A Jubi user-facing Python entry package is available (`python -m jubi.server`, `python -m jubi.acceptance`).
+- The Windows installer artifact is now `Jubi-Setup.exe` and the installed launcher is exposed as `Jubi.exe`.
+- New Jubi Phase 0 tests cover persistence, model fallback and approval/restart behavior.
 
-## 3. Architecture
-
-```mermaid
-flowchart TD
-    USER[User / Researcher] --> UI[SARUS Dashboard]
-    UI --> API[Local HTTP API]
-    API --> EXEC[Execution Engine]
-    EXEC --> ORCH[Orchestrator]
-    ORCH --> MODELS[Ollama Model Router]
-    ORCH --> ADAPTERS[10 Source Adapters]
-    ORCH --> MEMORY[Memory + Events]
-
-    EXEC --> POLICY[Policy / Approval]
-    POLICY --> BROKER[Privileged Broker]
-    BROKER --> WIN[Typed Windows Actions]
-    BROKER --> R0[Controlled Ring0 Bridge]
-    R0 --> DRIVER[SarusRing0.sys]
-    DRIVER --> KERNEL[Windows Kernel]
-
-    EXEC --> RECEIPTS[Signed Hash-Chained Receipts]
-
-    API --> FABLE[Fable Intelligence Layer]
-    FABLE --> TRACE[Verified Trace Store]
-    TRACE --> RECEIPTS
-    FABLE --> CAPS[Learned Capabilities]
-    CAPS --> EXEC
-    FABLE --> AGENDA[Bounded Agenda]
-    AGENDA --> CAPS
-    FABLE --> LAB[Fable Lab Manager]
-    LAB --> QEMU[Optional WSL / QEMU]
-    QEMU --> FOS[Original Fable OS]
-```
-
-The central rule is:
-
-```text
-AI reasoning != privileged execution
-```
-
-A model may propose work, but high-impact machine actions pass through typed policy/broker controls and produce execution receipts.
+See `docs/JUBI_PHASE0_FIX_REPORT.md` for the detailed repair record.
 
 ---
 
-## 4. Included source families
-
-SARUS coordinates:
-
-1. **SARA** — Windows local assistant/runtime.
-2. **NousResearch / hermes-agent** — agent/tool workflow concepts.
-3. **ECC** — skills, agents, commands and verification patterns.
-4. **agency-agents** — specialist persona/role patterns.
-5. **awesome-llm-apps** — application/workflow patterns.
-6. **second-brain-skills** — reusable knowledge/assistant skills.
-7. **superpowers** — reusable development/agent methods.
-8. **fable-os** — AI-native OS research source and Fable Intelligence Layer.
-9. **CAI** — security-oriented research material, isolated according to SARUS policy.
-10. **autoresearch** — bounded research/experiment material.
-
-Paths are configured in:
+## 2. Architecture
 
 ```text
-config\sources.json
+User / Dashboard
+        |
+        v
+Local HTTP API (127.0.0.1:8877)
+        |
+        +--> Ollama model router
+        |
+        +--> Persistent task execution
+        |       |
+        |       +--> Orchestrator
+        |       +--> Source adapters
+        |       +--> Approval state
+        |       +--> Signed receipts
+        |
+        +--> Local memory + events + automation state (SQLite)
+        |
+        +--> Policy engine
+                |
+                +--> Typed Privileged Broker
+                        |
+                        +--> allowlisted Windows actions
+                        +--> controlled legacy Ring0 status bridge
 ```
 
-Public source pins are configured in:
+The central security boundary remains:
 
 ```text
-config\online_sources.json
+AI reasoning != unrestricted privileged execution
 ```
 
-The current Fable source pin is:
-
-```text
-robiot/fable-os
-1cfe17c4baa77fac128008621721823913a1335c
-```
+Models can propose work. High-impact operations must go through typed policy/broker controls rather than a model-facing arbitrary shell or raw kernel interface.
 
 ---
 
-## 5. Local Ollama layer
+## 3. Local model layer
 
-Model routing is defined in:
-
-```text
-config\models.json
-```
-
-The production-required model subset is defined in:
+Model roles are configured in:
 
 ```text
-config\production.json
+config/models.json
 ```
 
-Required v1.3.1 models:
+Production-required local baseline is configured in:
+
+```text
+config/production.json
+```
+
+Current required baseline:
 
 ```text
 qwen2.5:7b
@@ -195,429 +95,376 @@ qwen2.5vl:3b
 nomic-embed-text-v2-moe:latest
 ```
 
-During the official EXE installation, SARUS verifies the local Ollama API and automatically downloads required models that are missing. Installation fails with a clear acceptance error instead of silently completing without a required model.
+Jubi dynamically queries the Ollama API at:
 
-Additional configured local models may be used when already available, but they are not all required for the production baseline.
+```text
+http://127.0.0.1:11434
+```
 
-Cloud-tagged models in `cloud_disabled` are not part of the required local production baseline.
+A configured-but-missing model is no longer returned as if it were installed. If there is no compatible installed model, Jubi returns a clear error.
+
+Cloud-tagged Ollama models are not part of the required local production baseline.
 
 ---
 
-## 6. Production acceptance
+## 4. Existing source families preserved from SARUS
 
-Main acceptance module:
+Jubi Phase 0 preserves the existing ten pinned source families:
+
+1. SARA
+2. NousResearch / hermes-agent
+3. ECC
+4. agency-agents
+5. awesome-llm-apps
+6. second-brain-skills
+7. superpowers
+8. fable-os
+9. CAI
+10. autoresearch
+
+Their paths are configured in:
 
 ```text
-sarus\acceptance.py
+config/sources.json
 ```
 
-Version 1.3.1 no longer uses the historical hard-coded `17,356` count. It reads the current reproducible expectation from `BUILD_MANIFEST.json`.
+Public upstream pins are configured in:
 
-Core acceptance covers:
-
-- version synchronization;
-- ten source adapters;
-- capability registry vs manifest;
-- signed receipt chain;
-- memory write/search;
-- policy approval gate;
-- CAI isolation;
-- Fable native integration;
-- Fable source completeness;
-- model-prose vs proof boundary;
-- local Ollama availability;
-- required local models;
-- Windows process broker on Windows;
-- SARA native bridge on Windows;
-- optional native ECC/Hermes status;
-- optional controlled Ring0 status unless explicitly required.
-
-Developer/manual full check:
-
-```powershell
-.\.sarus-venv\Scripts\python.exe -m sarus.acceptance --full
+```text
+config/online_sources.json
 ```
 
-Require the controlled Ring0 driver as part of the acceptance gate:
-
-```powershell
-.\.sarus-venv\Scripts\python.exe -m sarus.acceptance --full --require-ring0
-```
+Important distinction: a connected source repository is not automatically the same thing as a fully running native upstream runtime. Several integrations act as indexed capability/prompt sources routed through local Ollama; SARA/Hermes/ECC have separate native-runtime detection where available.
 
 ---
 
-## 7. Target-machine certification
+## 5. Persistent task execution and approvals
 
-Script:
-
-```text
-installer\CERTIFY-SARUS.ps1
-```
-
-Report:
-
-```text
-C:\Program Files\SARUS\logs\production-certification.json
-```
-
-The report records:
-
-- core acceptance result;
-- required-file completeness;
-- application Authenticode status;
-- controlled Ring0 runtime status;
-- bundled Ring0 driver signature status;
-- Doctor/model/Fable diagnostics.
-
-Normal internal certification:
-
-```powershell
-& "C:\Program Files\SARUS\installer\CERTIFY-SARUS.ps1"
-```
-
-Strict application-signature certification:
-
-```powershell
-& "C:\Program Files\SARUS\installer\CERTIFY-SARUS.ps1" -RequireSignedApp
-```
-
-Strict controlled Ring0 certification:
-
-```powershell
-& "C:\Program Files\SARUS\installer\CERTIFY-SARUS.ps1" -RequireRing0
-```
-
-A GitHub CI pass is not a substitute for this physical-laptop report because audio/camera/GPU/drivers/WSL and local runtime state are machine-specific.
-
----
-
-## 8. Privileged Broker
-
-Core files:
-
-```text
-sarus\core\privileged_broker.py
-sarus\core\windows.py
-config\broker_allowlist.json
-```
-
-Properties include:
-
-- default deny;
-- typed action IDs;
-- parameter/schema validation;
-- resource mappings and path scopes;
-- request-bound approval proof;
-- replay protection;
-- signed receipts;
-- sensitive-value redaction.
+Jubi stores the task plan and execution cursor in SQLite.
 
 Typical flow:
 
-```mermaid
-flowchart LR
-    MODEL[AI / Agent] --> REQUEST[Typed Request]
-    REQUEST --> VALIDATE[Validate]
-    VALIDATE --> POLICY[Policy]
-    POLICY -->|deny| DENIED[Denied Receipt]
-    POLICY -->|approval| APPROVAL[Approval Proof]
-    POLICY -->|allow| EXEC[Executor]
-    APPROVAL --> EXEC
-    EXEC --> RESULT[Real Result]
-    RESULT --> RECEIPT[Signed Receipt]
+```text
+Task starts
+  -> plan persisted
+  -> steps execute
+  -> high-risk step requires approval
+  -> task state = waiting_approval
+  -> Jubi may be restarted
+  -> pending approval is still present
+  -> approve exact step
+  -> execution resumes from that step
+  -> remaining steps continue
 ```
 
-There is no generic model-facing PowerShell/cmd executor in the privileged broker.
+Task states include:
+
+```text
+queued
+planning
+running
+waiting_approval
+completed
+partial
+failed
+rejected
+cancelled
+```
+
+Approvals are not a generic `approved=true` flag for privileged execution. The Privileged Broker retains its own request-bound proof mechanism for typed Windows actions.
 
 ---
 
-## 9. Controlled Ring0 bridge
+## 6. Local data and SQLite reliability
 
-Driver project:
-
-```text
-driver\SarusRing0\
-```
-
-User-mode bridge:
+Jubi Phase 0 intentionally keeps the legacy physical database filename:
 
 ```text
-sarus\core\ring0.py
+data/sarus.db
 ```
 
-Current fixed capabilities:
+This is a compatibility decision for the first migration release, not the product identity. The database is now owned by the Jubi runtime and contains persistent state for:
+
+- memories
+- events
+- tasks
+- task execution state
+- approvals
+- automations
+- receipts
+- Fable traces
+- learned capabilities
+- Fable agenda
+
+The database helper configures:
+
+```text
+WAL mode
+busy_timeout
+foreign keys
+explicit commit / rollback
+```
+
+A later target-tested migration may rename the physical database to `jubi.db`; Phase 0 avoids moving user state merely for cosmetic reasons.
+
+---
+
+## 7. Windows privileged broker
+
+The existing zero-trust typed broker is retained.
+
+Core behavior includes:
+
+- default deny
+- action IDs instead of arbitrary shell strings
+- parameter schemas
+- allowlisted resources
+- path scoping
+- replay protection
+- short-lived request-bound approval proofs
+- sensitive-value redaction
+- signed execution receipts
+
+Current examples include read-only process/service listing, scoped workspace file operations, URL opening and allowlisted service/process actions.
+
+Jubi Phase 0 does **not** expose arbitrary PowerShell/cmd execution through the privileged broker.
+
+---
+
+## 8. Controlled Ring0 compatibility bridge
+
+The legacy driver project remains under:
+
+```text
+driver/SarusRing0/
+```
+
+This name is intentionally retained during Phase 0 because it is a driver ABI/signing compatibility surface, not ordinary UI branding.
+
+Current fixed capabilities remain narrow:
 
 ```text
 ring0.ping
 ring0.status
 ```
 
-Architecture:
+There is no model-facing arbitrary kernel-memory API, raw IOCTL API or general kernel command executor.
 
-```mermaid
-flowchart LR
-    SARUS --> BROKER[Privileged Broker]
-    BROKER --> BRIDGE[Ring0Bridge]
-    BRIDGE --> DEVICE[\\.\SarusRing0]
-    DEVICE --> DRIVER[SarusRing0.sys]
-    DRIVER --> KERNEL[Windows Kernel]
-```
-
-The bridge intentionally has no public generic raw IOCTL method and no caller-selected arbitrary kernel-memory address API.
-
-### Driver activation
-
-The EXE installer activates a bundled driver only when Windows reports a valid Authenticode signature for that binary. Otherwise SARUS installs normally and records that kernel-driver activation was skipped.
-
-The installer does not disable Secure Boot, Code Integrity, Defender, HVCI, or driver-signature enforcement.
+A driver is activated by the installer only when Windows reports the bundled driver signature as valid. The installer does not disable Secure Boot, Code Integrity, HVCI, Defender or driver-signature enforcement.
 
 ---
 
-## 10. Fable Intelligence Layer
+## 9. Dashboard
 
-Implementation:
-
-```text
-sarus\core\fable.py
-sarus\adapters\fable_os.py
-sarus\web\fable.html
-docs\FABLE-INTEGRATION.md
-```
-
-Native Fable functionality includes:
-
-### Verified execution traces
-
-```text
-model prose != execution proof
-```
-
-Trusted SARUS events can be linked to signed receipts. Imported bracket-looking text remains an unverified candidate/prose unless SARUS itself produced verified evidence.
-
-### Learned capabilities
-
-Reusable task definitions are versioned and hashed. Execution returns through the normal SARUS execution/policy path.
-
-### Bounded agenda
-
-Supported scheduling modes:
-
-```text
-boot
-once
-every
-```
-
-Agenda execution is bounded by item count, minimum period, maximum runs, consecutive failure cutoff and one action per scheduler tick.
-
-### Original Fable QEMU lab
-
-The original Fable x86_64 OS remains an optional isolated research target. On Windows, its build/run path can use WSL and QEMU when those prerequisites exist.
-
-Missing WSL/QEMU does not make the normal Windows SARUS host fail production acceptance.
-
-Detailed Fable documentation:
-
-```text
-docs\FABLE-INTEGRATION.md
-```
-
----
-
-## 11. Release signing
-
-Application signing helper:
-
-```text
-installer\SIGN-RELEASE.ps1
-```
-
-The script expects an organization code-signing certificate already installed/available to SignTool. It uses SHA-256 file digests and RFC3161 timestamping and verifies the resulting Authenticode signature.
-
-Example developer release operation:
-
-```powershell
-.\installer\SIGN-RELEASE.ps1 -CertificateThumbprint "<COMPANY_CERT_THUMBPRINT>"
-```
-
-No private certificate/private key is stored in this repository.
-
-### Kernel driver signing
-
-`SarusRing0.sys` public distribution is a separate Windows driver-signing process. A locally compiled `.sys` is not automatically considered a production-signed public kernel driver.
-
-See:
-
-```text
-docs\PRODUCTION-READINESS.md
-```
-
----
-
-## 12. CI gates
-
-Active release workflows:
-
-```text
-.github\workflows\production-readiness.yml
-.github\workflows\fable-integration.yml
-.github\workflows\privileged-broker-security.yml
-.github\workflows\build-windows-installer.yml
-```
-
-They verify combinations of:
-
-- Python compilation;
-- production static invariants;
-- Fable integration;
-- all-source regression;
-- Broker security;
-- Ring0 fixed-surface policy;
-- PowerShell syntax;
-- production payload completeness;
-- synchronized v1.3.1 metadata;
-- Inno Setup EXE compilation;
-- final SHA-256 artifact generation.
-
-The active release workflows use read-only repository permissions.
-
-Obsolete one-time source-transfer workflows and marker files are not part of the v1.3.1 release tree.
-
----
-
-## 13. Installed directory structure
-
-Typical installation:
-
-```text
-C:\Program Files\SARUS\
-├── SARUS.exe
-├── README.md
-├── BUILD_MANIFEST.json
-├── .sarus-venv\
-├── config\
-│   ├── models.json
-│   ├── production.json
-│   ├── sources.json
-│   ├── online_sources.json
-│   └── broker_allowlist.json
-├── sarus\
-│   ├── server.py
-│   ├── acceptance.py
-│   ├── core\
-│   ├── adapters\
-│   └── web\
-├── sources\
-├── driver\SarusRing0\
-├── installer\
-│   ├── CERTIFY-SARUS.ps1
-│   ├── SIGN-RELEASE.ps1
-│   └── ...
-├── docs\
-├── tests\
-└── logs\
-```
-
----
-
-## 14. Logs
-
-Installation logs:
-
-```text
-C:\Program Files\SARUS\logs\exe-install.log
-C:\Program Files\SARUS\logs\github-install.log
-```
-
-Production certification:
-
-```text
-C:\Program Files\SARUS\logs\production-certification.json
-```
-
-Fable Lab:
-
-```text
-C:\Program Files\SARUS\logs\fable-lab.log
-```
-
----
-
-## 15. Troubleshooting
-
-### Installer stops at model provisioning
-
-Check that Ollama is installed and that the local API can start. SARUS deliberately fails the production install rather than claiming success with missing required models.
-
-### Dashboard does not open
-
-Check:
+Default dashboard:
 
 ```text
 http://127.0.0.1:8877
 ```
 
-and inspect `logs\exe-install.log` / `logs\github-install.log`.
+Views currently include:
 
-### Fable says runtime not ready
+- Command Center
+- AI & Models
+- Agent Network
+- Development
+- Automation
+- Computer
+- Fable Lab
+- Knowledge
+- Security
+- System Health
 
-The native Fable Intelligence Layer may still be healthy. `runtime_ready=false` refers to the optional original Fable WSL/QEMU research lab.
-
-### Ring0 says driver missing
-
-Normal SARUS can run without the driver. For Ring0-required research, provide a validly signed controlled `SarusRing0.sys`, install it using the provided driver workflow, then run strict certification with `-RequireRing0`.
-
-### Public release signature is missing
-
-An unsigned internal CI artifact can be tested, but `public_release_ready` will remain false until the company signing process is completed.
-
----
-
-## 16. Production status terminology
-
-SARUS deliberately uses separate status levels:
-
-**CI release-candidate ready** — source, security, integration and installer build gates passed.
-
-**Windows target certified** — the generated EXE was clean-installed on the actual Windows target and `production-certification.json` reports core readiness.
-
-**Public release signed** — application artifacts have valid organization Authenticode signatures and any distributed kernel driver has completed the required Windows/Microsoft signing path.
-
-These statuses are not collapsed into one claim because hardware/certificate evidence cannot be manufactured by CI.
+Phase 0 remains localhost-only by design.
 
 ---
 
-## 17. Further documentation
+## 10. Start Jubi from source
+
+Requirements:
+
+- Windows 10/11 recommended
+- Python 3.11+
+- Ollama
+
+Clone and enter the repository, then create/activate a Python environment appropriate for your setup.
+
+Run the user-facing entry point:
+
+```powershell
+python -m jubi.server
+```
+
+Open:
 
 ```text
-docs\FABLE-INTEGRATION.md
-docs\PRODUCTION-READINESS.md
+http://127.0.0.1:8877
+```
+
+Check Ollama separately:
+
+```powershell
+ollama list
 ```
 
 ---
 
-## Final operating model
+## 11. Acceptance
 
-```mermaid
-flowchart TB
-    RESEARCHER[Researcher] --> SARUS[SARUS v1.3.1]
-    SARUS --> OLLAMA[Local Ollama]
-    SARUS --> AGENTS[10 Source Families]
-    SARUS --> FABLE[Fable Intelligence]
-    SARUS --> WINDOWS[Windows Control Plane]
+User-facing acceptance command:
 
-    FABLE --> EVIDENCE[Verified Evidence]
-    FABLE --> LEARN[Learned Capabilities]
-    FABLE --> AUTO[Bounded Agenda]
-    FABLE --> QEMULAB[Optional QEMU Lab]
-
-    WINDOWS --> BROKER[Privileged Broker]
-    BROKER --> USERMODE[Typed User-Mode Actions]
-    BROKER --> RING0[Controlled Ring0]
-
-    EVIDENCE --> RECEIPTS[Signed Receipt Chain]
-    USERMODE --> RECEIPTS
-    RING0 --> RECEIPTS
+```powershell
+python -m jubi.acceptance
 ```
 
-**Normal installation remains one `SARUS-Setup.exe`. v1.3.1 adds explicit local-model provisioning, manifest-driven acceptance, target-machine certification, production CI gates and release-signing readiness without weakening Windows security controls.**
+Full target-machine validation including a real Ollama generation attempt:
+
+```powershell
+python -m jubi.acceptance --full
+```
+
+Compatibility command remains available during Phase 0:
+
+```powershell
+python -m sarus.acceptance --full
+```
+
+Do not treat GitHub CI as a substitute for physical Windows validation of camera, microphone, GPU, SARA native runtime, signed driver activation or installer behavior.
+
+---
+
+## 12. Tests
+
+Core Jubi Phase 0 regression test:
+
+```powershell
+python tests/jubi_phase0_test.py
+```
+
+Production/static gate:
+
+```powershell
+python tests/production_readiness_test.py
+```
+
+Foundation integration regression:
+
+```powershell
+python tests/integration_test.py
+```
+
+Broker security:
+
+```powershell
+python tests/broker_security_test.py
+python tests/ring0_bridge_test.py
+```
+
+Fable integration:
+
+```powershell
+python tests/fable_integration_test.py
+```
+
+Compile check:
+
+```powershell
+python -m compileall -q jubi sarus tests scripts
+```
+
+---
+
+## 13. Windows installer
+
+The Inno Setup definition still has the legacy repository filename:
+
+```text
+installer/SARUS-Setup.iss
+```
+
+but now builds the user-facing artifact:
+
+```text
+Jubi-Setup.exe
+```
+
+Target installation path:
+
+```text
+C:\Program Files\Jubi
+```
+
+Target launcher:
+
+```text
+Jubi.exe
+```
+
+During Phase 0 the verified legacy launcher payload is copied byte-for-byte to `Jubi.exe` after checksum verification. A separately rebuilt native launcher can replace this compatibility step later after Windows validation.
+
+Existing SARUS installations are not deliberately overwritten: Jubi uses a distinct installer AppId and install directory.
+
+---
+
+## 14. Legacy compatibility identifiers
+
+The following SARUS-era names may intentionally remain internally in Phase 0:
+
+- `sarus/` Python implementation package
+- `data/sarus.db`
+- `SARUS_*` environment-variable fallbacks
+- `installer/INSTALL-SARUS.ps1`
+- `installer/CERTIFY-SARUS.ps1`
+- `installer/UNINSTALL-SARUS.ps1`
+- `.sarus-venv`
+- `driver/SarusRing0/`
+- protected broker key locations used by the legacy installer
+
+They are compatibility surfaces, not the current product name. New UI/status/installer artifact identity is Jubi.
+
+---
+
+## 15. What is deliberately NOT in Phase 0
+
+The following are planned later and should not be represented as already implemented:
+
+- NVIDIA provider
+- OpenRouter provider
+- Hugging Face provider
+- provider quota/free-model manager
+- advanced task-classifying model router
+- semantic/vector RAG memory
+- experience-based self-learning router
+- advanced LLM planner / task DAG
+- AI Council
+- LAN device discovery and management
+- SSH / SMB / NAS management
+- expanded browser research agent
+- voice/screen upgrades beyond existing SARA capabilities
+- unrestricted PC or kernel control
+
+---
+
+## 16. Next planned development sequence
+
+After Phase 0 passes GitHub and target Windows validation:
+
+```text
+Phase 1  Advanced local brain/router
+Phase 2  Semantic + episodic + project memory
+Phase 3  Experience learning / skill evaluation
+Phase 4  NVIDIA + OpenRouter + Hugging Face provider manager
+Phase 5  Internet research/browser layer
+Phase 6  Expanded typed computer tools
+Phase 7  Authorized LAN / NAS / SSH / local-service layer
+Phase 8  Multi-agent supervisor / planner / reviewer
+Phase 9  Voice, screen awareness, self-healing and AI Council
+```
+
+The project should continue using the rule:
+
+```text
+Build -> test -> fix -> commit -> next feature
+```
+
+rather than attempting all future capabilities in one generation.
