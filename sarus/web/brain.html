@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Jubi Brain & Router</title>
+<title>Jubi Brain, Council & Supervisor</title>
 <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body data-page="brain">
 <main class="page">
-  <div class="hero"><div><h1>Advanced Local Brain</h1><p>See how Jubi classifies a request, ranks installed local models, learns from measured outcomes and performs bounded fallback.</p></div><button class="btn" id="brain-refresh">Refresh Brain</button></div>
+  <div class="hero"><div><h1>Brain, Council & Supervisor</h1><p>Inspect smart routing, compare independent model opinions, and decompose complex work into reviewed specialist steps without bypassing Jubi's security boundaries.</p></div><button class="btn" id="brain-refresh">Refresh Brain</button></div>
   <div class="grid">
-    <div class="card metric-card span-3"><div class="metric-label">Routing Mode</div><div id="brain-mode" class="metric-value small-value">—</div><div class="metric-note">Automatic cloud escalation stays disabled in Phase 1</div></div>
+    <div class="card metric-card span-3"><div class="metric-label">Routing Mode</div><div id="brain-mode" class="metric-value small-value">—</div><div class="metric-note">Provider Manager controls optional cloud use</div></div>
     <div class="card metric-card span-3"><div class="metric-label">Detected Models</div><div id="brain-models" class="metric-value">—</div><div class="metric-note">Models reported by local Ollama</div></div>
     <div class="card metric-card span-3"><div class="metric-label">Tracked Model/Task Pairs</div><div id="brain-pairs" class="metric-value">—</div><div class="metric-note">Measured routing performance records</div></div>
     <div class="card metric-card span-3"><div class="metric-label">Recent Decisions</div><div id="brain-decisions" class="metric-value">—</div><div class="metric-note">Recent persisted routing outcomes</div></div>
@@ -26,16 +26,42 @@
     </div>
 
     <div class="card span-12">
+      <div class="card-head"><div><div class="card-title">AI Council</div><div class="card-sub">Independent models answer first; a Judge compares evidence and synthesizes the final result</div></div></div>
+      <div class="card-body stack">
+        <textarea id="council-input" class="textarea" style="min-height:150px" placeholder="Give the Council a difficult architecture, business, research or coding decision"></textarea>
+        <div class="form-grid"><div class="field span-4"><label>Task type</label><select id="council-task-type" class="select"><option value="auto">Smart Auto</option><option value="general">General</option><option value="coding">Coding</option><option value="research">Research</option><option value="planning">Planning</option><option value="document">Document</option></select></div><div class="field span-4"><label>Maximum members</label><select id="council-members" class="select"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></div><div class="field span-4"><label>Judge provider</label><select id="council-judge" class="select"><option value="auto">Smart policy</option><option value="ollama">Ollama Local</option><option value="openrouter">OpenRouter</option><option value="nvidia">NVIDIA</option><option value="huggingface">Hugging Face</option></select></div></div>
+        <button id="council-run" class="btn primary">Run AI Council</button>
+        <div class="card" style="padding:14px"><div class="metric-label">Council final</div><div id="council-final" style="white-space:pre-wrap;margin-top:8px">Waiting for a Council run.</div></div>
+        <div id="council-member-results" class="stack"></div><pre id="council-route" class="codebox">Council route metadata will appear here.</pre>
+      </div>
+    </div>
+
+    <div class="card span-12">
+      <div class="card-head"><div><div class="card-title">Multi-Agent Supervisor</div><div class="card-sub">Planner → specialist reasoning steps → reviewer. This layer does not directly execute privileged tools.</div></div></div>
+      <div class="card-body stack">
+        <textarea id="supervisor-input" class="textarea" style="min-height:150px" placeholder="Describe a complex task that should be broken into specialist steps"></textarea>
+        <div class="field"><label>Provider policy</label><select id="supervisor-provider" class="select"><option value="auto">Smart provider policy</option><option value="ollama">Ollama Local</option><option value="openrouter">OpenRouter</option><option value="nvidia">NVIDIA</option><option value="huggingface">Hugging Face</option></select></div>
+        <div class="actions"><button id="supervisor-plan" class="btn">Create reasoning plan</button><button id="supervisor-run" class="btn primary">Run supervised reasoning</button></div>
+        <div class="card" style="padding:14px"><div class="metric-label">Supervisor final</div><div id="supervisor-final" style="white-space:pre-wrap;margin-top:8px">Run the Supervisor to produce an integrated result.</div></div>
+        <pre id="supervisor-output" class="codebox">Plan/run details will appear here.</pre>
+      </div>
+    </div>
+
+    <div class="card span-12">
       <div class="card-head"><div><div class="card-title">Measured Model Performance</div><div class="card-sub">Success/failure and latency history used by the adaptive router</div></div></div>
       <div class="table-wrap"><table><thead><tr><th>Model</th><th>Task Type</th><th>Attempts</th><th>Success Rate</th><th>Avg Success Latency</th><th>Last Status</th></tr></thead><tbody id="brain-performance"></tbody></table></div>
     </div>
+
+    <div class="card span-6"><div class="card-head"><div><div class="card-title">Council History</div><div class="card-sub">Prompt hashes + run metadata only</div></div></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Task</th><th>Members</th><th>Judge Provider</th><th>Judge Model</th><th>Latency</th></tr></thead><tbody id="council-history"></tbody></table></div></div>
+    <div class="card span-6"><div class="card-head"><div><div class="card-title">Supervisor History</div><div class="card-sub">Reasoning-only multi-agent run metadata</div></div></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Status</th><th>Task</th><th>Steps</th><th>Provider</th><th>Model</th><th>Latency</th></tr></thead><tbody id="supervisor-history"></tbody></table></div></div>
 
     <div class="card span-12">
       <div class="card-head"><div><div class="card-title">Routing Decision History</div><div class="card-sub">Jubi stores hashes and routing metadata, not full prompt text, in the Brain history</div></div></div>
       <div class="table-wrap"><table><thead><tr><th>Status</th><th>Intent</th><th>Complexity</th><th>Selected Model</th><th>Latency</th><th>Time</th></tr></thead><tbody id="brain-history"></tbody></table></div>
     </div>
   </div>
+  <div class="notice" style="margin-top:16px"><b>Boundary:</b> Council and Supervisor are reasoning layers. They cannot directly bypass approvals, typed broker schemas, or other tool-policy controls. High-privacy prompts continue to follow Provider Manager cloud blocking.</div>
 </main>
-<script src="/assets/app.js"></script>
+<script src="/assets/app.js"></script><script src="/assets/council.js"></script>
 </body>
 </html>
