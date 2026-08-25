@@ -4,6 +4,8 @@ from .events import EventBus
 from .models import OllamaRouter
 from .brain import BrainRouter
 from .providers import ProviderManager
+from .knowledge import SemanticKnowledge
+from .experience import ExperienceEngine
 from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry
 from .adapters import AdapterManager
@@ -25,7 +27,8 @@ class Jubi:
     The Advanced Local Brain remains the privacy-preserving foundation. The
     Provider Manager adds optional OpenRouter, NVIDIA NIM and Hugging Face
     Inference Providers behind explicit local-only/hybrid/cloud-boost modes.
-    Cloud credentials never live in the repository or Jubi SQLite database.
+    Semantic Knowledge adds local Ollama embeddings + RAG, while Experience
+    Memory records bounded outcomes without uncontrolled model-weight changes.
 
     Internal ``sarus`` module paths remain during this compatibility stage so
     installer/source/driver behavior is not broken by a cosmetic package move.
@@ -48,6 +51,8 @@ class Jubi:
             root / 'config/providers.json',
             self.bus,
         )
+        self.knowledge = SemanticKnowledge(self.db_path, self.models, self.providers, self.bus)
+        self.experience = ExperienceEngine(self.db_path, self.models, self.bus)
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.adapters = AdapterManager(root, root / 'config/sources.json')
@@ -76,6 +81,8 @@ class Jubi:
                 'brain': 'advanced-local-router-v1',
                 'provider_manager': 'provider-manager-v1',
                 'provider_mode': self.providers.mode(),
+                'semantic_knowledge': 'local-embedding-rag-v1',
+                'experience_memory': 'bounded-experience-v1',
             },
         )
 
@@ -100,11 +107,13 @@ class Jubi:
         ads = self.adapters.connect()
         models = self.models.list_models()
         provider_status = self.providers.status(validate=False)
+        knowledge_status = self.knowledge.status()
+        experience_stats = self.experience.stats()
         return {
             'name': 'Jubi',
             'version': self.VERSION,
             'foundation': self.FOUNDATION_VERSION,
-            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1+provider-manager-v1+semantic-knowledge-v1+experience-v1',
             'adapters': [a.__dict__ for a in ads],
             'models': models,
             'brain': {
@@ -116,6 +125,12 @@ class Jubi:
                 'mode': provider_status['mode'],
                 'local': provider_status['local'],
                 'cloud': provider_status['cloud'],
+            },
+            'knowledge': knowledge_status,
+            'experience': {
+                'total': experience_stats['total'],
+                'success_rate': experience_stats['success_rate'],
+                'embedded': experience_stats['embedded'],
             },
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),

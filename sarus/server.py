@@ -15,7 +15,7 @@ from sarus.core.app import Jubi
 
 APP = Jubi(ROOT)
 SESSION_TOKEN = secrets.token_urlsafe(32)
-MAX_HTTP_BODY = 65536
+MAX_HTTP_BODY = 2 * 1024 * 1024
 
 
 def _env(primary: str, legacy: str, default: str) -> str:
@@ -62,7 +62,7 @@ class H(SimpleHTTPRequestHandler):
     def _body(self):
         n = int(self.headers.get('Content-Length', '0'))
         if n < 0 or n > MAX_HTTP_BODY:
-            raise ValueError('request body exceeds 64 KiB limit')
+            raise ValueError('request body exceeds 2 MiB limit')
         try:
             return json.loads(self.rfile.read(n) or b'{}')
         except json.JSONDecodeError as exc:
@@ -101,6 +101,32 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.providers.performance())
             if p == '/api/providers/requests':
                 return self._json(APP.providers.recent_requests(int(q.get('limit', ['50'])[0])))
+            if p == '/api/knowledge/status':
+                return self._json(APP.knowledge.status())
+            if p == '/api/knowledge/documents':
+                return self._json(APP.knowledge.documents(q.get('namespace', [None])[0] or None, int(q.get('limit', ['100'])[0])))
+            if p == '/api/knowledge/search':
+                return self._json(
+                    APP.knowledge.search(
+                        q.get('q', [''])[0],
+                        q.get('namespace', [None])[0] or None,
+                        int(q.get('limit', ['8'])[0]),
+                    )
+                )
+            if p == '/api/experience':
+                success_raw = str(q.get('success', [''])[0]).lower()
+                success = True if success_raw in {'1', 'true', 'yes'} else (False if success_raw in {'0', 'false', 'no'} else None)
+                return self._json(APP.experience.recent(int(q.get('limit', ['100'])[0]), success=success))
+            if p == '/api/experience/stats':
+                return self._json(APP.experience.stats())
+            if p == '/api/experience/similar':
+                return self._json(
+                    APP.experience.similar(
+                        q.get('q', [''])[0],
+                        q.get('task_type', [None])[0] or None,
+                        int(q.get('limit', ['6'])[0]),
+                    )
+                )
             if p == '/api/broker':
                 return self._json(APP.privileged.status())
             if p == '/api/doctor':
@@ -164,6 +190,8 @@ class H(SimpleHTTPRequestHandler):
             return super().do_GET()
         except ValueError as exc:
             return self._json(self._safe_error(exc), 400)
+        except KeyError as exc:
+            return self._json(self._safe_error(exc), 404)
         except Exception as exc:
             APP.bus.emit('HTTP_ERROR', {'method': 'GET', 'path': p, 'error': str(exc)[:1000]})
             return self._json(self._safe_error(exc), 500)
@@ -227,14 +255,78 @@ class H(SimpleHTTPRequestHandler):
                     )
                 )
             if p == '/api/chat':
-                return self._json(
-                    APP.providers.generate(
-                        str(data.get('text', '')),
+                text = str(data.get('text', ''))
+                try:
+                    result = APP.providers.generate(
+                        text,
                         str(data.get('task_type', 'auto')),
                         model=data.get('model'),
                         provider=str(data.get('provider', 'auto')),
                     )
+                    try:
+                        APP.experience.record_chat(text, result, True)
+                    except Exception as learn_exc:
+                        APP.bus.emit('EXPERIENCE_RECORD_WARNING', {'error': str(learn_exc)[:1000]})
+                    return self._json(result)
+                except Exception as exc:
+                    try:
+                        classification = APP.brain.classify(text, str(data.get('task_type', 'auto')))
+                        APP.experience.record(
+                            text, str(exc), False, task_type=classification['task_type'], kind='chat',
+                            lesson='This route failed; use successful alternatives for similar work.',
+                        )
+                    except Exception:
+                        pass
+                    raise
+            if p == '/api/knowledge/ingest':
+                return self._json(
+                    APP.knowledge.ingest(
+                        str(data.get('content', '')),
+                        str(data.get('title', '')),
+                        str(data.get('namespace', 'general')),
+                        str(data.get('source', 'manual')),
+                        data.get('metadata') or {},
+                    )
                 )
+            if p == '/api/knowledge/search':
+                return self._json(
+                    APP.knowledge.search(
+                        str(data.get('query', data.get('q', ''))),
+                        str(data.get('namespace', '')).strip() or None,
+                        int(data.get('limit', 8)),
+                        float(data.get('min_score', 0.0)),
+                    )
+                )
+            if p == '/api/knowledge/ask':
+                return self._json(
+                    APP.knowledge.answer(
+                        str(data.get('question', '')),
+                        str(data.get('namespace', '')).strip() or None,
+                        int(data.get('limit', 6)),
+                        str(data.get('provider', 'auto')),
+                        data.get('model'),
+                    )
+                )
+            if p == '/api/knowledge/delete':
+                return self._json(APP.knowledge.delete_document(str(data.get('id', ''))))
+            if p == '/api/experience':
+                return self._json(
+                    APP.experience.record(
+                        str(data.get('request', '')),
+                        str(data.get('outcome', '')),
+                        bool(data.get('success', True)),
+                        task_type=str(data.get('task_type', 'general')),
+                        kind=str(data.get('kind', 'manual')),
+                        provider=str(data.get('provider', '')),
+                        model=str(data.get('model', '')),
+                        tool=str(data.get('tool', '')),
+                        latency_ms=float(data.get('latency_ms', 0)),
+                        lesson=str(data.get('lesson', '')),
+                        metadata=data.get('metadata') or {},
+                    )
+                )
+            if p == '/api/experience/delete':
+                return self._json(APP.experience.delete(str(data.get('id', ''))))
             if p == '/api/capability/run':
                 cid = str(data.get('id', ''))
                 cap = APP.registry.get(cid)

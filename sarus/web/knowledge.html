@@ -1,5 +1,44 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Knowledge · Jubi</title><link rel="stylesheet" href="/assets/styles.css"></head>
-<body data-page="knowledge"><main class="page"><div class="hero"><div><h1>Knowledge</h1><p>Manage the real local memory layer today, while keeping future semantic/vector memory separate from what is actually implemented.</p></div></div>
-<div class="grid"><div class="card span-5"><div class="card-head"><div><div class="card-title">Save memory</div><div class="card-sub">Writes directly to Jubi's local persistent memory store</div></div></div><div class="card-body stack"><div class="field"><label>Title</label><input id="memory-title" class="input" placeholder="Memory title"></div><div class="field"><label>Namespace</label><input id="memory-ns" class="input" value="general"></div><div class="field"><label>Content</label><textarea id="memory-content" class="textarea" placeholder="Information Jubi should store locally"></textarea></div><button id="memory-save" class="btn primary">Save memory</button></div></div>
-<div class="card span-7"><div class="card-head"><div><div class="card-title">Search local knowledge</div><div class="card-sub">Current Phase 0 memory is SQLite/FTS-backed, not fake semantic RAG</div></div></div><div class="card-body"><div class="toolbar"><input id="memory-q" class="input" placeholder="Search memory"><input id="memory-filter-ns" class="input" placeholder="Namespace (optional)"><button id="memory-search-btn" class="btn">Search</button></div><div id="memory-results" class="row-list" style="margin-top:12px"></div></div></div></div></main><script src="/assets/app.js"></script></body></html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Knowledge & Learning · Jubi</title><link rel="stylesheet" href="/assets/styles.css"></head>
+<body data-page="knowledge"><main class="page">
+<div class="hero"><div><h1>Knowledge & Learning</h1><p>Jubi now combines legacy local notes with real semantic retrieval, local Ollama embeddings, grounded RAG answers and inspectable experience learning.</p></div><button id="semantic-refresh" class="btn">Refresh</button></div>
+
+<div class="grid">
+<div class="card metric-card span-2"><div class="metric-label">Semantic docs</div><div id="semantic-docs" class="metric-value">—</div><div class="metric-note">Embedded local sources</div></div>
+<div class="card metric-card span-2"><div class="metric-label">Vector chunks</div><div id="semantic-chunks" class="metric-value">—</div><div class="metric-note">SQLite local vectors</div></div>
+<div class="card metric-card span-3"><div class="metric-label">Embedding model</div><div id="semantic-model" class="metric-value" style="font-size:16px">—</div><div class="metric-note">Embeddings never use cloud providers</div></div>
+<div class="card metric-card span-2"><div class="metric-label">Experiences</div><div id="experience-total" class="metric-value">—</div><div class="metric-note">Bounded local episodes</div></div>
+<div class="card metric-card span-3"><div class="metric-label">Experience success</div><div id="experience-rate" class="metric-value">—</div><div class="metric-note">Measured outcome history</div></div>
+</div>
+
+<div class="grid" style="margin-top:16px">
+<div class="card span-5"><div class="card-head"><div><div class="card-title">Add semantic knowledge</div><div class="card-sub">Content is chunked and embedded locally through Ollama</div></div></div><div class="card-body stack">
+<div class="field"><label>Title</label><input id="semantic-title" class="input" placeholder="Project architecture, proposal, notes…"></div>
+<div class="form-grid"><div class="field span-6"><label>Namespace</label><input id="semantic-ns" class="input" value="general"></div><div class="field span-6"><label>Source label</label><input id="semantic-source" class="input" value="manual"></div></div>
+<div class="field"><label>Document / text content</label><textarea id="semantic-content" class="textarea" style="min-height:240px" placeholder="Paste document text, code, notes or project knowledge here. Jubi stores embeddings only on this machine."></textarea></div>
+<button id="semantic-ingest" class="btn primary">Chunk + Embed locally</button><pre id="semantic-output" class="codebox">Waiting for knowledge.</pre></div></div>
+
+<div class="card span-7"><div class="card-head"><div><div class="card-title">Semantic search</div><div class="card-sub">Meaning-based retrieval using nomic/Ollama embeddings</div></div></div><div class="card-body stack">
+<div class="toolbar"><input id="semantic-query" class="input" placeholder="What did we decide about deployment, clients, architecture…?"><input id="semantic-query-ns" class="input" placeholder="Namespace (optional)"><button id="semantic-search" class="btn">Semantic search</button></div>
+<div id="semantic-results" class="row-list"></div></div></div>
+</div>
+
+<div class="grid" style="margin-top:16px">
+<div class="card span-7"><div class="card-head"><div><div class="card-title">Ask local knowledge (RAG)</div><div class="card-sub">Retrieve local chunks first, then answer with visible [K1] source markers</div></div></div><div class="card-body stack">
+<div class="field"><label>Question</label><textarea id="rag-question" class="textarea" placeholder="Ask a question grounded in your local knowledge"></textarea></div>
+<div class="form-grid"><div class="field span-6"><label>Namespace</label><input id="rag-ns" class="input" placeholder="Optional"></div><div class="field span-6"><label>Generation provider</label><select id="rag-provider" class="select"><option value="auto">Smart provider policy</option><option value="ollama">Ollama Local</option><option value="openrouter">OpenRouter</option><option value="nvidia">NVIDIA</option><option value="huggingface">Hugging Face</option></select></div></div>
+<button id="rag-ask" class="btn primary">Retrieve + Answer</button><div class="card" style="padding:14px"><div class="metric-label">Grounded answer</div><div id="rag-answer" style="white-space:pre-wrap;margin-top:8px">Waiting for a question.</div></div><div id="rag-sources" class="row-list"></div><pre id="rag-route" class="codebox">Provider route will appear here.</pre>
+</div></div>
+<div class="card span-5"><div class="card-head"><div><div class="card-title">Semantic document registry</div><div class="card-sub">Delete a document to remove all of its local vector chunks</div></div></div><div class="card-body"><div id="knowledge-documents" class="row-list"></div></div></div>
+</div>
+
+<div class="grid" style="margin-top:16px">
+<div class="card span-6"><div class="card-head"><div><div class="card-title">Experience learning</div><div class="card-sub">Jubi records chat outcomes locally; it does not mutate model weights automatically</div></div></div><div class="card-body stack"><div class="toolbar"><input id="experience-query" class="input" placeholder="Describe a task to find similar past outcomes"><button id="experience-search" class="btn">Find similar</button></div><div id="experience-similar" class="row-list"></div></div></div>
+<div class="card span-6"><div class="card-head"><div><div class="card-title">Recent experiences</div><div class="card-sub">Inspectable successes/failures used for future recommendations</div></div></div><div class="card-body"><div id="experience-list" class="row-list"></div></div></div>
+</div>
+
+<div class="grid" style="margin-top:16px"><div class="card span-5"><div class="card-head"><div><div class="card-title">Legacy quick memory</div><div class="card-sub">Existing SQLite/FTS note store preserved for compatibility</div></div></div><div class="card-body stack"><div class="field"><label>Title</label><input id="memory-title" class="input" placeholder="Memory title"></div><div class="field"><label>Namespace</label><input id="memory-ns" class="input" value="general"></div><div class="field"><label>Content</label><textarea id="memory-content" class="textarea" placeholder="Information Jubi should store locally"></textarea></div><button id="memory-save" class="btn">Save quick memory</button></div></div>
+<div class="card span-7"><div class="card-head"><div><div class="card-title">Search quick memory</div><div class="card-sub">Lexical SQLite/FTS search</div></div></div><div class="card-body"><div class="toolbar"><input id="memory-q" class="input" placeholder="Search memory"><input id="memory-filter-ns" class="input" placeholder="Namespace (optional)"><button id="memory-search-btn" class="btn">Search</button></div><div id="memory-results" class="row-list" style="margin-top:12px"></div></div></div></div>
+
+<div class="notice" style="margin-top:16px"><b>Learning boundary:</b> semantic vectors and experience records stay local. Jubi learns through retrieval, measured outcomes and preferences; it does not silently retrain or rewrite base model weights. RAG generation follows the Provider Manager mode and privacy policy.</div>
+</main><script src="/assets/app.js"></script><script src="/assets/knowledge.js"></script></body></html>

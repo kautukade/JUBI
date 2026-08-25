@@ -43,13 +43,17 @@ jobs:
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
       - name: Validate dashboard JavaScript syntax
-        run: node --check sarus/web/assets/app.js
+        run: |
+          node --check sarus/web/assets/app.js
+          node --check sarus/web/assets/knowledge.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
         run: python tests/jubi_brain_test.py
       - name: Provider Manager tests
         run: python tests/jubi_provider_manager_test.py
+      - name: Semantic Knowledge and Experience tests
+        run: python tests/jubi_knowledge_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
@@ -103,13 +107,17 @@ jobs:
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
       - name: Validate dashboard JavaScript syntax
-        run: node --check sarus/web/assets/app.js
+        run: |
+          node --check sarus/web/assets/app.js
+          node --check sarus/web/assets/knowledge.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
         run: python tests/jubi_brain_test.py
       - name: Provider Manager tests
         run: python tests/jubi_provider_manager_test.py
+      - name: Semantic Knowledge and Experience tests
+        run: python tests/jubi_knowledge_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
