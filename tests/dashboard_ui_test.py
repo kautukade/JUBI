@@ -29,7 +29,14 @@ REQUIRED_IDS = {
     'overview': {'metric-sources', 'metric-models', 'metric-units', 'metric-approvals', 'metric-files', 'metric-chain', 'sources-list', 'recent-tasks', 'recent-events'},
     'chat': {'chat-messages', 'chat-input', 'chat-provider', 'chat-model', 'chat-type', 'chat-send', 'chat-route-info', 'chat-provider-mode'},
     'tasks': {'task-input', 'task-plan', 'task-run', 'task-output', 'tasks-table', 'task-approvals'},
-    'brain': {'brain-mode', 'brain-models', 'brain-pairs', 'brain-decisions', 'brain-route-text', 'brain-route', 'brain-route-output', 'brain-performance', 'brain-history'},
+    'brain': {
+        'brain-mode', 'brain-models', 'brain-pairs', 'brain-decisions', 'brain-route-text', 'brain-route',
+        'brain-route-output', 'brain-performance', 'brain-history',
+        'council-input', 'council-task-type', 'council-members', 'council-judge', 'council-run',
+        'council-final', 'council-member-results', 'council-route', 'council-history',
+        'supervisor-input', 'supervisor-provider', 'supervisor-plan', 'supervisor-run',
+        'supervisor-final', 'supervisor-output', 'supervisor-history'
+    },
     'providers': {
         'providers-refresh', 'provider-mode', 'provider-mode-save', 'provider-ollama-status',
         'provider-cloud-count', 'provider-request-count', 'provider-vault',
@@ -62,6 +69,7 @@ class UnifiedDashboardTests(unittest.TestCase):
         self.assertTrue((WEB / 'assets/styles.css').is_file())
         self.assertTrue((WEB / 'assets/app.js').is_file())
         self.assertTrue((WEB / 'assets/knowledge.js').is_file())
+        self.assertTrue((WEB / 'assets/council.js').is_file())
         for filename, page in PAGES.items():
             path = WEB / filename
             self.assertTrue(path.is_file(), filename)
@@ -84,9 +92,11 @@ class UnifiedDashboardTests(unittest.TestCase):
     def test_client_is_real_api_wired_and_not_placeholder_navigation(self):
         js = (WEB / 'assets/app.js').read_text(encoding='utf-8')
         knowledge_js = (WEB / 'assets/knowledge.js').read_text(encoding='utf-8')
-        combined = js + '\n' + knowledge_js
+        council_js = (WEB / 'assets/council.js').read_text(encoding='utf-8')
+        combined = js + '\n' + knowledge_js + '\n' + council_js
         for endpoint in (
             '/api/status', '/api/models', '/api/chat', '/api/brain', '/api/brain/route',
+            '/api/council/run', '/api/council', '/api/supervisor/plan', '/api/supervisor/run', '/api/supervisor',
             '/api/providers', '/api/providers/models', '/api/providers/mode', '/api/provider/credential',
             '/api/provider/credential/delete', '/api/provider/validate', '/api/provider/default-model',
             '/api/plan', '/api/task', '/api/tasks', '/api/capabilities', '/api/capability/run',
@@ -117,6 +127,8 @@ class UnifiedDashboardTests(unittest.TestCase):
         self.assertIn("'X-JUBI-Token'", server)
         self.assertIn("'/api/brain'", server)
         self.assertIn("'/api/brain/route'", server)
+        self.assertIn("'/api/council/run'", server)
+        self.assertIn("'/api/supervisor/run'", server)
         self.assertIn("'/api/providers'", server)
         self.assertIn("'/api/provider/credential'", server)
         self.assertIn('APP.providers.generate', server)
