@@ -1,295 +1,194 @@
 # Jubi
 
-> **Jubi — Local AI Agent & Windows Automation Platform**  
-> Developed for **ITCYBER TECHNOLOGIES PVT LTD**  
-> Primary platform: **Windows 10/11 x64**  
-> Current migration release: **Jubi v0.1.0**  
-> Foundation: **SARUS v1.3.1**
+> **Local-first AI Agent, Research & Windows Automation Platform**  
+> Primary target: **Windows 10/11 x64**  
+> Foundation: **SARUS v1.3.1 compatibility layer**
 
-Jubi is the next evolution of the SARUS local AI research and Windows automation platform. The Phase 0 migration deliberately keeps the proven SARUS internals that are expensive and risky to rename blindly — source adapters, installer helper filenames, the controlled Ring0 driver ABI, and selected environment-variable compatibility — while moving the user-facing product, runtime identity, dashboard, installer artifact, tests and new entry points to **Jubi**.
+Jubi is the evolving product built on the stabilized SARUS foundation. User-facing runtime, dashboard and installer are Jubi; selected internal `sarus/` paths, installer helper names, the physical `data/sarus.db` filename and the narrow `SarusRing0` ABI are intentionally retained until a target-tested migration can change them safely.
 
-The goal of this release is **stability first**: persistence, task recovery, approval correctness, model discovery, lifecycle cleanup and regression coverage. It does **not** yet add the future NVIDIA/OpenRouter/Hugging Face provider layer, LAN management, semantic vector memory, advanced planner, or AI Council.
+## Current capabilities
 
----
+### Jubi Brain
+- Automatic intent classification: general, coding, vision, research, planning, document and system work.
+- Complexity and privacy classification.
+- Installed-model-only Ollama routing with bounded fallback.
+- Per-model success/failure and latency history used by future routing.
+- Explicit user model override remains available.
 
-## 1. What changed in Jubi v0.1.0
-
-The migration fixes several foundation issues before advanced features are added:
-
-- SQLite writes now use explicit transactions instead of relying on connection close behavior.
-- SQLite connections use WAL mode, a busy timeout and short per-operation connections to reduce locking under HTTP/background threads.
-- Memory, events, tasks, approvals and automations are persistence-safe.
-- Task plans are serialized to SQLite so an approval-required task can survive a Jubi restart.
-- Approval is bound to the exact persisted task step; approving one step cannot silently approve later steps.
-- Rejected approvals do not execute the pending action.
-- Ollama routing no longer returns a configured model that is not actually installed.
-- Ollama model discovery now exposes useful model metadata and basic role classification.
-- Jubi Doctor reads the required model list from `config/production.json` instead of duplicating it in Python.
-- The HTTP API uses Jubi branding, safe default error responses and localhost-only binding.
-- The dashboard is Jubi-branded and includes real Approve / Reject controls for pending pipeline approvals.
-- A Jubi user-facing Python entry package is available (`python -m jubi.server`, `python -m jubi.acceptance`).
-- The Windows installer artifact is now `Jubi-Setup.exe` and the installed launcher is exposed as `Jubi.exe`.
-- New Jubi Phase 0 tests cover persistence, model fallback and approval/restart behavior.
-
-See `docs/JUBI_PHASE0_FIX_REPORT.md` for the detailed repair record.
-
----
-
-## 2. Architecture
+### Local models
+The production baseline is configured in `config/production.json`. The typical local roles are:
 
 ```text
-User / Dashboard
-        |
-        v
-Local HTTP API (127.0.0.1:8877)
-        |
-        +--> Ollama model router
-        |
-        +--> Persistent task execution
-        |       |
-        |       +--> Orchestrator
-        |       +--> Source adapters
-        |       +--> Approval state
-        |       +--> Signed receipts
-        |
-        +--> Local memory + events + automation state (SQLite)
-        |
-        +--> Policy engine
-                |
-                +--> Typed Privileged Broker
-                        |
-                        +--> allowlisted Windows actions
-                        +--> controlled legacy Ring0 status bridge
+qwen2.5:7b                       general
+qwen2.5-coder:7b                 coding
+qwen2.5vl:3b                     vision
+nomic-embed-text-v2-moe:latest   embeddings / semantic memory
 ```
 
-The central security boundary remains:
+Jubi queries local Ollama at `http://127.0.0.1:11434`. A configured model is never treated as available unless Ollama actually reports it as installed.
+
+### Provider Manager
+Optional cloud inference is available through:
+- OpenRouter
+- NVIDIA NIM
+- Hugging Face Inference Providers
+
+Routing modes:
+
+```text
+Local Only   -> cloud generation disabled
+Hybrid Auto  -> local first; bounded cloud use for eligible work
+Cloud Boost  -> cloud may be preferred for eligible work
+```
+
+High-privacy prompts remain blocked from automatic cloud transmission. On Windows, dashboard-entered provider credentials are encrypted per-user with DPAPI under `%LOCALAPPDATA%\Jubi`; secrets are not committed to GitHub or stored in the Jubi SQLite database.
+
+### Semantic Knowledge / RAG
+Jubi includes local semantic knowledge using Ollama embeddings:
+- document/content chunking
+- local embedding generation
+- semantic similarity search
+- namespace/project separation
+- RAG answering with visible retrieved-source markers
+- persistent local vector data in SQLite
+
+### Experience / bounded self-learning
+Jubi learns from outcomes without modifying base model weights after every conversation. It records bounded experience such as task type, route, provider/model, success/failure, latency and lessons, and can retrieve similar prior experience for later work.
+
+### AI Council & Multi-Agent Supervisor
+- AI Council asks multiple eligible models independently and uses a Judge to synthesize the final result.
+- Multi-Agent Supervisor performs planner -> specialist reasoning -> reviewer workflows.
+- These are reasoning layers; they do not bypass tool policy, approval or privileged-broker boundaries.
+
+### Public Web Research
+Jubi can search/read public HTTP/HTTPS pages and synthesize source-marked research. Internet content is treated as **untrusted evidence**.
+
+The public research reader blocks:
+- localhost/loopback
+- private/link-local/reserved targets
+- credential-bearing URLs
+- unsupported network targets
+
+Fetched page text cannot directly trigger Windows/LAN privileged execution.
+
+### Computer Operator
+The Windows broker exposes typed, allowlisted operations instead of arbitrary shell strings. Current dashboard-accessible examples include:
+- process/service inventory
+- workspace file read/write/stat
+- directory list/create
+- scoped file copy/move
+- approval-protected scoped file delete
+- read-only Git status/log
+- fixed allowlisted app launch (VS Code, Notepad, Explorer)
+- HTTP/HTTPS URL opening
+- narrow Ring0 status/ping compatibility checks
+
+Workspace actions are confined to configured workspace roots. Jubi intentionally does not expose a model-facing unrestricted PowerShell/CMD/shell primitive.
+
+### Authorized LAN Manager
+Jubi includes a bounded LAN foundation for devices the user is authorized to manage:
+- passive host neighbor-cache discovery (`arp -a` / `ip neigh`)
+- explicit authorized-device registry
+- user-declared TCP service registry
+- health checks only against registered service ports
+- persistent local network observations
+
+It does **not** perform subnet-wide active scanning, credential brute force, exploitation, stealth lateral movement or arbitrary remote command execution.
+
+### Vision & browser voice controls
+Local vision uses an installed Ollama vision model and supports PNG/JPEG/WebP image analysis. This feature does not send images to OpenRouter/NVIDIA/Hugging Face.
+
+The dashboard also offers optional browser speech controls when supported:
+- click-to-talk dictation
+- text-to-speech read-aloud
+
+Browser speech recognition is not guaranteed to be local/offline. A native always-on `Hey Jubi` wake-word service is not claimed by the current release.
+
+### Persistent execution and approvals
+Jubi persists task plans and execution cursors in SQLite. An approval-required task can survive restart and resume the exact pending step after approval. Rejected steps do not execute.
+
+### Fable intelligence and source families
+The existing Fable intelligence layer and ten SARUS-era source families remain available as compatibility/runtime assets. A connected source repository is not automatically equivalent to a fully running upstream native runtime.
+
+## Dashboard
+
+Jubi uses one professional local dashboard at:
+
+```text
+http://127.0.0.1:8877
+```
+
+Feature surfaces include:
+- Overview
+- AI Chat
+- Tasks & Planner
+- Brain / AI Council / Supervisor
+- Providers
+- Models
+- Agents & Capabilities
+- Development
+- Knowledge / Experience
+- Fable Lab
+- Automation
+- Computer Operator
+- Web Research
+- Authorized LAN
+- Vision & Voice
+- Security & Receipts
+- System Health
+- Activity
+
+The HTTP dashboard remains localhost-only. Setting `JUBI_HOST=0.0.0.0` is rejected.
+
+## Security model
+
+The central rule is:
 
 ```text
 AI reasoning != unrestricted privileged execution
 ```
 
-Models can propose work. High-impact operations must go through typed policy/broker controls rather than a model-facing arbitrary shell or raw kernel interface.
-
----
-
-## 3. Local model layer
-
-Model roles are configured in:
-
-```text
-config/models.json
-```
-
-Production-required local baseline is configured in:
-
-```text
-config/production.json
-```
-
-Current required baseline:
-
-```text
-qwen2.5:7b
-qwen2.5-coder:7b
-qwen2.5vl:3b
-nomic-embed-text-v2-moe:latest
-```
-
-Jubi dynamically queries the Ollama API at:
-
-```text
-http://127.0.0.1:11434
-```
-
-A configured-but-missing model is no longer returned as if it were installed. If there is no compatible installed model, Jubi returns a clear error.
-
-Cloud-tagged Ollama models are not part of the required local production baseline.
-
----
-
-## 4. Existing source families preserved from SARUS
-
-Jubi Phase 0 preserves the existing ten pinned source families:
-
-1. SARA
-2. NousResearch / hermes-agent
-3. ECC
-4. agency-agents
-5. awesome-llm-apps
-6. second-brain-skills
-7. superpowers
-8. fable-os
-9. CAI
-10. autoresearch
-
-Their paths are configured in:
-
-```text
-config/sources.json
-```
-
-Public upstream pins are configured in:
-
-```text
-config/online_sources.json
-```
-
-Important distinction: a connected source repository is not automatically the same thing as a fully running native upstream runtime. Several integrations act as indexed capability/prompt sources routed through local Ollama; SARA/Hermes/ECC have separate native-runtime detection where available.
-
----
-
-## 5. Persistent task execution and approvals
-
-Jubi stores the task plan and execution cursor in SQLite.
-
-Typical flow:
-
-```text
-Task starts
-  -> plan persisted
-  -> steps execute
-  -> high-risk step requires approval
-  -> task state = waiting_approval
-  -> Jubi may be restarted
-  -> pending approval is still present
-  -> approve exact step
-  -> execution resumes from that step
-  -> remaining steps continue
-```
-
-Task states include:
-
-```text
-queued
-planning
-running
-waiting_approval
-completed
-partial
-failed
-rejected
-cancelled
-```
-
-Approvals are not a generic `approved=true` flag for privileged execution. The Privileged Broker retains its own request-bound proof mechanism for typed Windows actions.
-
----
-
-## 6. Local data and SQLite reliability
-
-Jubi Phase 0 intentionally keeps the legacy physical database filename:
-
-```text
-data/sarus.db
-```
-
-This is a compatibility decision for the first migration release, not the product identity. The database is now owned by the Jubi runtime and contains persistent state for:
-
-- memories
-- events
-- tasks
-- task execution state
-- approvals
-- automations
-- receipts
-- Fable traces
-- learned capabilities
-- Fable agenda
-
-The database helper configures:
-
-```text
-WAL mode
-busy_timeout
-foreign keys
-explicit commit / rollback
-```
-
-A later target-tested migration may rename the physical database to `jubi.db`; Phase 0 avoids moving user state merely for cosmetic reasons.
-
----
-
-## 7. Windows privileged broker
-
-The existing zero-trust typed broker is retained.
-
-Core behavior includes:
-
-- default deny
-- action IDs instead of arbitrary shell strings
-- parameter schemas
+Important boundaries:
+- default-deny privileged policy
+- typed action IDs and parameter schemas
 - allowlisted resources
-- path scoping
-- replay protection
-- short-lived request-bound approval proofs
-- sensitive-value redaction
+- workspace path scoping
+- request-bound approval proofs for configured high-risk actions
 - signed execution receipts
+- no arbitrary kernel memory API
+- no raw driver IOCTL interface exposed to models
+- no security-control disabling scripts
+- public web treated as untrusted data
+- passively discovered LAN devices remain untrusted until explicitly registered
 
-Current examples include read-only process/service listing, scoped workspace file operations, URL opening and allowlisted service/process actions.
-
-Jubi Phase 0 does **not** expose arbitrary PowerShell/cmd execution through the privileged broker.
-
----
-
-## 8. Controlled Ring0 compatibility bridge
-
-The legacy driver project remains under:
-
-```text
-driver/SarusRing0/
-```
-
-This name is intentionally retained during Phase 0 because it is a driver ABI/signing compatibility surface, not ordinary UI branding.
-
-Current fixed capabilities remain narrow:
+The legacy Ring0 bridge remains intentionally narrow:
 
 ```text
 ring0.ping
 ring0.status
 ```
 
-There is no model-facing arbitrary kernel-memory API, raw IOCTL API or general kernel command executor.
+## Local persistence
 
-A driver is activated by the installer only when Windows reports the bundled driver signature as valid. The installer does not disable Secure Boot, Code Integrity, HVCI, Defender or driver-signature enforcement.
-
----
-
-## 9. Dashboard
-
-Default dashboard:
+For compatibility the physical database remains:
 
 ```text
-http://127.0.0.1:8877
+data/sarus.db
 ```
 
-Views currently include:
+Jubi-owned state includes memory, semantic knowledge, experiences, tasks, approvals, automations, events, receipts, Brain/provider performance, Council/Supervisor history, research history, Fable state and authorized-network observations.
 
-- Command Center
-- AI & Models
-- Agent Network
-- Development
-- Automation
-- Computer
-- Fable Lab
-- Knowledge
-- Security
-- System Health
+SQLite uses WAL, busy timeout, foreign keys and explicit commit/rollback transactions.
 
-Phase 0 remains localhost-only by design.
+## Run from source
 
----
-
-## 10. Start Jubi from source
-
-Requirements:
-
-- Windows 10/11 recommended
+Prerequisites:
+- Windows 10/11 x64 for full broker behavior
 - Python 3.11+
-- Ollama
+- Ollama for local inference
+- required local models from `config/production.json`
 
-Clone and enter the repository, then create/activate a Python environment appropriate for your setup.
-
-Run the user-facing entry point:
+Start Jubi:
 
 ```powershell
 python -m jubi.server
@@ -301,170 +200,53 @@ Open:
 http://127.0.0.1:8877
 ```
 
-Check Ollama separately:
-
-```powershell
-ollama list
-```
-
----
-
-## 11. Acceptance
-
-User-facing acceptance command:
-
-```powershell
-python -m jubi.acceptance
-```
-
-Full target-machine validation including a real Ollama generation attempt:
+Run acceptance:
 
 ```powershell
 python -m jubi.acceptance --full
 ```
 
-Compatibility command remains available during Phase 0:
+## CI validation
 
-```powershell
-python -m sarus.acceptance --full
-```
+GitHub Actions validates on Linux and Windows:
+- Python compilation
+- dashboard JavaScript syntax
+- unified dashboard wiring
+- Advanced Brain
+- Provider Manager
+- semantic knowledge / experience
+- AI Council / Supervisor
+- public web research safety
+- typed computer operator
+- authorized LAN manager
+- local vision contracts
+- Phase 0 persistence and approval regression
+- production readiness
+- Fable and foundation integration
+- privileged broker / Ring0 policy tests
+- Windows installer compilation
 
-Do not treat GitHub CI as a substitute for physical Windows validation of camera, microphone, GPU, SARA native runtime, signed driver activation or installer behavior.
+CI does **not** prove target-machine hardware/runtime facts such as real Ollama inference speed, live provider quota, actual LAN device reachability, browser speech availability, or the final installed EXE behavior on the user's specific laptop. Those require physical target validation.
 
----
+## Windows installer
 
-## 12. Tests
-
-Core Jubi Phase 0 regression test:
-
-```powershell
-python tests/jubi_phase0_test.py
-```
-
-Production/static gate:
-
-```powershell
-python tests/production_readiness_test.py
-```
-
-Foundation integration regression:
-
-```powershell
-python tests/integration_test.py
-```
-
-Broker security:
-
-```powershell
-python tests/broker_security_test.py
-python tests/ring0_bridge_test.py
-```
-
-Fable integration:
-
-```powershell
-python tests/fable_integration_test.py
-```
-
-Compile check:
-
-```powershell
-python -m compileall -q jubi sarus tests scripts
-```
-
----
-
-## 13. Windows installer
-
-The Inno Setup definition still has the legacy repository filename:
-
-```text
-installer/SARUS-Setup.iss
-```
-
-but now builds the user-facing artifact:
+The canonical release artifact is:
 
 ```text
 Jubi-Setup.exe
 ```
 
-Target installation path:
+The installed launcher is exposed as `Jubi.exe`. Legacy SARUS helper filenames may remain internally where changing them would risk installer/driver compatibility.
 
-```text
-C:\Program Files\Jubi
-```
+## Current production boundary
 
-Target launcher:
+Code and CI now cover the main Jubi architecture. Before calling a specific laptop deployment fully certified, perform a clean Windows install and test:
+- local Ollama chat/coding/vision/embedding inference
+- provider credentials and live OpenRouter/NVIDIA/Hugging Face calls if desired
+- restart persistence and approval resume
+- Computer Operator actions inside real workspace roots
+- authorized LAN devices on the user's network
+- dashboard/browser speech support
+- installer/upgrade/uninstall and final `Jubi.exe` launch
 
-```text
-Jubi.exe
-```
-
-During Phase 0 the verified legacy launcher payload is copied byte-for-byte to `Jubi.exe` after checksum verification. A separately rebuilt native launcher can replace this compatibility step later after Windows validation.
-
-Existing SARUS installations are not deliberately overwritten: Jubi uses a distinct installer AppId and install directory.
-
----
-
-## 14. Legacy compatibility identifiers
-
-The following SARUS-era names may intentionally remain internally in Phase 0:
-
-- `sarus/` Python implementation package
-- `data/sarus.db`
-- `SARUS_*` environment-variable fallbacks
-- `installer/INSTALL-SARUS.ps1`
-- `installer/CERTIFY-SARUS.ps1`
-- `installer/UNINSTALL-SARUS.ps1`
-- `.sarus-venv`
-- `driver/SarusRing0/`
-- protected broker key locations used by the legacy installer
-
-They are compatibility surfaces, not the current product name. New UI/status/installer artifact identity is Jubi.
-
----
-
-## 15. What is deliberately NOT in Phase 0
-
-The following are planned later and should not be represented as already implemented:
-
-- NVIDIA provider
-- OpenRouter provider
-- Hugging Face provider
-- provider quota/free-model manager
-- advanced task-classifying model router
-- semantic/vector RAG memory
-- experience-based self-learning router
-- advanced LLM planner / task DAG
-- AI Council
-- LAN device discovery and management
-- SSH / SMB / NAS management
-- expanded browser research agent
-- voice/screen upgrades beyond existing SARA capabilities
-- unrestricted PC or kernel control
-
----
-
-## 16. Next planned development sequence
-
-After Phase 0 passes GitHub and target Windows validation:
-
-```text
-Phase 1  Advanced local brain/router
-Phase 2  Semantic + episodic + project memory
-Phase 3  Experience learning / skill evaluation
-Phase 4  NVIDIA + OpenRouter + Hugging Face provider manager
-Phase 5  Internet research/browser layer
-Phase 6  Expanded typed computer tools
-Phase 7  Authorized LAN / NAS / SSH / local-service layer
-Phase 8  Multi-agent supervisor / planner / reviewer
-Phase 9  Voice, screen awareness, self-healing and AI Council
-```
-
-The project should continue using the rule:
-
-```text
-Build -> test -> fix -> commit -> next feature
-```
-
-rather than attempting all future capabilities in one generation.
+Do not treat unverified target-machine behavior as proven merely because CI is green.
