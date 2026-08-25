@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from sarus.core.research import PublicWebResearch, _DuckParser, _TextExtractor
+from sarus.core.research import PublicWebResearch, _DuckParser, _TextExtractor, _SafeRedirectHandler
 
 
 class FakeProviders:
@@ -34,8 +34,10 @@ class OfflineResearch(PublicWebResearch):
 
     def fetch(self, url, timeout=20):
         if 'example.com' in url:
-            return {'url': url, 'title': 'Official documentation', 'content_type': 'text/html', 'text': 'Verified public documentation states the feature is available.', 'chars': 62}
-        return {'url': url, 'title': 'Secondary source', 'content_type': 'text/html', 'text': 'A second public source confirms the same feature.', 'chars': 49}
+            text = ('Verified public documentation states the feature is available and describes the supported production behavior. ' * 3).strip()
+            return {'url': url, 'title': 'Official documentation', 'content_type': 'text/html', 'text': text, 'chars': len(text)}
+        text = ('A second public source independently confirms the same feature and provides additional implementation context. ' * 3).strip()
+        return {'url': url, 'title': 'Secondary source', 'content_type': 'text/html', 'text': text, 'chars': len(text)}
 
 
 class ResearchTests(unittest.TestCase):
@@ -72,6 +74,20 @@ class ResearchTests(unittest.TestCase):
             PublicWebResearch._normalize_public_url('http://user:pass@example.com/')
         with self.assertRaises(PermissionError):
             PublicWebResearch._normalize_public_url('https://8.8.8.8:8443/')
+
+    def test_redirect_handler_validates_destination_before_follow(self):
+        calls = []
+        def validator(url):
+            calls.append(url)
+            if '127.0.0.1' in url:
+                raise PermissionError('blocked redirect')
+            return url
+        handler = _SafeRedirectHandler(validator)
+        class Req:
+            full_url = 'https://example.com/start'
+        with self.assertRaises(PermissionError):
+            handler.redirect_request(Req(), None, 302, 'Found', {}, 'http://127.0.0.1/admin')
+        self.assertIn('127.0.0.1', calls[0])
 
     def test_research_synthesis_marks_web_as_untrusted_and_persists_metadata(self):
         research = OfflineResearch(self.db, self.providers)
