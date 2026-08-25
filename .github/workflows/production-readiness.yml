@@ -47,6 +47,7 @@ jobs:
           node --check sarus/web/assets/app.js
           node --check sarus/web/assets/knowledge.js
           node --check sarus/web/assets/council.js
+          node --check sarus/web/assets/research.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
@@ -57,6 +58,10 @@ jobs:
         run: python tests/jubi_knowledge_test.py
       - name: AI Council and Supervisor tests
         run: python tests/jubi_council_test.py
+      - name: Public Web Research tests
+        run: |
+          python tests/jubi_research_test.py
+          python tests/jubi_research_ui_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
@@ -114,6 +119,7 @@ jobs:
           node --check sarus/web/assets/app.js
           node --check sarus/web/assets/knowledge.js
           node --check sarus/web/assets/council.js
+          node --check sarus/web/assets/research.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
@@ -124,6 +130,10 @@ jobs:
         run: python tests/jubi_knowledge_test.py
       - name: AI Council and Supervisor tests
         run: python tests/jubi_council_test.py
+      - name: Public Web Research tests
+        run: |
+          python tests/jubi_research_test.py
+          python tests/jubi_research_ui_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
