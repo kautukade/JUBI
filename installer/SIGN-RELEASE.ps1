@@ -7,8 +7,8 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $Root = Split-Path -Parent $PSScriptRoot
-if (-not $InstallerPath) { $InstallerPath = Join-Path $Root 'dist-installer\SARUS-Setup.exe' }
-$LauncherPath = Join-Path $Root 'SARUS.exe'
+if (-not $InstallerPath) { $InstallerPath = Join-Path $Root 'dist-installer\Jubi-Setup.exe' }
+$LauncherPath = Join-Path $Root 'Jubi.exe'
 
 $signTool = Get-Command signtool.exe -ErrorAction SilentlyContinue
 if (-not $signTool) {
@@ -38,5 +38,5 @@ function Sign-And-Verify([string]$Path) {
 if (-not $SkipLauncher) { Sign-And-Verify $LauncherPath }
 Sign-And-Verify $InstallerPath
 
-Write-Host 'Application release signing complete.' -ForegroundColor Green
-Write-Host 'SarusRing0.sys is intentionally not signed by this script. New public Windows kernel drivers must follow Microsoft Hardware Dev Center / Windows driver signing requirements.'
+Write-Host 'Jubi application release signing complete.' -ForegroundColor Green
+Write-Host 'The legacy compatibility driver SarusRing0.sys is intentionally not signed by this script. Public Windows kernel drivers must follow Microsoft Hardware Dev Center / Windows driver signing requirements.'
