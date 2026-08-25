@@ -4,6 +4,7 @@ from dataclasses import dataclass, asdict
 import hashlib
 import json
 import math
+import re
 import time
 import uuid
 from pathlib import Path
@@ -134,7 +135,22 @@ class BrainRouter:
 
     @staticmethod
     def _contains(text: str, words: tuple[str, ...]) -> bool:
-        return any(word in text for word in words)
+        """Match keywords without accidental substring hits such as repo/report.
+
+        Word-like keywords use Unicode-aware token boundaries. Phrases and
+        punctuation-bearing markers keep normal substring matching so terms
+        such as ``api key`` and ``end-to-end`` still work naturally.
+        """
+        for word in words:
+            marker = str(word).strip().lower()
+            if not marker:
+                continue
+            if re.fullmatch(r'[\w]+', marker, flags=re.UNICODE):
+                if re.search(rf'(?<!\w){re.escape(marker)}(?!\w)', text, flags=re.UNICODE):
+                    return True
+            elif marker in text:
+                return True
+        return False
 
     def classify(self, text: str, explicit_task_type: str | None = None) -> dict:
         raw = str(text or '').strip()
