@@ -1,0 +1,19 @@
+{
+  "mode": "local-first",
+  "allow_cloud_through_ollama_by_default": false,
+  "max_fallback_attempts": 3,
+  "latency_target_ms": 30000,
+  "performance_weight": 22.0,
+  "latency_weight": 8.0,
+  "configured_priority_weight": 16.0,
+  "kind_match_weight": 100.0,
+  "task_types": {
+    "general": ["general", "coding"],
+    "coding": ["coding", "general"],
+    "vision": ["vision"],
+    "research": ["general", "coding"],
+    "planning": ["general", "coding"],
+    "document": ["general", "coding"],
+    "system": ["general", "coding"]
+  }
+}

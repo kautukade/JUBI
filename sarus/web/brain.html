@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Jubi Brain & Router</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body data-page="brain">
+<main class="page">
+  <div class="hero"><div><h1>Advanced Local Brain</h1><p>See how Jubi classifies a request, ranks installed local models, learns from measured outcomes and performs bounded fallback.</p></div><button class="btn" id="brain-refresh">Refresh Brain</button></div>
+  <div class="grid">
+    <div class="card metric-card span-3"><div class="metric-label">Routing Mode</div><div id="brain-mode" class="metric-value small-value">—</div><div class="metric-note">Automatic cloud escalation stays disabled in Phase 1</div></div>
+    <div class="card metric-card span-3"><div class="metric-label">Detected Models</div><div id="brain-models" class="metric-value">—</div><div class="metric-note">Models reported by local Ollama</div></div>
+    <div class="card metric-card span-3"><div class="metric-label">Tracked Model/Task Pairs</div><div id="brain-pairs" class="metric-value">—</div><div class="metric-note">Measured routing performance records</div></div>
+    <div class="card metric-card span-3"><div class="metric-label">Recent Decisions</div><div id="brain-decisions" class="metric-value">—</div><div class="metric-note">Recent persisted routing outcomes</div></div>
+
+    <div class="card span-12">
+      <div class="card-head"><div><div class="card-title">Route Inspector</div><div class="card-sub">Analyze a request without running the model</div></div></div>
+      <div class="card-body">
+        <textarea id="brain-route-text" class="textarea" placeholder="Example: Fix this React authentication bug and explain the root cause"></textarea>
+        <div class="actions"><button class="btn primary" id="brain-route">Analyze Route</button></div>
+        <pre id="brain-route-output" class="output">Enter a task to inspect Jubi's routing decision.</pre>
+      </div>
+    </div>
+
+    <div class="card span-12">
+      <div class="card-head"><div><div class="card-title">Measured Model Performance</div><div class="card-sub">Success/failure and latency history used by the adaptive router</div></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Model</th><th>Task Type</th><th>Attempts</th><th>Success Rate</th><th>Avg Success Latency</th><th>Last Status</th></tr></thead><tbody id="brain-performance"></tbody></table></div>
+    </div>
+
+    <div class="card span-12">
+      <div class="card-head"><div><div class="card-title">Routing Decision History</div><div class="card-sub">Jubi stores hashes and routing metadata, not full prompt text, in the Brain history</div></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Status</th><th>Intent</th><th>Complexity</th><th>Selected Model</th><th>Latency</th><th>Time</th></tr></thead><tbody id="brain-history"></tbody></table></div>
+    </div>
+  </div>
+</main>
+<script src="/assets/app.js"></script>
+</body>
+</html>

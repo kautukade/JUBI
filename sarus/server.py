@@ -84,6 +84,12 @@ class H(SimpleHTTPRequestHandler):
                 return self._json({'token': SESSION_TOKEN, 'product': 'Jubi'})
             if p == '/api/status':
                 return self._json(APP.status())
+            if p == '/api/brain':
+                return self._json(APP.brain.status())
+            if p == '/api/brain/decisions':
+                return self._json(APP.brain.recent_decisions(int(q.get('limit', ['50'])[0])))
+            if p == '/api/brain/performance':
+                return self._json(APP.brain.performance())
             if p == '/api/broker':
                 return self._json(APP.privileged.status())
             if p == '/api/doctor':
@@ -170,11 +176,19 @@ class H(SimpleHTTPRequestHandler):
                         data.get('capability_id'),
                     )
                 )
+            if p == '/api/brain/route':
+                return self._json(
+                    APP.brain.route(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        data.get('model'),
+                    )
+                )
             if p == '/api/chat':
                 return self._json(
-                    APP.models.generate(
+                    APP.brain.generate(
                         str(data.get('text', '')),
-                        str(data.get('task_type', 'general')),
+                        str(data.get('task_type', 'auto')),
                         model=data.get('model'),
                     )
                 )
@@ -316,7 +330,7 @@ def run(port=None):
     port = int(port or _env('JUBI_PORT', 'SARUS_PORT', '8877'))
     host = _env('JUBI_HOST', 'SARUS_HOST', '127.0.0.1')
     if host == '0.0.0.0':
-        raise RuntimeError('Jubi Phase 0 is localhost-only; JUBI_HOST=0.0.0.0 is not permitted')
+        raise RuntimeError('Jubi is localhost-only in Phase 1; JUBI_HOST=0.0.0.0 is not permitted')
     print(f'Jubi v{APP.VERSION} dashboard: http://{host}:{port}')
     httpd = ThreadingHTTPServer((host, port), H)
     try:
