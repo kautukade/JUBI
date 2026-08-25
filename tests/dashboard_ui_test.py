@@ -11,6 +11,7 @@ PAGES = {
     'index.html': 'overview',
     'chat.html': 'chat',
     'tasks.html': 'tasks',
+    'brain.html': 'brain',
     'models.html': 'models',
     'agents.html': 'agents',
     'development.html': 'development',
@@ -25,8 +26,9 @@ PAGES = {
 
 REQUIRED_IDS = {
     'overview': {'metric-sources', 'metric-models', 'metric-units', 'metric-approvals', 'metric-files', 'metric-chain', 'sources-list', 'recent-tasks', 'recent-events'},
-    'chat': {'chat-messages', 'chat-input', 'chat-model', 'chat-type', 'chat-send'},
+    'chat': {'chat-messages', 'chat-input', 'chat-model', 'chat-type', 'chat-send', 'chat-route-info'},
     'tasks': {'task-input', 'task-plan', 'task-run', 'task-output', 'tasks-table', 'task-approvals'},
+    'brain': {'brain-mode', 'brain-models', 'brain-pairs', 'brain-decisions', 'brain-route-text', 'brain-route', 'brain-route-output', 'brain-performance', 'brain-history'},
     'models': {'model-count', 'model-online', 'model-table', 'model-select', 'model-test'},
     'agents': {'agent-sources', 'cap-query', 'cap-source', 'cap-list', 'cap-detail', 'cap-run-btn'},
     'development': {'dev-input', 'dev-plan', 'dev-run', 'dev-output', 'dev-history'},
@@ -66,15 +68,16 @@ class UnifiedDashboardTests(unittest.TestCase):
     def test_client_is_real_api_wired_and_not_placeholder_navigation(self):
         js = (WEB / 'assets/app.js').read_text(encoding='utf-8')
         for endpoint in (
-            '/api/status', '/api/models', '/api/chat', '/api/plan', '/api/task',
-            '/api/tasks', '/api/capabilities', '/api/capability/run', '/api/memory',
-            '/api/automations', '/api/automation/toggle', '/api/system/action',
-            '/api/approvals', '/api/approval', '/api/receipts', '/api/broker',
-            '/api/doctor', '/api/events', '/api/fable', '/api/fable/lab',
-            '/api/fable/capability/save', '/api/fable/agenda/add',
+            '/api/status', '/api/models', '/api/chat', '/api/brain', '/api/brain/route',
+            '/api/plan', '/api/task', '/api/tasks', '/api/capabilities', '/api/capability/run',
+            '/api/memory', '/api/automations', '/api/automation/toggle', '/api/system/action',
+            '/api/approvals', '/api/approval', '/api/receipts', '/api/broker', '/api/doctor',
+            '/api/events', '/api/fable', '/api/fable/lab', '/api/fable/capability/save',
+            '/api/fable/agenda/add',
         ):
             self.assertIn(endpoint, js)
         self.assertIn('X-JUBI-Token', js)
+        self.assertIn('Smart auto-select', js)
         self.assertNotIn('example response', js.lower())
         self.assertNotIn('fake response', js.lower())
 
@@ -89,6 +92,8 @@ class UnifiedDashboardTests(unittest.TestCase):
         server = (ROOT / 'sarus/server.py').read_text(encoding='utf-8')
         self.assertIn("directory=str(ROOT / 'sarus/web')", server)
         self.assertIn("'X-JUBI-Token'", server)
+        self.assertIn("'/api/brain'", server)
+        self.assertIn("'/api/brain/route'", server)
 
 
 if __name__ == '__main__':

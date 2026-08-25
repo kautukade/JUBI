@@ -2,6 +2,7 @@ from pathlib import Path
 
 from .events import EventBus
 from .models import OllamaRouter
+from .brain import BrainRouter
 from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry
 from .adapters import AdapterManager
@@ -20,10 +21,11 @@ from .fable import FableIntegration
 class Jubi:
     """Jubi local AI runtime.
 
-    Jubi v0.1.0 evolves the proven SARUS v1.3.1 foundation. Internal ``sarus``
-    module paths are intentionally retained during this stabilization phase so
-    installer, source-adapter and controlled-driver compatibility is not broken
-    by a cosmetic package rename.
+    Jubi Phase 1 adds the Advanced Local Brain on top of the stabilized SARUS
+    foundation: automatic intent classification, local model ranking, measured
+    performance history and bounded local fallback. Internal ``sarus`` module
+    paths remain during this compatibility stage so installer/source/driver
+    behavior is not broken by a cosmetic package migration.
     """
 
     VERSION = '0.1.0'
@@ -31,12 +33,12 @@ class Jubi:
 
     def __init__(self, root: Path):
         self.root = root
-        # Keep the existing database filename for Phase 0 compatibility. The
-        # database schema/state is Jubi-owned from this point forward; a later
-        # explicit migration can rename the physical file after target testing.
+        # Keep the existing database filename for compatibility while Jubi owns
+        # the state schema. A later tested migration can rename the physical file.
         self.db_path = root / 'data/sarus.db'
         self.bus = EventBus(self.db_path)
         self.models = OllamaRouter(root / 'config/models.json')
+        self.brain = BrainRouter(self.db_path, self.models, root / 'config/brain.json', self.bus)
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.adapters = AdapterManager(root, root / 'config/sources.json')
@@ -59,7 +61,11 @@ class Jubi:
         self.scheduler.start()
         self.bus.emit(
             'JUBI_STARTED',
-            {'version': self.VERSION, 'foundation': self.FOUNDATION_VERSION},
+            {
+                'version': self.VERSION,
+                'foundation': self.FOUNDATION_VERSION,
+                'brain': 'advanced-local-router-v1',
+            },
         )
 
     def shutdown(self):
@@ -81,13 +87,21 @@ class Jubi:
 
     def status(self):
         ads = self.adapters.connect()
+        models = self.models.list_models()
         return {
             'name': 'Jubi',
             'version': self.VERSION,
             'foundation': self.FOUNDATION_VERSION,
-            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+jubi-stabilization-v1',
+            'runtime': 'zero-trust-broker-v1+fable-intelligence-v1+advanced-local-brain-v1',
             'adapters': [a.__dict__ for a in ads],
-            'models': self.models.list_models(),
+            'models': models,
+            'brain': {
+                'mode': self.brain.cfg.get('mode', 'local-first'),
+                'automatic_cloud_escalation': bool(
+                    self.brain.cfg.get('allow_cloud_through_ollama_by_default', False)
+                ),
+                'tracked_model_task_pairs': len(self.brain.performance()),
+            },
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
