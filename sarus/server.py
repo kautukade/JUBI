@@ -51,10 +51,7 @@ class H(SimpleHTTPRequestHandler):
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header(
-            'Content-Security-Policy',
-            "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'",
-        )
+        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'")
         self.send_header('Content-Length', str(len(b)))
         self.end_headers()
         self.wfile.write(b)
@@ -94,6 +91,8 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.council.recent(int(q.get('limit', ['50'])[0])))
             if p == '/api/supervisor':
                 return self._json(APP.supervisor.recent(int(q.get('limit', ['30'])[0])))
+            if p == '/api/research':
+                return self._json(APP.research.recent(int(q.get('limit', ['30'])[0])))
             if p == '/api/providers':
                 validate = str(q.get('validate', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
                 return self._json(APP.providers.status(validate=validate))
@@ -160,6 +159,8 @@ class H(SimpleHTTPRequestHandler):
             return self._json(self._safe_error(exc), 400)
         except KeyError as exc:
             return self._json(self._safe_error(exc), 404)
+        except PermissionError as exc:
+            return self._json(self._safe_error(exc), 403)
         except Exception as exc:
             APP.bus.emit('HTTP_ERROR', {'method': 'GET', 'path': p, 'error': str(exc)[:1000]})
             return self._json(self._safe_error(exc), 500)
@@ -187,6 +188,12 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.supervisor.plan(str(data.get('text', '')), str(data.get('task_type', 'auto')), str(data.get('provider', 'auto'))))
             if p == '/api/supervisor/run':
                 return self._json(APP.supervisor.run(str(data.get('text', '')), str(data.get('task_type', 'auto')), str(data.get('provider', 'auto'))))
+            if p == '/api/research/search':
+                return self._json(APP.research.search(str(data.get('query', '')), int(data.get('limit', 8))))
+            if p == '/api/research/fetch':
+                return self._json(APP.research.fetch(str(data.get('url', '')), int(data.get('timeout', 20))))
+            if p == '/api/research/run':
+                return self._json(APP.research.research(str(data.get('query', '')), int(data.get('max_sources', 5)), str(data.get('provider', 'auto'))))
             if p == '/api/provider/route':
                 return self._json(APP.providers.route_preview(str(data.get('text', '')), str(data.get('task_type', 'auto')), str(data.get('provider', 'auto'))))
             if p == '/api/providers/mode':
