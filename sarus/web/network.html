@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Network · Jubi</title><link rel="stylesheet" href="/assets/styles.css"></head>
+<body data-page="network"><main class="page">
+<div class="hero"><div><h1>Authorized LAN Manager</h1><p>Inspect the host neighbor cache, register devices you control, and check only the TCP services you explicitly configure.</p></div><button id="network-refresh" class="btn">Refresh</button></div>
+<div class="grid">
+<div class="card metric-card span-3"><div class="metric-label">Registered devices</div><div id="network-device-count" class="metric-value">—</div><div class="metric-note">Explicit user registry</div></div>
+<div class="card metric-card span-3"><div class="metric-label">Discovery</div><div id="network-discovery-mode" class="metric-value" style="font-size:17px">PASSIVE</div><div class="metric-note">Neighbor cache only</div></div>
+<div class="card metric-card span-3"><div class="metric-label">Active subnet scan</div><div class="metric-value danger-text" style="font-size:17px">DISABLED</div><div class="metric-note">No port-range scanning</div></div>
+<div class="card metric-card span-3"><div class="metric-label">Remote exploitation</div><div class="metric-value good" style="font-size:17px">DISABLED</div><div class="metric-note">No brute force or lateral movement</div></div>
+</div>
+<div class="grid" style="margin-top:16px">
+<div class="card span-5"><div class="card-head"><div><div class="card-title">Register an authorized device</div><div class="card-sub">Only add devices and services you are permitted to manage</div></div></div><div class="card-body stack">
+<div class="field"><label>Label</label><input id="network-label" class="input" placeholder="Office NAS"></div>
+<div class="field"><label>Host or IP</label><input id="network-host" class="input" placeholder="192.168.1.20 or nas.local"></div>
+<div class="field"><label>Services</label><input id="network-services" class="input" placeholder="ssh:22,http:80,https:443"></div>
+<div class="field"><label>Notes</label><textarea id="network-notes" class="textarea" placeholder="Ownership / purpose / location"></textarea></div>
+<button id="network-register" class="btn primary">Register device</button><pre id="network-register-output" class="codebox">No device registered yet.</pre>
+</div></div>
+<div class="card span-7"><div class="card-head"><div><div class="card-title">Passive neighbor discovery</div><div class="card-sub">Reads Windows ARP / OS neighbor cache; it does not probe the subnet</div></div><button id="network-discover" class="btn">Read neighbor cache</button></div><div class="card-body"><div id="network-neighbors" class="row-list"></div></div></div>
+</div>
+<div class="grid" style="margin-top:16px">
+<div class="card span-12"><div class="card-head"><div><div class="card-title">Authorized device registry</div><div class="card-sub">Health checks resolve the host and connect only to registered service ports</div></div></div><div class="table-wrap"><table><thead><tr><th>Device</th><th>Host</th><th>Services</th><th>Updated</th><th>Actions</th></tr></thead><tbody id="network-devices"></tbody></table></div></div>
+<div class="card span-12"><div class="card-head"><div><div class="card-title">Recent network observations</div><div class="card-sub">Local audit trail of passive observations and registered health checks</div></div></div><div id="network-observations" class="card-body row-list"></div></div>
+</div>
+<div class="notice" style="margin-top:16px"><b>Trust rule:</b> devices seen passively are untrusted metadata until you explicitly register them. Jubi does not attempt authentication, exploit services, scan all ports, or move laterally across your network.</div>
+</main><script src="/assets/app.js"></script><script src="/assets/network.js"></script></body></html>
