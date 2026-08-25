@@ -86,14 +86,27 @@ class _DuckParser(HTMLParser):
             self._capture = False
 
 
+class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Validate every redirect destination before urllib follows it."""
+
+    def __init__(self, validator):
+        super().__init__()
+        self.validator = validator
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        candidate = urllib.parse.urljoin(req.full_url, newurl)
+        safe = self.validator(candidate)
+        return super().redirect_request(req, fp, code, msg, headers, safe)
+
+
 class PublicWebResearch:
     """Public-web search/read/research with SSRF and prompt-injection boundaries.
 
     Search uses DuckDuckGo's documented non-JavaScript search surface. Arbitrary
     page reads are restricted to public HTTP(S) destinations: loopback, private,
     link-local, multicast, reserved and unspecified IPs are rejected before the
-    request. Returned page text is treated as untrusted evidence and never as
-    executable instructions.
+    request and before every redirect. Returned page text is treated as
+    untrusted evidence and never as executable instructions.
     """
 
     SEARCH_URL = 'https://html.duckduckgo.com/html/'
@@ -179,7 +192,10 @@ class PublicWebResearch:
                 'Accept': 'text/html,text/plain,application/xhtml+xml;q=0.9,*/*;q=0.2',
             },
         )
-        with urllib.request.urlopen(req, timeout=max(3, min(int(timeout), 60))) as r:
+        opener = urllib.request.build_opener(
+            _SafeRedirectHandler(self._normalize_public_url if validate_public else (lambda x: x))
+        )
+        with opener.open(req, timeout=max(3, min(int(timeout), 60))) as r:
             final_url = r.geturl()
             if validate_public:
                 final_url = self._normalize_public_url(final_url)
