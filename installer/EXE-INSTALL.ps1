@@ -76,6 +76,18 @@ try {
     }
     Log "Jubi.exe launcher prepared and verified: $jubiHash"
 
+    # INSTALL-SARUS.ps1 retains a compatibility shortcut path while it rebuilds
+    # the verified legacy launcher. Recreate the final branded shortcut here,
+    # after Jubi.exe exists, so the official installer always points to Jubi.exe.
+    $shell = New-Object -ComObject WScript.Shell
+    $desktop = [Environment]::GetFolderPath('Desktop')
+    $lnk = $shell.CreateShortcut((Join-Path $desktop 'Jubi.lnk'))
+    $lnk.TargetPath = $JubiLauncher
+    $lnk.WorkingDirectory = $Root
+    $lnk.Description = 'Jubi Local AI Agent Platform'
+    $lnk.Save()
+    Log 'Final Jubi desktop shortcut now targets Jubi.exe.'
+
     # A trusted prebuilt controlled Ring0 driver is activated only when Windows
     # validates its signature. Security enforcement is never disabled.
     if ((Test-Path -LiteralPath $Ring0Driver) -and (Test-Path -LiteralPath $Ring0Installer)) {
