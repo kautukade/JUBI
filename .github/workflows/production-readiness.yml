@@ -42,6 +42,8 @@ jobs:
           python-version: '3.11'
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
+      - name: Validate dashboard JavaScript syntax
+        run: node --check sarus/web/assets/app.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests
@@ -98,6 +100,8 @@ jobs:
           }
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
+      - name: Validate dashboard JavaScript syntax
+        run: node --check sarus/web/assets/app.js
       - name: Unified dashboard regression tests
         run: python tests/dashboard_ui_test.py
       - name: Advanced Local Brain tests

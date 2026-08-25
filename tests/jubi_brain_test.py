@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from sarus.core.brain import BrainRouter
 
@@ -89,7 +94,6 @@ class BrainRouterTests(unittest.TestCase):
         self.assertEqual(decisions[0]['selected_model'], 'qwen2.5:7b')
 
     def test_performance_history_influences_ranking(self):
-        # glm4 starts behind qwen2.5 because of configured preference.
         initial = self.brain.route('Explain this business idea')
         self.assertEqual(initial['selected_model'], 'qwen2.5:7b')
         for _ in range(8):
