@@ -42,6 +42,8 @@ jobs:
           python-version: '3.11'
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
+      - name: Unified dashboard regression tests
+        run: python tests/dashboard_ui_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
@@ -94,6 +96,8 @@ jobs:
           }
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
+      - name: Unified dashboard regression tests
+        run: python tests/dashboard_ui_test.py
       - name: Jubi Phase 0 regression tests
         run: python tests/jubi_phase0_test.py
       - name: Production readiness tests
