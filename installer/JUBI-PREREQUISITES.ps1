@@ -8,7 +8,9 @@ $ProgressPreference = 'SilentlyContinue'
 $Root = Split-Path -Parent $PSScriptRoot
 $ConfigPath = Join-Path $Root 'config\bootstrap.json'
 $ProductionPath = Join-Path $Root 'config\production.json'
-$LogDir = Join-Path $env:LOCALAPPDATA 'Jubi\logs'
+$JubiDataDir = Join-Path $env:LOCALAPPDATA 'Jubi'
+$LogDir = Join-Path $JubiDataDir 'logs'
+$RuntimeConfig = Join-Path $JubiDataDir 'runtime.json'
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $Log = Join-Path $LogDir 'prerequisites.log'
 
@@ -115,12 +117,96 @@ function Find-Ollama {
     return $null
 }
 
-function Test-OllamaApi {
+function Normalize-LocalOllamaUrl([string]$Value) {
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $null }
+    $raw = $Value.Trim()
+    if ($raw -notmatch '^https?://') { $raw = "http://$raw" }
+    try { $uri = [Uri]$raw } catch { return $null }
+    if ($uri.Scheme -ne 'http') { return $null }
+    $host = $uri.Host.ToLowerInvariant()
+    if ($host -in @('localhost','0.0.0.0','::','[::]')) { $host = '127.0.0.1' }
+    if ($host -eq '::1') { $host = '127.0.0.1' }
+    if ($host -ne '127.0.0.1') { return $null }
+    $port = if ($uri.IsDefaultPort) { 11434 } else { $uri.Port }
+    if ($port -lt 1 -or $port -gt 65535) { return $null }
+    return "http://127.0.0.1:$port"
+}
+
+function Get-OllamaCandidates($Bootstrap) {
+    $values = @(
+        $env:JUBI_OLLAMA_URL,
+        $env:OLLAMA_HOST,
+        [Environment]::GetEnvironmentVariable('JUBI_OLLAMA_URL', 'User'),
+        [Environment]::GetEnvironmentVariable('OLLAMA_HOST', 'User'),
+        [string]$Bootstrap.prerequisites.ollama.api,
+        'http://127.0.0.1:11434'
+    )
+    $result = @()
+    foreach ($value in $values) {
+        $normalized = Normalize-LocalOllamaUrl ([string]$value)
+        if ($normalized -and ($result -notcontains $normalized)) { $result += $normalized }
+    }
+    return ,$result
+}
+
+function Test-OllamaApi([string]$BaseUrl) {
     try {
-        $r = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:11434/api/tags' -TimeoutSec 3
-        return ($r.StatusCode -eq 200)
+        $request = [System.Net.HttpWebRequest]::Create("$BaseUrl/api/tags")
+        $request.Method = 'GET'
+        $request.Proxy = $null
+        $request.Timeout = 2500
+        $request.ReadWriteTimeout = 2500
+        $response = $request.GetResponse()
+        try { return ([int]$response.StatusCode -eq 200) }
+        finally { $response.Close() }
     }
     catch { return $false }
+}
+
+function Save-JubiRuntime([string]$BaseUrl) {
+    New-Item -ItemType Directory -Force -Path $JubiDataDir | Out-Null
+    $data = [ordered]@{
+        ollama_base_url = $BaseUrl
+        updated_at = (Get-Date).ToUniversalTime().ToString('o')
+    }
+    $data | ConvertTo-Json | Set-Content -LiteralPath $RuntimeConfig -Encoding utf8
+    [Environment]::SetEnvironmentVariable('JUBI_OLLAMA_URL', $BaseUrl, 'User')
+    $env:JUBI_OLLAMA_URL = $BaseUrl
+    Log "Jubi local Ollama endpoint saved: $BaseUrl"
+}
+
+function Start-OllamaLocal([string]$Ollama, [string]$BaseUrl) {
+    $bind = $BaseUrl.Substring('http://'.Length)
+    $stdout = Join-Path $LogDir 'ollama-serve.stdout.log'
+    $stderr = Join-Path $LogDir 'ollama-serve.stderr.log'
+    Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
+
+    $previousHost = $env:OLLAMA_HOST
+    try {
+        $env:OLLAMA_HOST = $bind
+        Log "Starting Ollama local API at $BaseUrl"
+        $process = Start-Process -FilePath $Ollama -ArgumentList @('serve') -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+    }
+    finally {
+        if ($null -eq $previousHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
+        else { $env:OLLAMA_HOST = $previousHost }
+    }
+
+    foreach ($i in 1..45) {
+        Start-Sleep -Seconds 1
+        if (Test-OllamaApi $BaseUrl) { return $process }
+        try { if ($process.HasExited) { break } } catch {}
+    }
+
+    $details = ''
+    if (Test-Path -LiteralPath $stderr) {
+        $tail = Get-Content -LiteralPath $stderr -Tail 12 -ErrorAction SilentlyContinue
+        if ($tail) { $details = (($tail | ForEach-Object { $_.Trim() }) -join ' | ') }
+    }
+    $exitText = 'still running'
+    try { if ($process.HasExited) { $exitText = "exit code $($process.ExitCode)" } } catch {}
+    if ($details) { throw "Ollama API did not become healthy at $BaseUrl ($exitText). $details" }
+    throw "Ollama API did not become healthy at $BaseUrl ($exitText). See $stderr"
 }
 
 function Ensure-Ollama($Bootstrap) {
@@ -146,16 +232,20 @@ function Ensure-Ollama($Bootstrap) {
     if (-not $ollama) { throw 'Ollama is not installed and automatic provisioning was unavailable.' }
     Log "Ollama found: $ollama"
 
-    if (-not (Test-OllamaApi)) {
-        Log 'Starting Ollama background API.'
-        Start-Process -FilePath $ollama -ArgumentList @('serve') -WindowStyle Hidden | Out-Null
-        foreach ($i in 1..30) {
-            Start-Sleep -Seconds 1
-            if (Test-OllamaApi) { break }
+    $candidates = @(Get-OllamaCandidates $Bootstrap)
+    foreach ($candidate in $candidates) {
+        if (Test-OllamaApi $candidate) {
+            Log "Existing healthy Ollama API detected at $candidate"
+            Save-JubiRuntime $candidate
+            return [pscustomobject]@{ Exe = $ollama; BaseUrl = $candidate }
         }
     }
-    if (-not (Test-OllamaApi)) { throw 'Ollama API did not become healthy on 127.0.0.1:11434.' }
-    return $ollama
+
+    $startUrl = if ($candidates.Count -gt 0) { $candidates[0] } else { 'http://127.0.0.1:11434' }
+    [void](Start-OllamaLocal $ollama $startUrl)
+    if (-not (Test-OllamaApi $startUrl)) { throw "Ollama API recovery failed at $startUrl." }
+    Save-JubiRuntime $startUrl
+    return [pscustomobject]@{ Exe = $ollama; BaseUrl = $startUrl }
 }
 
 function Ensure-OptionalTool([string]$Command, [string]$WingetId, [string]$DisplayName) {
@@ -172,21 +262,29 @@ function Ensure-OptionalTool([string]$Command, [string]$WingetId, [string]$Displ
     }
 }
 
-function Ensure-Models([string]$Ollama, $Production) {
+function Ensure-Models([string]$Ollama, [string]$BaseUrl, $Production) {
     if ($Fast) { return }
     $required = @($Production.required_models)
     if ($required.Count -eq 0) { return }
-    $list = (& $Ollama list 2>$null | Out-String)
-    foreach ($model in $required) {
-        $name = [string]$model
-        $base = ($name -split ':')[0]
-        if ($list -match [regex]::Escape($name) -or $list -match [regex]::Escape($base)) {
-            Log "Required Ollama model already present: $name"
-            continue
+    $previousHost = $env:OLLAMA_HOST
+    try {
+        $env:OLLAMA_HOST = $BaseUrl.Substring('http://'.Length)
+        $list = (& $Ollama list 2>$null | Out-String)
+        foreach ($model in $required) {
+            $name = [string]$model
+            $base = ($name -split ':')[0]
+            if ($list -match [regex]::Escape($name) -or $list -match [regex]::Escape($base)) {
+                Log "Required Ollama model already present: $name"
+                continue
+            }
+            Log "Pulling required Ollama model automatically: $name"
+            & $Ollama pull $name
+            if ($LASTEXITCODE -ne 0) { throw "Ollama could not pull required model $name (exit $LASTEXITCODE)." }
         }
-        Log "Pulling required Ollama model automatically: $name"
-        & $Ollama pull $name
-        if ($LASTEXITCODE -ne 0) { throw "Ollama could not pull required model $name (exit $LASTEXITCODE)." }
+    }
+    finally {
+        if ($null -eq $previousHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
+        else { $env:OLLAMA_HOST = $previousHost }
     }
 }
 
@@ -204,12 +302,12 @@ try {
 
     Log "Jubi prerequisite check started. Fast=$Fast"
     $python = Ensure-Python311 $bootstrap
-    $ollama = Ensure-Ollama $bootstrap
+    $ollamaState = Ensure-Ollama $bootstrap
     Ensure-OptionalTool 'git.exe' ([string]$bootstrap.prerequisites.git.winget_id) 'Git'
     Ensure-OptionalTool 'node.exe' ([string]$bootstrap.prerequisites.node.winget_id) 'Node.js LTS'
-    Ensure-Models $ollama $production
+    Ensure-Models ([string]$ollamaState.Exe) ([string]$ollamaState.BaseUrl) $production
 
-    Log "Prerequisite check passed. Python=$python Ollama=$ollama"
+    Log "Prerequisite check passed. Python=$python Ollama=$($ollamaState.Exe) OllamaApi=$($ollamaState.BaseUrl)"
     exit 0
 }
 catch {
