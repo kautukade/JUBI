@@ -1,18 +1,17 @@
 #define MyAppName "Jubi"
 #define MyAppVersion "0.1.0"
 #define MyAppPublisher "ITCYBER TECHNOLOGIES PVT LTD"
-#define MyAppURL "https://github.com/kautukade/SARUS"
+#define MyAppURL "https://github.com/kautukade/JUBI"
 #define MyAppExeName "Jubi.exe"
 
 [Setup]
-; New AppId keeps the Jubi Phase 0 install separate from an existing SARUS install.
 AppId={{8AF94329-2DB2-46E3-B227-98D5619E01E4}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
-AppUpdatesURL={#MyAppURL}
+AppSupportURL={#MyAppURL}/issues
+AppUpdatesURL={#MyAppURL}/releases/tag/continuous
 DefaultDirName={autopf}\Jubi
 DefaultGroupName=Jubi
 DisableProgramGroupPage=yes
@@ -26,7 +25,8 @@ SolidCompression=yes
 WizardStyle=modern
 SetupLogging=yes
 RestartIfNeededByRun=no
-CloseApplications=no
+CloseApplications=yes
+RestartApplications=no
 DirExistsWarning=no
 UsePreviousAppDir=yes
 UninstallDisplayName=Jubi Local AI Agent Platform
@@ -53,10 +53,24 @@ Name: "{autodesktop}\Jubi"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: checkedonce
 
 [UninstallRun]
-; Legacy script filename is retained for Phase 0 compatibility.
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\installer\UNINSTALL-SARUS.ps1"""; WorkingDir: "{app}"; Flags: runhidden waituntilterminated
 
 [Code]
+function IsUpdateMode: Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+  begin
+    if CompareText(ParamStr(I), '/UPDATE') = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
@@ -68,7 +82,10 @@ begin
   begin
     BootstrapScript := ExpandConstant('{app}\installer\EXE-INSTALL.ps1');
     LogPath := ExpandConstant('{app}\logs\exe-install.log');
-    WizardForm.StatusLabel.Caption := 'Installing Jubi runtime, local models, integrations and production checks...';
+    if IsUpdateMode then
+      WizardForm.StatusLabel.Caption := 'Updating Jubi, repairing requirements and restarting background services...'
+    else
+      WizardForm.StatusLabel.Caption := 'Installing Jubi, requirements, AI models and background services...';
 
     if not FileExists(BootstrapScript) then
     begin
@@ -77,6 +94,9 @@ begin
     end;
 
     BootstrapArgs := '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + BootstrapScript + '"';
+    if IsUpdateMode then
+      BootstrapArgs := BootstrapArgs + ' -UpdateMode';
+
     if not Exec(
       ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
       BootstrapArgs,
