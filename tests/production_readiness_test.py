@@ -47,10 +47,12 @@ class ProductionReadinessTest(unittest.TestCase):
     def test_installer_has_production_certification_model_provisioning_and_jubi_launcher(self):
         exe = (ROOT / 'installer/EXE-INSTALL.ps1').read_text(encoding='utf-8')
         acceptance = (ROOT / 'sarus/acceptance.py').read_text(encoding='utf-8')
-        self.assertIn('CERTIFY-SARUS.ps1', exe)  # legacy Phase-0 filename
+        self.assertIn('CERTIFY-SARUS.ps1', exe)
         self.assertIn('config\\production.json', exe)
         self.assertIn('Jubi.exe', exe)
         self.assertIn('JUBI_INSTALL_MODE', exe)
+        self.assertIn('JUBI-PREREQUISITES.ps1', exe)
+        self.assertIn('REGISTER-JUBI-BACKGROUND.ps1', exe)
         self.assertIn("'/api/pull'", acceptance)
         self.assertIn("SARUS_INSTALL_MODE", acceptance)
         self.assertIn("'stream': False", acceptance)
@@ -126,24 +128,30 @@ class ProductionReadinessTest(unittest.TestCase):
         ]
         self.assertEqual([p for p in obsolete if (ROOT / p).exists()], [])
 
-    def test_active_workflows_have_no_transfer_endpoint_or_write_permission(self):
+    def test_active_workflows_keep_repository_write_permission_narrow(self):
         workflows = ROOT / '.github/workflows'
         for path in workflows.glob('*.yml'):
             text = path.read_text(encoding='utf-8')
             self.assertNotIn('trycloudflare.com', text, path.name)
-            # The canonical-installer cleanup job needs Actions write permission,
-            # but repository contents must stay read-only.
-            self.assertNotRegex(text, re.compile(r'permissions:\s*\n\s*contents:\s*write'), path.name)
+            if path.name == 'build-windows-installer.yml':
+                self.assertIn('permissions:\n  contents: read', text)
+                self.assertEqual(text.count('contents: write'), 1)
+                self.assertIn('publish-continuous-release:', text)
+            else:
+                self.assertNotIn('contents: write', text, path.name)
 
-    def test_installer_workflow_keeps_one_canonical_jubi_artifact(self):
+    def test_installer_workflow_keeps_one_canonical_jubi_artifact_and_release(self):
         text = (ROOT / '.github/workflows/build-windows-installer.yml').read_text(encoding='utf-8')
         self.assertIn("if: github.event_name == 'push' && github.ref == 'refs/heads/main'", text)
         self.assertIn('cleanup-old-installers:', text)
         self.assertIn('actions: write', text)
         self.assertIn("artifact.get('name') != 'Jubi-Windows-Installer'", text)
-        self.assertIn('Expected exactly one installer artifact for current run', text)
+        self.assertIn('Expected exactly one current installer artifact', text)
         self.assertIn("method='DELETE'", text)
         self.assertIn('dist-installer/Jubi-Setup.exe', text)
+        self.assertIn('publish-continuous-release:', text)
+        self.assertIn('Jubi-Update-Manifest.json', text)
+        self.assertIn('gh release upload continuous', text)
 
     def test_no_security_disable_in_release_scripts(self):
         combined = '\n'.join(
