@@ -60,6 +60,8 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
         self.assertIn("runtime.json", text)
         self.assertIn("$request.Proxy = $null", text)
         self.assertIn("ollama-serve.stderr.log", text)
+        self.assertIn("$hostName = $uri.Host.ToLowerInvariant()", text)
+        self.assertNotRegex(text, r"(?im)^\s*\$host\s*=")
 
     def test_ollama_router_respects_local_custom_port(self):
         with TemporaryDirectory() as td:
