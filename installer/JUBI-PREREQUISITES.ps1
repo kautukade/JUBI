@@ -123,10 +123,10 @@ function Normalize-LocalOllamaUrl([string]$Value) {
     if ($raw -notmatch '^https?://') { $raw = "http://$raw" }
     try { $uri = [Uri]$raw } catch { return $null }
     if ($uri.Scheme -ne 'http') { return $null }
-    $host = $uri.Host.ToLowerInvariant()
-    if ($host -in @('localhost','0.0.0.0','::','[::]')) { $host = '127.0.0.1' }
-    if ($host -eq '::1') { $host = '127.0.0.1' }
-    if ($host -ne '127.0.0.1') { return $null }
+    $hostName = $uri.Host.ToLowerInvariant()
+    if ($hostName -in @('localhost','0.0.0.0','::','[::]')) { $hostName = '127.0.0.1' }
+    if ($hostName -eq '::1') { $hostName = '127.0.0.1' }
+    if ($hostName -ne '127.0.0.1') { return $null }
     $port = if ($uri.IsDefaultPort) { 11434 } else { $uri.Port }
     if ($port -lt 1 -or $port -gt 65535) { return $null }
     return "http://127.0.0.1:$port"
