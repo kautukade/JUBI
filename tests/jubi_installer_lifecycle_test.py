@@ -93,7 +93,7 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
     def test_real_target_ollama_candidate_list_is_not_nested(self):
         text = (ROOT / "installer" / "JUBI-PREREQUISITES.ps1").read_text(encoding="utf-8")
         self.assertIn("return $result", text)
-        self.assertNotIn("return ,$result", text)
+        self.assertIsNone(re.search(r"(?im)^\s*return\s+,\$result\s*$", text))
         self.assertIn("foreach ($candidateUrl in @($Candidates))", text)
         self.assertIn("11505", text)
 
