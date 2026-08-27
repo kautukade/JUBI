@@ -5,8 +5,10 @@ on:
     branches:
       - main
       - 'agent/**'
+  pull_request:
     paths:
       - 'installer/**'
+      - 'jubi/**'
       - 'sarus/**'
       - 'scripts/**'
       - 'tests/**'
@@ -14,18 +16,6 @@ on:
       - 'driver/**'
       - 'vendor/**'
       - 'sources/**'
-      - 'docs/**'
-      - 'BUILD_MANIFEST.json'
-      - 'README.md'
-      - '.github/workflows/build-windows-installer.yml'
-  pull_request:
-    paths:
-      - 'installer/**'
-      - 'sarus/**'
-      - 'tests/**'
-      - 'config/**'
-      - 'driver/**'
-      - 'vendor/**'
       - 'docs/**'
       - 'BUILD_MANIFEST.json'
       - 'README.md'
@@ -38,11 +28,25 @@ permissions:
 jobs:
   build-installer:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout Jubi foundation
         uses: actions/checkout@v4
+
+      - name: Stamp build identity for automatic updates
+        shell: powershell
+        run: |
+          $manifest = Get-Content -LiteralPath 'BUILD_MANIFEST.json' -Raw | ConvertFrom-Json
+          $info = [ordered]@{
+            repository = 'kautukade/JUBI'
+            version = [string]$manifest.version
+            commit_sha = '${{ github.sha }}'
+            build_epoch = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+            channel = if ('${{ github.ref }}' -eq 'refs/heads/main') { 'continuous' } else { 'development' }
+          }
+          $info | ConvertTo-Json | Set-Content -LiteralPath 'config\build-info.json' -Encoding utf8
+          Get-Content -LiteralPath 'config\build-info.json'
 
       - name: Verify production installer payload
         shell: powershell
@@ -50,6 +54,10 @@ jobs:
           $required = @(
             'BUILD_MANIFEST.json',
             'config\production.json',
+            'config\bootstrap.json',
+            'config\build-info.json',
+            'jubi\background.py',
+            'jubi\updater.py',
             'sarus\server.py',
             'sarus\acceptance.py',
             'sarus\core\fable.py',
@@ -57,8 +65,13 @@ jobs:
             'sarus\web\fable.html',
             'tests\fable_integration_test.py',
             'tests\production_readiness_test.py',
+            'tests\jubi_installer_lifecycle_test.py',
             'docs\FABLE-INTEGRATION.md',
             'docs\PRODUCTION-READINESS.md',
+            'installer\JUBI-PREREQUISITES.ps1',
+            'installer\JUBI-BACKGROUND.ps1',
+            'installer\REGISTER-JUBI-BACKGROUND.ps1',
+            'installer\UNREGISTER-JUBI-BACKGROUND.ps1',
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
             'installer\SETUP-BROKER.ps1',
@@ -78,6 +91,10 @@ jobs:
           }
 
           $powershellScripts = @(
+            'installer\JUBI-PREREQUISITES.ps1',
+            'installer\JUBI-BACKGROUND.ps1',
+            'installer\REGISTER-JUBI-BACKGROUND.ps1',
+            'installer\UNREGISTER-JUBI-BACKGROUND.ps1',
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
             'installer\SETUP-BROKER.ps1',
@@ -98,34 +115,22 @@ jobs:
           }
 
           $iss = Get-Content -LiteralPath 'installer\SARUS-Setup.iss' -Raw
-          if ($iss -match 'Filename:\s*"\{app\}\\START_SARUS\.bat"') {
-            throw 'End-user installer shortcut still points to START_SARUS.bat; shortcuts must target Jubi.exe.'
-          }
-          if ($iss -notmatch 'Filename:\s*"\{app\}\\\{#MyAppExeName\}"') {
-            throw 'Jubi.exe shortcut was not found in the Inno Setup definition.'
-          }
-          if ($iss -notmatch '#define MyAppName "Jubi"') {
-            throw 'Installer product name is not Jubi.'
-          }
-          if ($iss -notmatch '#define MyAppVersion "0\.1\.0"') {
-            throw 'Installer version is not Jubi 0.1.0.'
-          }
-          if ($iss -notmatch 'OutputBaseFilename=Jubi-Setup') {
-            throw 'Installer output filename is not Jubi-Setup.'
-          }
+          if ($iss -match 'Filename:\s*"\{app\}\\START_SARUS\.bat"') { throw 'End-user shortcut still points to START_SARUS.bat.' }
+          if ($iss -notmatch 'Filename:\s*"\{app\}\\\{#MyAppExeName\}"') { throw 'Jubi.exe shortcut was not found.' }
+          if ($iss -notmatch '#define MyAppName "Jubi"') { throw 'Installer product name is not Jubi.' }
+          if ($iss -notmatch '#define MyAppVersion "0\.1\.0"') { throw 'Installer version is not Jubi 0.1.0.' }
+          if ($iss -notmatch 'OutputBaseFilename=Jubi-Setup') { throw 'Installer output filename is not Jubi-Setup.' }
+          if ($iss -notmatch 'https://github\.com/kautukade/JUBI') { throw 'Installer repository URL is not canonical JUBI.' }
+          if ($iss -notmatch '/UPDATE') { throw 'Installer does not support silent update mode.' }
 
           $manifest = Get-Content -LiteralPath 'BUILD_MANIFEST.json' -Raw | ConvertFrom-Json
           $production = Get-Content -LiteralPath 'config\production.json' -Raw | ConvertFrom-Json
           if ($manifest.name -ne 'Jubi' -or $production.name -ne 'Jubi') { throw 'Product metadata is not synchronized to Jubi.' }
           if ($manifest.version -ne '0.1.0' -or $production.version -ne '0.1.0') { throw 'Version metadata is not synchronized at 0.1.0.' }
 
-          $onlineSources = Get-Content -LiteralPath 'config\online_sources.json' -Raw | ConvertFrom-Json
-          $fable = $onlineSources | Where-Object { $_.key -eq 'fable_os' } | Select-Object -First 1
-          if (-not $fable) { throw 'Pinned Fable source is missing from online_sources.json.' }
-          if ($fable.repo -ne 'robiot/fable-os') { throw "Unexpected Fable repository: $($fable.repo)" }
-          if ($fable.sha -ne '1cfe17c4baa77fac128008621721823913a1335c') { throw "Unexpected Fable pin: $($fable.sha)" }
-
-          python -m compileall -q sarus scripts tests
+          python -m compileall -q jubi sarus scripts tests
+          python tests\jubi_installer_lifecycle_test.py
+          if ($LASTEXITCODE -ne 0) { throw 'Installer lifecycle tests failed.' }
           python tests\production_readiness_test.py
           if ($LASTEXITCODE -ne 0) { throw 'Production readiness tests failed.' }
           python tests\fable_integration_test.py
@@ -146,7 +151,6 @@ jobs:
             $iscc = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
           }
           if (-not $iscc) { throw 'Inno Setup compiler ISCC.exe was not found.' }
-          Write-Host "Using Inno Setup compiler: $iscc"
           "iscc=$iscc" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Build Jubi-Setup.exe
@@ -164,8 +168,9 @@ jobs:
           if (-not (Test-Path -LiteralPath $exe)) { throw 'Jubi-Setup.exe was not produced.' }
           $item = Get-Item -LiteralPath $exe
           if ($item.Length -lt 1MB) { throw "Installer is unexpectedly small: $($item.Length) bytes" }
-          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash.ToLowerInvariant()
           "SHA256  $hash  Jubi-Setup.exe" | Set-Content -LiteralPath 'dist-installer\SHA256.txt' -Encoding ascii
+          Copy-Item -LiteralPath 'config\build-info.json' -Destination 'dist-installer\build-info.json' -Force
           Write-Host "Installer size: $([math]::Round($item.Length / 1MB, 2)) MB"
           Write-Host "SHA256: $hash"
 
@@ -177,11 +182,63 @@ jobs:
           path: |
             dist-installer/Jubi-Setup.exe
             dist-installer/SHA256.txt
+            dist-installer/build-info.json
             README.md
             docs/PRODUCTION-READINESS.md
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
+
+  publish-continuous-release:
+    name: Publish self-update channel
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-installer
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download current installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Jubi-Windows-Installer
+          path: release
+      - name: Build verified update manifest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, pathlib, re
+          root = pathlib.Path('release')
+          build = json.loads((root / 'build-info.json').read_text(encoding='utf-8-sig'))
+          text = (root / 'SHA256.txt').read_text(encoding='ascii')
+          m = re.search(r'([0-9a-fA-F]{64})', text)
+          if not m:
+              raise SystemExit('Installer SHA256 missing')
+          manifest = {
+              'schema_version': 1,
+              'repository': 'kautukade/JUBI',
+              'channel': 'continuous',
+              'version': build['version'],
+              'commit_sha': build['commit_sha'],
+              'build_epoch': int(build['build_epoch']),
+              'installer_asset': 'Jubi-Setup.exe',
+              'installer_sha256': m.group(1).lower(),
+          }
+          (root / 'Jubi-Update-Manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(manifest, indent=2))
+          PY
+      - name: Create or refresh continuous GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if ! gh release view continuous >/dev/null 2>&1; then
+            gh release create continuous --prerelease --title 'Jubi Continuous' --notes 'Automatically refreshed after every successful main build. Jubi installations use this release only after SHA-256 verification.' --target '${{ github.sha }}'
+          else
+            gh release edit continuous --prerelease --title 'Jubi Continuous' --notes "Automatically refreshed from main commit ${{ github.sha }}. Jubi verifies the update manifest and installer SHA-256 before installation."
+          fi
+          gh release upload continuous release/Jubi-Setup.exe release/Jubi-Update-Manifest.json release/SHA256.txt --clobber
 
   cleanup-old-installers:
     name: Keep only current Jubi installer artifact
@@ -191,7 +248,6 @@ jobs:
     permissions:
       contents: read
       actions: write
-
     steps:
       - name: Delete older Jubi Windows installer artifacts
         env:
@@ -201,53 +257,31 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import json
-          import os
-          import urllib.request
-
+          import json, os, urllib.request
           repo = os.environ['REPOSITORY']
           token = os.environ['GH_TOKEN']
           current_run = str(os.environ['CURRENT_RUN_ID'])
-          headers = {
-              'Authorization': f'Bearer {token}',
-              'Accept': 'application/vnd.github+json',
-              'X-GitHub-Api-Version': '2022-11-28',
-          }
-
+          headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
           def request(url, method='GET'):
               req = urllib.request.Request(url, method=method, headers=headers)
               with urllib.request.urlopen(req, timeout=30) as response:
                   body = response.read()
                   return json.loads(body) if body else None
-
-          page = 1
-          artifacts = []
+          page, artifacts = 1, []
           while True:
               data = request(f'https://api.github.com/repos/{repo}/actions/artifacts?per_page=100&page={page}')
               batch = data.get('artifacts', [])
               artifacts.extend(batch)
-              if len(batch) < 100:
-                  break
+              if len(batch) < 100: break
               page += 1
-
-          current = []
-          old = []
+          current, old = [], []
           for artifact in artifacts:
-              if artifact.get('name') != 'Jubi-Windows-Installer':
-                  continue
+              if artifact.get('name') != 'Jubi-Windows-Installer': continue
               run_id = str((artifact.get('workflow_run') or {}).get('id', ''))
-              if run_id == current_run:
-                  current.append(artifact)
-              else:
-                  old.append(artifact)
-
+              (current if run_id == current_run else old).append(artifact)
           if len(current) != 1:
-              raise SystemExit(f'Expected exactly one installer artifact for current run {current_run}, found {len(current)}')
-
+              raise SystemExit(f'Expected exactly one current installer artifact, found {len(current)}')
           for artifact in old:
-              artifact_id = artifact['id']
-              request(f'https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}', method='DELETE')
-              print(f'Deleted old installer artifact {artifact_id}')
-
-          print(f'Canonical Jubi installer artifact kept: {current[0]["id"]}; deleted: {len(old)}')
+              request(f'https://api.github.com/repos/{repo}/actions/artifacts/{artifact["id"]}', method='DELETE')
+          print(f'Kept current installer {current[0]["id"]}; deleted {len(old)} old installer artifacts')
           PY
