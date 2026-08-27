@@ -1,13 +1,15 @@
-param()
+param(
+    [switch]$UpdateMode
+)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
 $Root = Split-Path -Parent $PSScriptRoot
+$Prerequisites = Join-Path $PSScriptRoot 'JUBI-PREREQUISITES.ps1'
 $Bootstrap = Join-Path $PSScriptRoot 'SETUP-BROKER.ps1'
-# Legacy filenames are intentionally retained during Jubi Phase 0 so the
-# existing tested installer chain remains compatible.
 $Installer = Join-Path $PSScriptRoot 'INSTALL-SARUS.ps1'
 $Certifier = Join-Path $PSScriptRoot 'CERTIFY-SARUS.ps1'
+$RegisterBackground = Join-Path $PSScriptRoot 'REGISTER-JUBI-BACKGROUND.ps1'
 $Ring0Installer = Join-Path $Root 'driver\SarusRing0\INSTALL-RING0.ps1'
 $Ring0Driver = Join-Path $Root 'driver\SarusRing0\bin\Release\SarusRing0.sys'
 $PowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
@@ -44,28 +46,30 @@ function Invoke-JubiPowerShell([string]$ScriptPath, [string[]]$Arguments = @()) 
 try {
     if (-not (Test-Path -LiteralPath $PowerShell)) { throw 'Windows PowerShell 5.1 is required.' }
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'sarus\server.py'))) { throw 'Jubi foundation payload is incomplete.' }
-    if (-not (Test-Path -LiteralPath (Join-Path $Root 'vendor\launcher\SARUS.exe.b64'))) { throw 'Bundled legacy launcher payload is missing.' }
+    if (-not (Test-Path -LiteralPath (Join-Path $Root 'vendor\launcher\SARUS.exe.b64'))) { throw 'Bundled verified launcher payload is missing.' }
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'vendor\launcher\SHA256.txt'))) { throw 'Bundled launcher checksum is missing.' }
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'config\production.json'))) { throw 'Production profile is missing.' }
+    if (-not (Test-Path -LiteralPath (Join-Path $Root 'config\bootstrap.json'))) { throw 'One-click bootstrap profile is missing.' }
 
-    Log 'Jubi v0.1.0 single-EXE installation started (SARUS 1.3.1 foundation).'
+    Log "Jubi one-click installation started. UpdateMode=$UpdateMode"
     $env:JUBI_INSTALL_MODE = 'exe'
-    # Compatibility for the SARUS-era acceptance/install scripts during Phase 0.
     $env:SARUS_INSTALL_MODE = 'exe'
+
+    Log 'Checking Windows requirements and automatically installing missing prerequisites.'
+    Invoke-JubiPowerShell $Prerequisites
 
     Log 'Preparing protected privileged-broker storage.'
     Invoke-JubiPowerShell $Bootstrap
 
-    Log 'Installing Jubi core foundation, SARA, source integrations, dependencies, required Ollama models and private Python runtime.'
+    Log 'Installing/repairing Jubi core, integrations and private Python runtime.'
     Invoke-JubiPowerShell $Installer @('-NonInteractive', '-NoLaunch')
 
-    # The legacy launcher binary is reused byte-for-byte during Phase 0. Jubi.exe
-    # is a branded filename copy; a separately rebuilt native launcher can be
-    # introduced later after target-machine validation.
+    # The verified legacy native launcher remains the current PE foundation.
+    # Expose the branded Jubi.exe name and verify byte-for-byte integrity.
     $LegacyLauncher = Join-Path $Root 'SARUS.exe'
     $JubiLauncher = Join-Path $Root 'Jubi.exe'
     if (-not (Test-Path -LiteralPath $LegacyLauncher)) {
-        throw 'Legacy verified launcher was not reconstructed by the installer.'
+        throw 'Verified launcher was not reconstructed by the installer.'
     }
     Copy-Item -LiteralPath $LegacyLauncher -Destination $JubiLauncher -Force
     $legacyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $LegacyLauncher).Hash
@@ -76,17 +80,15 @@ try {
     }
     Log "Jubi.exe launcher prepared and verified: $jubiHash"
 
-    # INSTALL-SARUS.ps1 retains a compatibility shortcut path while it rebuilds
-    # the verified legacy launcher. Recreate the final branded shortcut here,
-    # after Jubi.exe exists, so the official installer always points to Jubi.exe.
     $shell = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath('Desktop')
     $lnk = $shell.CreateShortcut((Join-Path $desktop 'Jubi.lnk'))
     $lnk.TargetPath = $JubiLauncher
     $lnk.WorkingDirectory = $Root
     $lnk.Description = 'Jubi Local AI Agent Platform'
+    $lnk.IconLocation = "$JubiLauncher,0"
     $lnk.Save()
-    Log 'Final Jubi desktop shortcut now targets Jubi.exe.'
+    Log 'Desktop Jubi shortcut prepared.'
 
     # A trusted prebuilt controlled Ring0 driver is activated only when Windows
     # validates its signature. Security enforcement is never disabled.
@@ -97,11 +99,11 @@ try {
             Invoke-JubiPowerShell $Ring0Installer @('-DriverPath', "`"$Ring0Driver`"")
         }
         else {
-            Log "Ring0 driver payload exists but is not validly signed for this machine (status: $($signature.Status)); kernel driver activation was skipped."
+            Log "Ring0 driver payload is not validly signed for this machine (status: $($signature.Status)); activation skipped."
         }
     }
     else {
-        Log 'No prebuilt signed Ring0 driver is bundled; controlled Ring0 source is installed but driver activation is skipped.'
+        Log 'No prebuilt signed Ring0 driver is bundled; controlled source remains available but activation is skipped.'
     }
 
     $requiredFinal = @(
@@ -110,11 +112,14 @@ try {
         (Join-Path $Root 'README.md'),
         (Join-Path $Root 'BUILD_MANIFEST.json'),
         (Join-Path $Root 'config\production.json'),
+        (Join-Path $Root 'config\bootstrap.json'),
         (Join-Path $Root 'config\models.json'),
         (Join-Path $Root 'config\broker_allowlist.json'),
-        (Join-Path $Root 'sarus\server.py'),
-        (Join-Path $Root 'sarus\core\fable.py'),
-        (Join-Path $Root 'sarus\web\fable.html')
+        (Join-Path $Root 'jubi\background.py'),
+        (Join-Path $Root 'jubi\updater.py'),
+        (Join-Path $Root 'installer\JUBI-BACKGROUND.ps1'),
+        (Join-Path $Root 'installer\REGISTER-JUBI-BACKGROUND.ps1'),
+        (Join-Path $Root 'sarus\server.py')
     )
     foreach ($path in $requiredFinal) {
         if (-not (Test-Path -LiteralPath $path)) {
@@ -125,10 +130,18 @@ try {
     Log 'Running target-machine production certification (core profile).'
     Invoke-JubiPowerShell $Certifier
 
-    Log 'Post-install verification and core certification passed.'
-    Log 'Launching Jubi.exe.'
-    Start-Process -FilePath $JubiLauncher -WorkingDirectory $Root
-    Log 'Jubi v0.1.0 single-EXE installation completed successfully.'
+    Log 'Registering Jubi to start with Windows, self-restart on failure and check verified updates automatically.'
+    Invoke-JubiPowerShell $RegisterBackground
+
+    Log 'Post-install verification, background registration and core certification passed.'
+    if (-not $UpdateMode) {
+        Log 'Launching Jubi dashboard.'
+        Start-Process -FilePath $JubiLauncher -WorkingDirectory $Root
+    }
+    else {
+        Log 'Silent update completed; background task will run the refreshed Jubi build.'
+    }
+    Log 'Jubi one-click installation completed successfully.'
     exit 0
 }
 catch {
