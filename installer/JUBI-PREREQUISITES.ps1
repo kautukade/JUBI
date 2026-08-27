@@ -28,18 +28,39 @@ function Test-Command([string]$Name) {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Remove-TempFile([string]$Path, [int]$Attempts = 5) {
+    if ([string]::IsNullOrWhiteSpace($Path)) { return }
+    foreach ($attempt in 1..$Attempts) {
+        if (-not (Test-Path -LiteralPath $Path)) { return }
+        try {
+            Remove-Item -LiteralPath $Path -Force -ErrorAction Stop
+            return
+        }
+        catch {
+            if ($attempt -lt $Attempts) { Start-Sleep -Milliseconds (400 * $attempt) }
+        }
+    }
+    if (Test-Path -LiteralPath $Path) {
+        Log "WARNING: temporary file is still locked and will be left for Windows cleanup: $Path"
+    }
+}
+
 function Invoke-Download([string]$Uri, [string]$OutFile, [int]$Attempts = 3) {
     $last = $null
+    Remove-TempFile $OutFile 2
     foreach ($attempt in 1..$Attempts) {
+        $part = $OutFile + '.' + [guid]::NewGuid().ToString('N') + '.download'
         try {
             Log "Downloading $Uri (attempt $attempt/$Attempts)"
-            Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $OutFile -TimeoutSec 300
-            if ((Test-Path -LiteralPath $OutFile) -and ((Get-Item -LiteralPath $OutFile).Length -gt 500KB)) { return }
-            throw 'Downloaded file is unexpectedly small.'
+            Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $part -TimeoutSec 300
+            if (-not (Test-Path -LiteralPath $part)) { throw 'Downloaded file was not created.' }
+            if ((Get-Item -LiteralPath $part).Length -le 500KB) { throw 'Downloaded file is unexpectedly small.' }
+            Move-Item -LiteralPath $part -Destination $OutFile -Force
+            return
         }
         catch {
             $last = $_
-            Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue
+            Remove-TempFile $part 3
             if ($attempt -lt $Attempts) { Start-Sleep -Seconds (3 * $attempt) }
         }
     }
@@ -88,7 +109,9 @@ function Find-Python311 {
             $candidate = ($result | Select-Object -Last 1).Trim()
             if (Test-Python311Exe $candidate) { return $candidate }
         }
-    } catch {}
+    }
+    catch {}
+
     $candidates = @(
         'C:\Program Files\Python311\python.exe',
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe')
@@ -114,14 +137,19 @@ function Ensure-Python311($Bootstrap) {
 
     $url = [string]$pythonCfg.fallback_url
     if (-not $url.StartsWith('https://www.python.org/')) { throw 'Python fallback URL is not trusted.' }
-    $installer = Join-Path $env:TEMP 'jubi-python-3.11-amd64.exe'
-    Invoke-Download $url $installer
-    $sig = Get-AuthenticodeSignature -LiteralPath $installer
-    if ($sig.Status -ne 'Valid') { throw "Python installer signature is not valid: $($sig.Status)" }
-    Log 'Installing/repairing Python 3.11 fallback silently.'
-    $p = Start-Process -FilePath $installer -ArgumentList @('/quiet','InstallAllUsers=1','PrependPath=1','Include_launcher=1','Include_test=0') -Wait -PassThru
-    Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
-    if ($p.ExitCode -notin @(0,3010)) { throw "Python installer failed with exit code $($p.ExitCode)" }
+    $installer = Join-Path $env:TEMP ('jubi-python-3.11-' + [guid]::NewGuid().ToString('N') + '.exe')
+    try {
+        Invoke-Download $url $installer
+        $sig = Get-AuthenticodeSignature -LiteralPath $installer
+        if ($sig.Status -ne 'Valid') { throw "Python installer signature is not valid: $($sig.Status)" }
+        Log 'Installing/repairing Python 3.11 fallback silently.'
+        $p = Start-Process -FilePath $installer -ArgumentList @('/quiet','InstallAllUsers=1','PrependPath=1','Include_launcher=1','Include_test=0') -Wait -PassThru
+        if ($p.ExitCode -notin @(0,3010)) { throw "Python installer failed with exit code $($p.ExitCode)" }
+    }
+    finally {
+        Remove-TempFile $installer 5
+    }
+
     $pythonExe = Find-Python311
     if (-not $pythonExe) { throw 'Python 3.11 installation/repair completed but a working python.exe could not be found.' }
     return $pythonExe
@@ -167,16 +195,22 @@ function Get-OllamaCandidates($Bootstrap) {
         try {
             $portNumber = [int]$candidatePort
             if ($portNumber -ge 1 -and $portNumber -le 65535) { $values += "http://127.0.0.1:$portNumber" }
-        } catch {}
+        }
+        catch {}
     }
-    $values += 'http://127.0.0.1:11434'
+    foreach ($fallbackPort in @(11434,11500,11435,11436,11437,11438,11439,11440,11501,11502,11503,11504,11505)) {
+        $values += "http://127.0.0.1:$fallbackPort"
+    }
 
     $result = @()
     foreach ($value in $values) {
         $normalized = Normalize-LocalOllamaUrl ([string]$value)
         if ($normalized -and ($result -notcontains $normalized)) { $result += $normalized }
     }
-    return ,$result
+    # Intentionally return an enumerated array. `return ,$result` nests the list
+    # and PowerShell coerces all URLs into one space-separated string, which made
+    # every local port look occupied on a real target laptop.
+    return $result
 }
 
 function Test-OllamaApi([string]$BaseUrl) {
@@ -208,9 +242,34 @@ function Test-LocalPortAvailable([string]$BaseUrl) {
     catch { return $false }
 }
 
+function Stop-StaleOllamaProcesses([string]$OllamaExe) {
+    if ([string]::IsNullOrWhiteSpace($OllamaExe) -or -not (Test-Path -LiteralPath $OllamaExe)) { return 0 }
+    $trustedDir = [IO.Path]::GetFullPath((Split-Path -Parent $OllamaExe)).TrimEnd('\') + '\'
+    $stopped = 0
+    foreach ($process in @(Get-Process -Name 'ollama*' -ErrorAction SilentlyContinue)) {
+        $processPath = $null
+        try { $processPath = $process.Path } catch {}
+        if ([string]::IsNullOrWhiteSpace($processPath)) { continue }
+        try { $fullPath = [IO.Path]::GetFullPath($processPath) } catch { continue }
+        if (-not $fullPath.StartsWith($trustedDir, [StringComparison]::OrdinalIgnoreCase)) { continue }
+        try {
+            Log "Stopping stale trusted Ollama process PID=$($process.Id) Path=$fullPath"
+            Stop-Process -Id $process.Id -Force -ErrorAction Stop
+            $stopped++
+        }
+        catch {
+            Log "WARNING: could not stop trusted Ollama process PID=$($process.Id): $($_.Exception.Message)"
+        }
+    }
+    if ($stopped -gt 0) { Start-Sleep -Seconds 2 }
+    return $stopped
+}
+
 function Install-OrRepair-Ollama($Bootstrap, [switch]$ForceRepair) {
     $cfg = $Bootstrap.prerequisites.ollama
     $ollamaExe = Find-Ollama
+    if (-not $ollamaExe -and $Fast) { return $null }
+
     if (-not $ollamaExe) {
         [void](Install-WingetPackage ([string]$cfg.winget_id) 'Ollama')
         $ollamaExe = Find-Ollama
@@ -220,17 +279,24 @@ function Install-OrRepair-Ollama($Bootstrap, [switch]$ForceRepair) {
 
     $url = [string]$cfg.fallback_url
     if (-not $url.StartsWith('https://ollama.com/')) { throw 'Ollama fallback URL is not trusted.' }
-    $installer = Join-Path $env:TEMP 'Jubi-OllamaSetup.exe'
-    Invoke-Download $url $installer
-    $sig = Get-AuthenticodeSignature -LiteralPath $installer
-    if ($sig.Status -ne 'Valid') { throw "Ollama installer signature is not valid: $($sig.Status)" }
-    if ($ForceRepair) { Log 'Repairing the existing Ollama installation with the trusted official installer.' }
-    else { Log 'Installing Ollama fallback silently.' }
-    $p = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
-    Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
-    if ($p.ExitCode -notin @(0,3010)) { throw "Ollama installer failed with exit code $($p.ExitCode)" }
-    $ollamaExe = Find-Ollama
-    return $ollamaExe
+    $installer = Join-Path $env:TEMP ('Jubi-OllamaSetup-' + [guid]::NewGuid().ToString('N') + '.exe')
+    try {
+        Invoke-Download $url $installer
+        $sig = Get-AuthenticodeSignature -LiteralPath $installer
+        if ($sig.Status -ne 'Valid') { throw "Ollama installer signature is not valid: $($sig.Status)" }
+        if ($ForceRepair) { Log 'Repairing the existing Ollama installation with the trusted official installer.' }
+        else { Log 'Installing Ollama fallback silently.' }
+        $p = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+        if ($p.ExitCode -notin @(0,3010)) { throw "Ollama installer failed with exit code $($p.ExitCode)" }
+    }
+    finally {
+        # Some vendor installers keep their bootstrap EXE open briefly after the
+        # parent process exits. The path is unique per attempt, so a lock can
+        # never poison the next automatic repair attempt.
+        Remove-TempFile $installer 6
+    }
+    Start-Sleep -Seconds 2
+    return (Find-Ollama)
 }
 
 function Start-OllamaLocal([string]$OllamaExe, [string]$BaseUrl) {
@@ -273,7 +339,8 @@ function Start-OllamaLocal([string]$OllamaExe, [string]$BaseUrl) {
 
 function Start-OllamaOnCandidates([string]$OllamaExe, [string[]]$Candidates) {
     $failures = @()
-    foreach ($candidateUrl in $Candidates) {
+    foreach ($candidateUrl in @($Candidates)) {
+        if ([string]::IsNullOrWhiteSpace($candidateUrl)) { continue }
         if (Test-OllamaApi $candidateUrl) {
             return [pscustomobject]@{ Exe = $OllamaExe; BaseUrl = $candidateUrl }
         }
@@ -312,6 +379,9 @@ function Ensure-Ollama($Bootstrap) {
         }
     }
 
+    # Only terminate processes from the trusted Ollama installation directory.
+    # This frees stale Ollama-owned listeners without touching unrelated apps.
+    [void](Stop-StaleOllamaProcesses $ollamaExe)
     try {
         return Start-OllamaOnCandidates $ollamaExe $candidates
     }
@@ -321,7 +391,8 @@ function Ensure-Ollama($Bootstrap) {
         Log "Initial Ollama recovery failed. Attempting one trusted Ollama repair. $firstFailure"
         $ollamaExe = Install-OrRepair-Ollama $Bootstrap -ForceRepair
         if (-not $ollamaExe) { throw 'Ollama repair completed but ollama.exe could not be found.' }
-        Start-Sleep -Seconds 2
+        [void](Stop-StaleOllamaProcesses $ollamaExe)
+        $candidates = @(Get-OllamaCandidates $Bootstrap)
         return Start-OllamaOnCandidates $ollamaExe $candidates
     }
 }
@@ -375,7 +446,7 @@ function Ensure-Models([string]$OllamaExe, [string]$BaseUrl, $Production) {
             }
             if (-not $pulled) {
                 $pending += $name
-                Log "WARNING: model $name is still pending. Jubi installation will continue and background self-repair will retry automatically."
+                Log "WARNING: model $name is still pending. Jubi core installation will continue and background self-repair will retry automatically."
             }
         }
     }
@@ -383,7 +454,9 @@ function Ensure-Models([string]$OllamaExe, [string]$BaseUrl, $Production) {
         if ($null -eq $previousOllamaHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
         else { $env:OLLAMA_HOST = $previousOllamaHost }
     }
-    return ,$pending
+    # Keep one array element per model; do not return a nested array that is
+    # later coerced into a single space-separated model string.
+    return $pending
 }
 
 function Save-JubiRuntime([string]$PythonExe, [string]$OllamaBaseUrl, [string[]]$PendingModels) {
@@ -420,7 +493,7 @@ try {
 
     $drive = Get-PSDrive -Name ([IO.Path]::GetPathRoot($Root).Substring(0,1)) -ErrorAction SilentlyContinue
     if ($drive -and $drive.Free -lt 20GB) {
-        Log "WARNING: less than 20 GB free on the Jubi install drive. Core installation can continue, but local AI models may need more storage."
+        Log 'WARNING: less than 20 GB free on the Jubi install drive. Core installation can continue; missing local AI models are allowed to remain pending and background repair will retry them.'
     }
 
     Log "Jubi prerequisite check started. Fast=$Fast Repair=$Repair"
