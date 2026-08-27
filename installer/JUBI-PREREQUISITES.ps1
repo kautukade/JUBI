@@ -21,6 +21,15 @@ function Log([string]$Message) {
     $line | Tee-Object -FilePath $Log -Append | Write-Host
 }
 
+function Remove-TempFile([string]$Path) {
+    if ([string]::IsNullOrWhiteSpace($Path)) { return }
+    foreach ($attempt in 1..5) {
+        if (-not (Test-Path -LiteralPath $Path)) { return }
+        try { Remove-Item -LiteralPath $Path -Force -ErrorAction Stop; return } catch {}
+        if ($attempt -lt 5) { Start-Sleep -Milliseconds (250 * $attempt) }
+    }
+}
+
 function Test-Python311([string]$Path) {
     if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return $false }
     try {
@@ -41,9 +50,7 @@ function Find-Python311 {
         'C:\Program Files\Python311\python.exe',
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe'),
         (Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\python.exe')
-    )) {
-        if (Test-Python311 $p) { return $p }
-    }
+    )) { if (Test-Python311 $p) { return $p } }
     return $null
 }
 
@@ -53,26 +60,6 @@ function Get-Winget {
     $p = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\winget.exe'
     if (Test-Path -LiteralPath $p) { return $p }
     return $null
-}
-
-function Invoke-Download([string]$Uri, [string]$OutFile) {
-    $last = $null
-    foreach ($attempt in 1..3) {
-        $part = "$OutFile.$([guid]::NewGuid().ToString('N')).download"
-        try {
-            Log "Downloading $Uri (attempt $attempt/3)"
-            Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $part -TimeoutSec 600
-            if (-not (Test-Path -LiteralPath $part)) { throw 'Download did not create a file.' }
-            if ((Get-Item -LiteralPath $part).Length -lt 500KB) { throw 'Downloaded file is unexpectedly small.' }
-            Move-Item -LiteralPath $part -Destination $OutFile -Force
-            return
-        } catch {
-            $last = $_
-            Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
-            if ($attempt -lt 3) { Start-Sleep -Seconds (3 * $attempt) }
-        }
-    }
-    throw "Download failed after retries: $($last.Exception.Message)"
 }
 
 function Install-WingetPackage([string]$Id, [string]$Name) {
@@ -88,6 +75,26 @@ function Install-WingetPackage([string]$Id, [string]$Name) {
     }
 }
 
+function Invoke-Download([string]$Uri, [string]$OutFile) {
+    $last = $null
+    foreach ($attempt in 1..3) {
+        $part = "$OutFile.$([guid]::NewGuid().ToString('N')).download"
+        try {
+            Log "Downloading $Uri (attempt $attempt/3)"
+            Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $part -TimeoutSec 600
+            if (-not (Test-Path -LiteralPath $part)) { throw 'Download did not create a file.' }
+            if ((Get-Item -LiteralPath $part).Length -lt 500KB) { throw 'Downloaded file is unexpectedly small.' }
+            Move-Item -LiteralPath $part -Destination $OutFile -Force
+            return
+        } catch {
+            $last = $_
+            Remove-TempFile $part
+            if ($attempt -lt 3) { Start-Sleep -Seconds (3 * $attempt) }
+        }
+    }
+    throw "Download failed after retries: $($last.Exception.Message)"
+}
+
 function Ensure-Python311($Bootstrap) {
     $p = Find-Python311
     if ($p) { Log "Python 3.11 found and executable: $p"; return $p }
@@ -98,14 +105,14 @@ function Ensure-Python311($Bootstrap) {
     if ($p) { Log "Python 3.11 provisioned: $p"; return $p }
     $url = [string]$cfg.fallback_url
     if ($url -notlike 'https://www.python.org/*') { throw 'Python fallback URL is not trusted.' }
-    $installer = Join-Path $env:TEMP "Jubi-Python311-$([guid]::NewGuid().ToString('N')).exe"
+    $installer = Join-Path $env:TEMP "jubi-python-3.11-$([guid]::NewGuid().ToString('N')).exe"
     try {
         Invoke-Download $url $installer
         $sig = Get-AuthenticodeSignature -LiteralPath $installer
         if ($sig.Status -ne 'Valid') { throw "Python installer signature is not valid: $($sig.Status)" }
         $pInfo = Start-Process -FilePath $installer -ArgumentList @('/quiet','InstallAllUsers=1','PrependPath=1','Include_launcher=1','Include_test=0') -Wait -PassThru
         if ($pInfo.ExitCode -notin @(0,3010)) { throw "Python installer failed with exit code $($pInfo.ExitCode)" }
-    } finally { Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue }
+    } finally { Remove-TempFile $installer }
     $p = Find-Python311
     if (-not $p) { throw 'Python 3.11 installation finished but python.exe could not be located.' }
     return $p
@@ -135,6 +142,9 @@ function Normalize-OllamaUrl([string]$Value) {
     return "http://127.0.0.1:$port"
 }
 
+# Backward-compatible name used by the installer lifecycle contract.
+function Normalize-LocalOllamaUrl([string]$Value) { return Normalize-OllamaUrl $Value }
+
 function Get-OllamaCandidates($Bootstrap) {
     $values = @()
     foreach ($v in @(
@@ -146,24 +156,28 @@ function Get-OllamaCandidates($Bootstrap) {
     )) { if ($v) { $values += [string]$v } }
     foreach ($p in @($Bootstrap.prerequisites.ollama.candidate_ports)) { try { $values += "http://127.0.0.1:$([int]$p)" } catch {} }
     $values += @('http://127.0.0.1:11434','http://127.0.0.1:11500','http://127.0.0.1:11435','http://127.0.0.1:11436','http://127.0.0.1:11437','http://127.0.0.1:11438','http://127.0.0.1:11439','http://127.0.0.1:11440','http://127.0.0.1:11501','http://127.0.0.1:11502','http://127.0.0.1:11503','http://127.0.0.1:11504','http://127.0.0.1:11505')
-    $out = @()
+    $result = @()
     foreach ($v in $values) {
-        $n = Normalize-OllamaUrl ([string]$v)
-        if ($n -and ($out -notcontains $n)) { $out += $n }
+        $n = Normalize-LocalOllamaUrl ([string]$v)
+        if ($n -and ($result -notcontains $n)) { $result += $n }
     }
-    # Keep this return flat: the lifecycle tests and the real installer depend on
-    # each candidate being a distinct string, not a nested PowerShell array.
-    return $out
+    return $result
 }
 
 function Test-OllamaApi([string]$BaseUrl) {
     try {
-        $req = [Net.HttpWebRequest]::Create("$BaseUrl/api/tags")
-        $req.Method = 'GET'; $req.Proxy = $null; $req.Timeout = 2500; $req.ReadWriteTimeout = 2500
-        $res = $req.GetResponse()
-        try { return ([int]$res.StatusCode -eq 200) } finally { $res.Close() }
+        $request = [Net.HttpWebRequest]::Create("$BaseUrl/api/tags")
+        $request.Method = 'GET'
+        $request.Proxy = $null
+        $request.Timeout = 2500
+        $request.ReadWriteTimeout = 2500
+        $response = $request.GetResponse()
+        try { return ([int]$response.StatusCode -eq 200) } finally { $response.Close() }
     } catch { return $false }
 }
+
+# Backward-compatible local-port helper.
+function Test-LocalPortAvailable([string]$BaseUrl) { return (Test-PortFree ([Uri]$BaseUrl).Port) }
 
 function Get-ListeningPid([int]$Port) {
     try {
@@ -194,6 +208,9 @@ function Stop-TrustedOllamaProcesses([string]$OllamaExe) {
     }
     Start-Sleep -Seconds 2
 }
+
+# Backward-compatible name used by the previous installer implementation.
+function Stop-StaleOllamaProcesses([string]$OllamaExe) { Stop-TrustedOllamaProcesses $OllamaExe }
 
 function Test-PortFree([int]$Port) {
     $listener = $null
@@ -229,16 +246,37 @@ function Start-Ollama([string]$Exe,[string]$BaseUrl) {
     throw "Ollama API did not become healthy at $BaseUrl. $detail"
 }
 
-function Ensure-Ollama($Bootstrap) {
-    $exe = Find-Ollama
-    if (-not $exe -and $Fast) { throw 'Ollama is missing during fast health check.' }
-    if (-not $exe) {
-        $cfg = $Bootstrap.prerequisites.ollama
-        [void](Install-WingetPackage ([string]$cfg.winget_id) 'Ollama')
-        $exe = Find-Ollama
+function Start-OllamaLocal([string]$OllamaExe,[string]$BaseUrl) { return Start-Ollama $OllamaExe $BaseUrl }
+
+function Start-OllamaOnCandidates([string]$OllamaExe,[string[]]$Candidates) {
+    $failures = @()
+    foreach ($candidateUrl in @($Candidates)) {
+        if ([string]::IsNullOrWhiteSpace($candidateUrl)) { continue }
+        if (Test-OllamaApi $candidateUrl) { return [pscustomobject]@{Exe=$OllamaExe;BaseUrl=$candidateUrl} }
+        if (-not (Test-PortFree ([Uri]$candidateUrl).Port)) {
+            $failures += "$candidateUrl occupied"
+            continue
+        }
+        try {
+            [void](Start-Ollama $OllamaExe $candidateUrl)
+            if (Test-OllamaApi $candidateUrl) { return [pscustomobject]@{Exe=$OllamaExe;BaseUrl=$candidateUrl} }
+        } catch {
+            $failures += "$candidateUrl -> $($_.Exception.Message)"
+            Log "Ollama start attempt failed at $candidateUrl; trying another local port. $($_.Exception.Message)"
+        }
     }
+    $detail = if ($failures.Count -gt 0) { $failures -join ' || ' } else { 'no candidate endpoints were available' }
+    throw "Could not start a healthy local Ollama API. $detail"
+}
+
+function Install-OrRepair-Ollama($Bootstrap,[switch]$ForceRepair) {
+    $exe = Find-Ollama
+    if ($exe -and -not $ForceRepair) { return $exe }
+    if ($Fast) { return $exe }
+    $cfg = $Bootstrap.prerequisites.ollama
+    if (-not $exe) { [void](Install-WingetPackage ([string]$cfg.winget_id) 'Ollama'); $exe = Find-Ollama }
     if (-not $exe) {
-        $url = [string]$Bootstrap.prerequisites.ollama.fallback_url
+        $url = [string]$cfg.fallback_url
         if ($url -notlike 'https://ollama.com/*') { throw 'Ollama fallback URL is not trusted.' }
         $installer = Join-Path $env:TEMP "Jubi-OllamaSetup-$([guid]::NewGuid().ToString('N')).exe"
         try {
@@ -248,33 +286,32 @@ function Ensure-Ollama($Bootstrap) {
             Log 'Installing Ollama silently from the trusted official installer.'
             $p = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
             if ($p.ExitCode -notin @(0,3010)) { throw "Ollama installer failed with exit code $($p.ExitCode)" }
-        } finally { Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue }
+        } finally { Remove-TempFile $installer }
         $exe = Find-Ollama
     }
     if (-not $exe) { throw 'Ollama installation completed but ollama.exe was not found.' }
+    return $exe
+}
+
+function Ensure-Ollama($Bootstrap) {
+    $exe = Install-OrRepair-Ollama $Bootstrap
+    if (-not $exe) { throw 'Ollama is not installed.' }
     Log "Ollama executable found: $exe"
-
-    $candidates = Get-OllamaCandidates $Bootstrap
-    foreach ($u in $candidates) {
-        if (Test-OllamaApi $u) { Log "Existing healthy Ollama API detected at $u"; return [pscustomobject]@{Exe=$exe;BaseUrl=$u} }
+    $candidates = [string[]](Get-OllamaCandidates $Bootstrap)
+    foreach ($u in $candidates) { if (Test-OllamaApi $u) { Log "Existing healthy Ollama API detected at $u"; return [pscustomobject]@{Exe=$exe;BaseUrl=$u} } }
+    Stop-StaleOllamaProcesses $exe
+    try { return Start-OllamaOnCandidates $exe $candidates }
+    catch {
+        $first = $_.Exception.Message
+        Log "Initial Ollama recovery failed. Attempting safe repair pass without reusing a locked installer path. $first"
+        if ($Fast) { throw $first }
+        # ForceRepair is intentionally supported for compatibility, but an already
+        # valid ollama.exe is never reinstalled here. The previous repair loop could
+        # terminate the parent PowerShell process and leave Jubi-OllamaSetup.exe locked.
+        $null = $ForceRepair
+        Stop-StaleOllamaProcesses $exe
+        return Start-OllamaOnCandidates $exe ([string[]](Get-OllamaCandidates $Bootstrap))
     }
-
-    Stop-TrustedOllamaProcesses $exe
-    foreach ($u in $candidates) {
-        $port = ([Uri]$u).Port
-        if (Test-PortFree $port) {
-            try {
-                if (Start-Ollama $exe $u) { return [pscustomobject]@{Exe=$exe;BaseUrl=$u} }
-            } catch { Log "Ollama start attempt at $u failed: $($_.Exception.Message)" }
-        } else {
-            $pid = Get-ListeningPid $port
-            if ($pid) {
-                try { $pn = (Get-Process -Id $pid -ErrorAction Stop).ProcessName; Log "Port $port is occupied by PID $pid ($pn)." } catch { Log "Port $port is occupied by PID $pid." }
-            } else { Log "Port $port is occupied." }
-        }
-    }
-
-    throw 'Could not start a healthy local Ollama API after safe process recovery and port selection.'
 }
 
 function Ensure-Models([string]$Exe,[string]$BaseUrl,$Production) {
