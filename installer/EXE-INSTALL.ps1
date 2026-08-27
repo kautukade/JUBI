@@ -15,17 +15,32 @@ $Ring0Driver = Join-Path $Root 'driver\SarusRing0\bin\Release\SarusRing0.sys'
 $PowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 
 $LogDir = Join-Path $Root 'logs'
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+$ChildLogDir = Join-Path $env:LOCALAPPDATA 'Jubi\logs\installer-steps'
+New-Item -ItemType Directory -Force -Path $LogDir,$ChildLogDir | Out-Null
 $Log = Join-Path $LogDir 'exe-install.log'
 
 function Log([string]$Message) {
     "[$(Get-Date -Format s)] $Message" | Tee-Object -FilePath $Log -Append | Write-Host
 }
 
+function Append-ChildLog([string]$Name, [string]$Path, [string]$StreamName) {
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    foreach ($line in (Get-Content -LiteralPath $Path -ErrorAction SilentlyContinue)) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$line)) {
+            Log "[$Name/$StreamName] $line"
+        }
+    }
+}
+
 function Invoke-JubiPowerShell([string]$ScriptPath, [string[]]$Arguments = @()) {
     if (-not (Test-Path -LiteralPath $ScriptPath)) {
         throw "Required installer script is missing: $ScriptPath"
     }
+    $name = [IO.Path]::GetFileNameWithoutExtension($ScriptPath)
+    $stdout = Join-Path $ChildLogDir "$name.stdout.log"
+    $stderr = Join-Path $ChildLogDir "$name.stderr.log"
+    Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
+
     $argumentList = @(
         '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
         '-File', "`"$ScriptPath`""
@@ -36,10 +51,22 @@ function Invoke-JubiPowerShell([string]$ScriptPath, [string[]]$Arguments = @()) 
         WorkingDirectory = $Root
         Wait = $true
         PassThru = $true
+        RedirectStandardOutput = $stdout
+        RedirectStandardError = $stderr
     }
     $process = Start-Process @startParams
+    Append-ChildLog $name $stdout 'stdout'
+    Append-ChildLog $name $stderr 'stderr'
     if ($process.ExitCode -ne 0) {
-        throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode)."
+        $detail = ''
+        if (Test-Path -LiteralPath $stderr) {
+            $tail = Get-Content -LiteralPath $stderr -Tail 8 -ErrorAction SilentlyContinue
+            if ($tail) { $detail = (($tail | ForEach-Object { $_.Trim() }) -join ' | ') }
+        }
+        if ($detail) {
+            throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode): $detail"
+        }
+        throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode). See $stdout and $stderr"
     }
 }
 
@@ -64,8 +91,6 @@ try {
     Log 'Installing/repairing Jubi core, integrations and private Python runtime.'
     Invoke-JubiPowerShell $Installer @('-NonInteractive', '-NoLaunch')
 
-    # The verified legacy native launcher remains the current PE foundation.
-    # Expose the branded Jubi.exe name and verify byte-for-byte integrity.
     $LegacyLauncher = Join-Path $Root 'SARUS.exe'
     $JubiLauncher = Join-Path $Root 'Jubi.exe'
     if (-not (Test-Path -LiteralPath $LegacyLauncher)) {
@@ -90,8 +115,6 @@ try {
     $lnk.Save()
     Log 'Desktop Jubi shortcut prepared.'
 
-    # A trusted prebuilt controlled Ring0 driver is activated only when Windows
-    # validates its signature. Security enforcement is never disabled.
     if ((Test-Path -LiteralPath $Ring0Driver) -and (Test-Path -LiteralPath $Ring0Installer)) {
         $signature = Get-AuthenticodeSignature -LiteralPath $Ring0Driver
         if ($signature.Status -eq 'Valid') {
