@@ -67,7 +67,7 @@ function Install-WingetPackage([string]$Id, [string]$DisplayName) {
         Log "winget returned exit code $LASTEXITCODE for $Id; trying trusted fallback if available."
     }
     catch {
-        Log "winget invocation failed for $Id: $($_.Exception.Message)"
+        Log "winget invocation failed for ${Id}: $($_.Exception.Message)"
     }
     return $false
 }
@@ -369,7 +369,7 @@ function Ensure-Models([string]$OllamaExe, [string]$BaseUrl, $Production) {
                     Log "Ollama model pull returned exit code $LASTEXITCODE for $name."
                 }
                 catch {
-                    Log "Ollama model pull failed for $name: $($_.Exception.Message)"
+                    Log "Ollama model pull failed for ${name}: $($_.Exception.Message)"
                 }
                 if ($attempt -lt 3) { Start-Sleep -Seconds (5 * $attempt) }
             }
