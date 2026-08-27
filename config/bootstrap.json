@@ -1,0 +1,39 @@
+{
+  "name": "Jubi One-Click Bootstrap",
+  "schema_version": 1,
+  "background": {
+    "task_name": "Jubi Background Agent",
+    "restart_seconds": 60,
+    "update_check_seconds": 21600,
+    "health_poll_seconds": 5
+  },
+  "auto_update": {
+    "enabled": true,
+    "channel": "continuous",
+    "release_api": "https://api.github.com/repos/kautukade/JUBI/releases/tags/continuous",
+    "manifest_asset": "Jubi-Update-Manifest.json",
+    "installer_asset": "Jubi-Setup.exe",
+    "require_sha256": true,
+    "allow_downgrade": false
+  },
+  "prerequisites": {
+    "python": {
+      "major_minor": "3.11",
+      "winget_id": "Python.Python.3.11",
+      "fallback_url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
+    },
+    "ollama": {
+      "winget_id": "Ollama.Ollama",
+      "fallback_url": "https://ollama.com/download/OllamaSetup.exe",
+      "api": "http://127.0.0.1:11434"
+    },
+    "git": {
+      "winget_id": "Git.Git",
+      "required_for_core": false
+    },
+    "node": {
+      "winget_id": "OpenJS.NodeJS.LTS",
+      "required_for_core": false
+    }
+  }
+}
