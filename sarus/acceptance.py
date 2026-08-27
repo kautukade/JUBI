@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import time
+import urllib.parse
 from pathlib import Path
 
 from .core.app import Jubi
@@ -30,6 +31,27 @@ def _find_ollama() -> str | None:
     return None
 
 
+def _runtime_state() -> dict:
+    base = os.environ.get('LOCALAPPDATA')
+    if not base:
+        return {}
+    path = Path(base) / 'Jubi' / 'runtime.json'
+    try:
+        value = json.loads(path.read_text(encoding='utf-8-sig'))
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def _runtime_pending_models() -> set[str]:
+    value = _runtime_state().get('pending_models') or []
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list):
+        return set()
+    return {str(item).strip() for item in value if str(item).strip()}
+
+
 def _wait_for_ollama(app: Jubi, seconds: int = 30) -> bool:
     deadline = time.time() + seconds
     while time.time() < deadline:
@@ -46,6 +68,15 @@ def _start_ollama_for_install(app: Jubi) -> bool:
     if not exe:
         return False
     kwargs: dict = {'stdout': subprocess.DEVNULL, 'stderr': subprocess.DEVNULL}
+    env = os.environ.copy()
+    try:
+        parsed = urllib.parse.urlparse(str(app.models.base))
+        host = parsed.hostname or ''
+        if host in {'127.0.0.1', 'localhost'} and parsed.port:
+            env['OLLAMA_HOST'] = f'127.0.0.1:{parsed.port}'
+    except (TypeError, ValueError):
+        pass
+    kwargs['env'] = env
     if os.name == 'nt':
         kwargs['creationflags'] = (
             getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0)
@@ -119,8 +150,6 @@ def run_acceptance(
     def memory_roundtrip():
         token = 'accept-' + str(time.time())
         saved = app.memory.add(token, 'acceptance', 'test')
-        # Reopen a new store to prove the write is committed, not merely visible
-        # through one connection/object.
         from .core.memory import MemoryStore
         reopened = MemoryStore(app.db_path)
         return {'ok': any(x['id'] == saved['id'] for x in reopened.search(token, 'test', 5))}
@@ -136,24 +165,43 @@ def run_acceptance(
 
     required_models = list(production.get('required_models', []))
     install_mode = _install_mode()
+    pending_models = _runtime_pending_models() if install_mode else set()
     should_provision = provision_models or install_mode
+
     if should_provision and not app.models.list_models().get('online'):
         check('Ollama auto-start for installer', lambda: _start_ollama_for_install(app), required=True)
-    if should_provision:
+
+    # JUBI-PREREQUISITES.ps1 already attempts model downloads with retries. If a
+    # model is explicitly recorded as pending (for example because the network
+    # or disk is temporarily constrained), the one-click installer must still be
+    # able to finish the healthy core installation. The background repair loop
+    # will retry those exact pending models without asking the user to reinstall.
+    if should_provision and not (install_mode and pending_models):
         check('Required Ollama model provisioning', lambda: _provision_required_models(app, required_models), required=True)
+    elif install_mode and pending_models:
+        checks.append(
+            {
+                'name': 'Deferred Ollama model provisioning',
+                'ok': True,
+                'detail': {'pending': sorted(pending_models), 'background_retry': True},
+                'required': False,
+            }
+        )
 
     doctor = app.doctor.run()
     check('Ollama online', lambda: doctor['models'].get('online', False), required=True)
     installed = set(doctor['models'].get('models', []))
     for model in required_models:
-        check('model ' + model, lambda model=model: model in installed, required=True)
+        model_required = not (install_mode and model in pending_models)
+        check('model ' + model, lambda model=model: model in installed, required=model_required)
 
     if full and doctor['models'].get('online') and required_models:
         chat_model = app.models.choose('general')
+        generation_required = not (install_mode and bool(pending_models))
         check(
             'Ollama generation',
             lambda: bool(chat_model and app.models.generate_text('Reply exactly JUBI_OK', 'general', model=chat_model)[:100]),
-            required=True,
+            required=generation_required,
         )
 
     if os.name == 'nt':
@@ -192,6 +240,7 @@ def run_acceptance(
         'ok': ok,
         'target': 'windows' if os.name == 'nt' else os.name,
         'install_mode': install_mode,
+        'pending_models': sorted(pending_models),
         'checks': checks,
         'doctor': doctor,
     }

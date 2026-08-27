@@ -19,7 +19,7 @@ from sarus.core.models import OllamaRouter
 class JubiInstallerLifecycleTests(unittest.TestCase):
     def test_bootstrap_is_canonical_and_auto_update_enabled(self):
         cfg = json.loads((ROOT / "config" / "bootstrap.json").read_text(encoding="utf-8"))
-        self.assertGreaterEqual(cfg["schema_version"], 2)
+        self.assertGreaterEqual(cfg["schema_version"], 3)
         update = cfg["auto_update"]
         self.assertTrue(update["enabled"])
         self.assertEqual(update["channel"], "continuous")
@@ -31,7 +31,8 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
         ports = cfg["prerequisites"]["ollama"]["candidate_ports"]
         self.assertIn(11434, ports)
         self.assertIn(11500, ports)
-        self.assertGreaterEqual(len(ports), 3)
+        self.assertGreaterEqual(len(ports), 10)
+        self.assertEqual(len(ports), len(set(ports)))
 
     def test_updater_is_hash_verified_and_repo_scoped(self):
         text = (ROOT / "jubi" / "updater.py").read_text(encoding="utf-8")
@@ -83,9 +84,38 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
             "pending_models",
             "ForceRepair",
             "candidate_ports",
+            "Stop-StaleOllamaProcesses",
+            "Remove-TempFile",
         ):
             self.assertIn(token, text)
         self.assertIsNone(re.search(r"(?im)^\s*\$host\s*=", text), "PowerShell $Host is read-only and must never be assigned")
+
+    def test_real_target_ollama_candidate_list_is_not_nested(self):
+        text = (ROOT / "installer" / "JUBI-PREREQUISITES.ps1").read_text(encoding="utf-8")
+        self.assertIn("return $result", text)
+        self.assertIsNone(re.search(r"(?im)^\s*return\s+,\$result\s*$", text))
+        self.assertIn("foreach ($candidateUrl in @($Candidates))", text)
+        self.assertIn("11505", text)
+
+    def test_vendor_installer_downloads_use_unique_temp_paths(self):
+        text = (ROOT / "installer" / "JUBI-PREREQUISITES.ps1").read_text(encoding="utf-8")
+        self.assertIn("Jubi-OllamaSetup-", text)
+        self.assertIn("jubi-python-3.11-", text)
+        self.assertIn("[guid]::NewGuid().ToString('N')", text)
+        self.assertIn(".download", text)
+        self.assertNotIn("Join-Path $env:TEMP 'Jubi-OllamaSetup.exe'", text)
+
+    def test_pending_models_do_not_force_reinstall_loop(self):
+        text = (ROOT / "sarus" / "acceptance.py").read_text(encoding="utf-8")
+        for token in (
+            "_runtime_pending_models",
+            "Deferred Ollama model provisioning",
+            "background_retry",
+            "model_required = not (install_mode and model in pending_models)",
+            "generation_required = not (install_mode and bool(pending_models))",
+            "env['OLLAMA_HOST']",
+        ):
+            self.assertIn(token, text)
 
     def test_core_install_retries_transient_work_and_reuses_runtime_on_update(self):
         text = (ROOT / "installer" / "INSTALL-SARUS.ps1").read_text(encoding="utf-8")
