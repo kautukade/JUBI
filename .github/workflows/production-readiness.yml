@@ -42,6 +42,8 @@ jobs:
           python-version: '3.11'
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
+      - name: Installer lifecycle static tests
+        run: python tests/jubi_installer_lifecycle_test.py
       - name: Validate dashboard JavaScript syntax
         run: |
           node --check sarus/web/assets/app.js
@@ -105,6 +107,10 @@ jobs:
         shell: powershell
         run: |
           $scripts = @(
+            'installer\JUBI-PREREQUISITES.ps1',
+            'installer\JUBI-BACKGROUND.ps1',
+            'installer\REGISTER-JUBI-BACKGROUND.ps1',
+            'installer\UNREGISTER-JUBI-BACKGROUND.ps1',
             'installer\INSTALL-SARUS.ps1',
             'installer\EXE-INSTALL.ps1',
             'installer\SETUP-BROKER.ps1',
@@ -124,6 +130,8 @@ jobs:
           }
       - name: Compile Python
         run: python -m compileall -q jubi sarus tests scripts
+      - name: Installer lifecycle static tests
+        run: python tests/jubi_installer_lifecycle_test.py
       - name: Validate dashboard JavaScript syntax
         run: |
           node --check sarus/web/assets/app.js
