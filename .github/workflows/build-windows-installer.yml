@@ -209,7 +209,7 @@ jobs:
         run: |
           python - <<'PY'
           import json, pathlib, re
-          root = pathlib.Path('release')
+          root = pathlib.Path('release/dist-installer')
           build = json.loads((root / 'build-info.json').read_text(encoding='utf-8-sig'))
           text = (root / 'SHA256.txt').read_text(encoding='ascii')
           m = re.search(r'([0-9a-fA-F]{64})', text)
@@ -238,7 +238,7 @@ jobs:
           else
             gh release edit continuous --prerelease --title 'Jubi Continuous' --notes "Automatically refreshed from main commit ${{ github.sha }}. Jubi verifies the update manifest and installer SHA-256 before installation."
           fi
-          gh release upload continuous release/Jubi-Setup.exe release/Jubi-Update-Manifest.json release/SHA256.txt --clobber
+          gh release upload continuous release/dist-installer/Jubi-Setup.exe release/dist-installer/Jubi-Update-Manifest.json release/dist-installer/SHA256.txt --clobber
 
   cleanup-old-installers:
     name: Keep only current Jubi installer artifact
