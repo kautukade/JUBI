@@ -42,7 +42,6 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
     def test_prerequisites_are_automatically_provisioned(self):
         text = (ROOT / "installer" / "JUBI-PREREQUISITES.ps1").read_text(encoding="utf-8")
         for token in ("Python.Python.3.11", "Ollama.Ollama", "Git.Git", "OpenJS.NodeJS.LTS"):
-            # Package identifiers live in bootstrap.json and are consumed here.
             self.assertIn(token, (ROOT / "config" / "bootstrap.json").read_text(encoding="utf-8"))
         self.assertIn("Install-WingetPackage", text)
         self.assertIn("www.python.org", text)
@@ -65,7 +64,7 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
 
     def test_workflow_publishes_continuous_release_manifest(self):
         workflow = (ROOT / ".github" / "workflows" / "build-windows-installer.yml").read_text(encoding="utf-8")
-        self.assertIn("config/build-info.json", workflow)
+        self.assertIn("config\\build-info.json", workflow)
         self.assertIn("Jubi-Update-Manifest.json", workflow)
         self.assertIn("gh release upload continuous", workflow)
 
