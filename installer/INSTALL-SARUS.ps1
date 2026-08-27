@@ -1,6 +1,8 @@
 param(
     [switch]$NonInteractive,
-    [switch]$NoLaunch
+    [switch]$NoLaunch,
+    [switch]$UpdateMode,
+    [switch]$RepairMode
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -12,13 +14,108 @@ if (-not (Test-Path (Join-Path $Root 'sarus\server.py'))) {
 }
 
 $LogDir = Join-Path $Root 'logs'
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+$UserLogDir = Join-Path $env:LOCALAPPDATA 'Jubi\logs'
+$RuntimeState = Join-Path $env:LOCALAPPDATA 'Jubi\runtime.json'
+New-Item -ItemType Directory -Force -Path $LogDir,$UserLogDir | Out-Null
 $Log = Join-Path $LogDir 'github-install.log'
 function Log([string]$m) { "[$(Get-Date -Format s)] $m" | Tee-Object -FilePath $Log -Append | Write-Host }
 function IsAdmin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     $p = New-Object Security.Principal.WindowsPrincipal($id)
     return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Invoke-WebDownloadRetry([string]$Uri, [string]$OutFile, [int]$Attempts = 3, [int]$TimeoutSec = 900) {
+    $last = $null
+    foreach ($attempt in 1..$Attempts) {
+        try {
+            Log "Downloading $Uri (attempt $attempt/$Attempts)"
+            Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue
+            Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $OutFile -TimeoutSec $TimeoutSec
+            if ((Test-Path -LiteralPath $OutFile) -and ((Get-Item -LiteralPath $OutFile).Length -gt 1KB)) { return }
+            throw 'Downloaded file is empty or unexpectedly small.'
+        }
+        catch {
+            $last = $_
+            Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue
+            if ($attempt -lt $Attempts) { Start-Sleep -Seconds (5 * $attempt) }
+        }
+    }
+    throw "Download failed after retries: $($last.Exception.Message)"
+}
+
+function Test-PythonRuntime([string]$PythonExe) {
+    if ([string]::IsNullOrWhiteSpace($PythonExe) -or -not (Test-Path -LiteralPath $PythonExe)) { return $false }
+    try {
+        $value = & $PythonExe -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+        return ($LASTEXITCODE -eq 0 -and (($value | Select-Object -Last 1).Trim() -eq '3.11'))
+    }
+    catch { return $false }
+}
+
+function Resolve-Python311 {
+    if (Test-Path -LiteralPath $RuntimeState) {
+        try {
+            $runtimeInfo = Get-Content -LiteralPath $RuntimeState -Raw | ConvertFrom-Json
+            $savedPython = [string]$runtimeInfo.python_exe
+            if (Test-PythonRuntime $savedPython) {
+                Log "Using prerequisite-verified Python runtime: $savedPython"
+                return $savedPython
+            }
+        }
+        catch {}
+    }
+    try {
+        $value = & py.exe -3.11 -c 'import sys; print(sys.executable)' 2>$null
+        if ($LASTEXITCODE -eq 0 -and $value) {
+            $candidate = ($value | Select-Object -Last 1).Trim()
+            if (Test-PythonRuntime $candidate) { return $candidate }
+        }
+    }
+    catch {}
+    foreach ($candidate in @('C:\Program Files\Python311\python.exe',(Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe'))) {
+        if (Test-PythonRuntime $candidate) { return $candidate }
+    }
+    return $null
+}
+
+function Invoke-SaraDependencySetup([IO.FileInfo]$SaraBat) {
+    $stdout = Join-Path $UserLogDir 'sara-dependencies.stdout.log'
+    $stderr = Join-Path $UserLogDir 'sara-dependencies.stderr.log'
+    $lastCode = -1
+    foreach ($attempt in 1..2) {
+        Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
+        Log "Running bundled SARA dependency provisioning automatically (attempt $attempt/2)."
+        $oldCI = $env:CI
+        $oldNpmYes = $env:NPM_CONFIG_YES
+        $oldPipCheck = $env:PIP_DISABLE_PIP_VERSION_CHECK
+        $env:CI = '1'
+        $env:NPM_CONFIG_YES = 'true'
+        $env:PIP_DISABLE_PIP_VERSION_CHECK = '1'
+        try {
+            $escapedSaraBat = $SaraBat.FullName.Replace('"', '""')
+            $cmdLine = "call `"$escapedSaraBat`" < NUL"
+            $sp = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/s','/c', $cmdLine) -WorkingDirectory $SaraBat.DirectoryName -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+            $lastCode = $sp.ExitCode
+            if ($lastCode -eq 0) {
+                Log 'SARA dependency provisioning completed successfully.'
+                return
+            }
+        }
+        finally {
+            $env:CI = $oldCI
+            $env:NPM_CONFIG_YES = $oldNpmYes
+            $env:PIP_DISABLE_PIP_VERSION_CHECK = $oldPipCheck
+        }
+        $tail = ''
+        if (Test-Path -LiteralPath $stderr) {
+            $lines = Get-Content -LiteralPath $stderr -Tail 10 -ErrorAction SilentlyContinue
+            if ($lines) { $tail = ($lines -join ' | ') }
+        }
+        Log "SARA dependency setup attempt $attempt failed with exit code $lastCode. $tail"
+        if ($attempt -lt 2) { Start-Sleep -Seconds 8 }
+    }
+    throw "SARA dependency setup failed after automatic retry. Exit code $lastCode. See $stdout and $stderr"
 }
 
 if (-not (IsAdmin)) {
@@ -28,12 +125,14 @@ if (-not (IsAdmin)) {
     Log 'Requesting Administrator permission...'
     $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File',"`"$PSCommandPath`"")
     if ($NoLaunch) { $args += '-NoLaunch' }
+    if ($UpdateMode) { $args += '-UpdateMode' }
+    if ($RepairMode) { $args += '-RepairMode' }
     $p = Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList $args -Wait -PassThru
     exit $p.ExitCode
 }
 
 try {
-    Log "Jubi installation engine started. Mode=$($env:JUBI_INSTALL_MODE) LegacyMode=$($env:SARUS_INSTALL_MODE) NonInteractive=$NonInteractive NoLaunch=$NoLaunch"
+    Log "Jubi installation engine started. UpdateMode=$UpdateMode RepairMode=$RepairMode NonInteractive=$NonInteractive NoLaunch=$NoLaunch"
 
     # ------------------------------------------------------------------
     # 1) Restore the custom SARA source.
@@ -58,21 +157,13 @@ try {
             if (-not (Test-Path $hashFile)) { throw 'FINAL-SHA256.txt is missing.' }
             Log 'Reconstructing the verified bundled SARA source...'
             $sb = New-Object Text.StringBuilder
-            foreach ($part in $parts) {
-                [void]$sb.Append((Get-Content -LiteralPath $part.FullName -Raw).Trim())
-            }
+            foreach ($part in $parts) { [void]$sb.Append((Get-Content -LiteralPath $part.FullName -Raw).Trim()) }
             $saraArchive = Join-Path $env:TEMP 'SARA-public-final.tar.xz'
-            try {
-                [IO.File]::WriteAllBytes($saraArchive, [Convert]::FromBase64String($sb.ToString()))
-            }
-            catch {
-                throw "SARA bundle base64 reconstruction failed: $($_.Exception.Message)"
-            }
+            try { [IO.File]::WriteAllBytes($saraArchive, [Convert]::FromBase64String($sb.ToString())) }
+            catch { throw "SARA bundle base64 reconstruction failed: $($_.Exception.Message)" }
             $expected = ((Get-Content -LiteralPath $hashFile -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
             $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $saraArchive).Hash.ToLowerInvariant()
-            if ($actual -ne $expected) {
-                throw "SARA source checksum mismatch. Expected $expected got $actual. Installation stopped."
-            }
+            if ($actual -ne $expected) { throw "SARA source checksum mismatch. Expected $expected got $actual. Installation stopped." }
             Log "SARA source verified: $actual"
             $tar = Join-Path $env:SystemRoot 'System32\tar.exe'
             if (-not (Test-Path $tar)) { throw 'Windows tar.exe is required to extract SARA.' }
@@ -81,38 +172,25 @@ try {
             Remove-Item $saraArchive -Force -ErrorAction SilentlyContinue
         }
         else {
-            # Owner fallback only. The normal release installer carries the verified
-            # bundled source, so end users should not need to perform this step.
             Log "Verified bundled SARA source is incomplete ($($parts.Count)/24 parts). Trying authenticated GitHub owner fallback..."
             $git = Get-Command git.exe -ErrorAction SilentlyContinue
-            if (-not $git) {
-                throw 'The verified SARA bundle is incomplete and Git is unavailable for the authenticated owner fallback.'
-            }
+            if (-not $git) { throw 'The verified SARA bundle is incomplete and Git is unavailable for the authenticated owner fallback.' }
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $saraTarget) | Out-Null
             if (Test-Path $saraTarget) { Remove-Item $saraTarget -Recurse -Force }
             & $git.Source clone --depth 1 'https://github.com/kautukade/SARA-AI-OS.git' $saraTarget
-            if ($LASTEXITCODE -ne 0) {
-                throw 'Could not obtain SARA source. Use an official installer containing the verified finalparts bundle.'
-            }
+            if ($LASTEXITCODE -ne 0) { throw 'Could not obtain SARA source. Use an official installer containing the verified finalparts bundle.' }
         }
 
         if (-not (Test-Path $saraInstaller)) {
             $foundSaraInstaller = Get-ChildItem -Path (Join-Path $Root 'sources') -Filter 'INSTALL-AND-START-SARA.bat' -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($foundSaraInstaller) {
-                $saraInstaller = $foundSaraInstaller.FullName
-                $saraTarget = $foundSaraInstaller.DirectoryName
-            }
-            else {
-                throw 'SARA Windows dependency installer was not found after source restoration.'
-            }
+            if ($foundSaraInstaller) { $saraInstaller = $foundSaraInstaller.FullName; $saraTarget = $foundSaraInstaller.DirectoryName }
+            else { throw 'SARA Windows dependency installer was not found after source restoration.' }
         }
     }
 
     # ------------------------------------------------------------------
     # 2) Restore and verify the legacy native launcher payload.
     # ------------------------------------------------------------------
-    # Jubi Phase 0 reuses the byte-identical verified launcher binary. The outer
-    # EXE bootstrap copies this to Jubi.exe after SHA-256 equality verification.
     $launcherB64 = Join-Path $Root 'vendor\launcher\SARUS.exe.b64'
     $launcherHashFile = Join-Path $Root 'vendor\launcher\SHA256.txt'
     if (-not (Test-Path -LiteralPath $launcherB64)) { throw 'vendor\launcher\SARUS.exe.b64 is missing.' }
@@ -139,92 +217,78 @@ try {
         $i++
         $dest = Join-Path $Root ("sources\" + $s.wrapper + "\" + $s.inner)
         $alreadyPresent = $false
-        if (Test-Path $dest) {
-            $alreadyPresent = ((Get-ChildItem -LiteralPath $dest -Force -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null)
-        }
-        if ($alreadyPresent) {
-            Log "[$i/$($specs.Count)] $($s.repo) already present."
-            continue
-        }
+        if (Test-Path $dest) { $alreadyPresent = ((Get-ChildItem -LiteralPath $dest -Force -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null) }
+        if ($alreadyPresent) { Log "[$i/$($specs.Count)] $($s.repo) already present."; continue }
 
         $work = Join-Path $env:TEMP ('jubi-source-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Force -Path $work | Out-Null
-        $zip = Join-Path $work 'src.zip'
-        $x = Join-Path $work 'x'
-        $url = "https://codeload.github.com/$($s.repo)/zip/$($s.sha)"
-        Log "[$i/$($specs.Count)] Downloading $($s.repo) @ $($s.sha.Substring(0,12))"
-        Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $zip -TimeoutSec 900
-        Expand-Archive -LiteralPath $zip -DestinationPath $x -Force
-        $src = Get-ChildItem $x -Directory | Select-Object -First 1
-        if (-not $src) { throw "Archive root missing for $($s.repo)" }
-        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
-        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        Move-Item -LiteralPath $src.FullName -Destination $dest -Force
-        Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue
+        try {
+            $zip = Join-Path $work 'src.zip'
+            $x = Join-Path $work 'x'
+            $url = "https://codeload.github.com/$($s.repo)/zip/$($s.sha)"
+            Log "[$i/$($specs.Count)] Restoring $($s.repo) @ $($s.sha.Substring(0,12))"
+            Invoke-WebDownloadRetry $url $zip 3 900
+            Expand-Archive -LiteralPath $zip -DestinationPath $x -Force
+            $src = Get-ChildItem $x -Directory | Select-Object -First 1
+            if (-not $src) { throw "Archive root missing for $($s.repo)" }
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
+            if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+            Move-Item -LiteralPath $src.FullName -Destination $dest -Force
+        }
+        finally { Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue }
     }
 
     # ------------------------------------------------------------------
-    # 4) Provision SARA/Windows dependencies automatically.
+    # 4) Provision SARA/Windows dependencies. Normal installs and explicit
+    # repairs run this; silent updates keep the already-proven machine setup.
     # ------------------------------------------------------------------
     $saraBat = Get-ChildItem -Path (Join-Path $Root 'sources') -Filter 'INSTALL-AND-START-SARA.bat' -File -Recurse | Select-Object -First 1
     if (-not $saraBat) { throw 'SARA Windows dependency installer not found.' }
-    Log 'Running bundled SARA dependency provisioning automatically in non-interactive mode.'
-
-    $oldCI = $env:CI
-    $oldNpmYes = $env:NPM_CONFIG_YES
-    $oldPipCheck = $env:PIP_DISABLE_PIP_VERSION_CHECK
-    $env:CI = '1'
-    $env:NPM_CONFIG_YES = 'true'
-    $env:PIP_DISABLE_PIP_VERSION_CHECK = '1'
-    try {
-        $escapedSaraBat = $saraBat.FullName.Replace('"', '""')
-        $cmdLine = "call `"$escapedSaraBat`" < NUL"
-        $sp = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/d','/s','/c', $cmdLine) -WorkingDirectory $saraBat.DirectoryName -Wait -PassThru
-        if ($sp.ExitCode -ne 0) { throw "SARA dependency setup failed with exit code $($sp.ExitCode)" }
+    if ($UpdateMode -and -not $RepairMode) {
+        Log 'Update mode: keeping previously provisioned SARA/Windows dependencies to avoid unnecessary global reinstall work.'
     }
-    finally {
-        $env:CI = $oldCI
-        $env:NPM_CONFIG_YES = $oldNpmYes
-        $env:PIP_DISABLE_PIP_VERSION_CHECK = $oldPipCheck
+    else {
+        Invoke-SaraDependencySetup $saraBat
     }
 
     # ------------------------------------------------------------------
-    # 5) Create private Python runtime and run Jubi acceptance tests.
+    # 5) Reuse a healthy private runtime. This is critical for safe in-place
+    # updates because the updater itself may currently be running from it.
     # ------------------------------------------------------------------
-    $py = $null
-    try {
-        $v = & py.exe -3.11 -c 'import sys; print(sys.executable)' 2>$null
-        if ($LASTEXITCODE -eq 0) { $py = ($v | Select-Object -Last 1).Trim() }
-    } catch {}
-    if (-not $py) { throw 'Python 3.11 was not found after dependency provisioning.' }
+    $py = Resolve-Python311
+    if (-not $py) { throw 'Python 3.11 was not found after prerequisite provisioning.' }
 
-    # Legacy physical venv path retained for Phase 0 compatibility.
     $venv = Join-Path $Root '.sarus-venv'
-    if (Test-Path -LiteralPath $venv) {
-        Log 'Refreshing existing private Python environment.'
-        Remove-Item -LiteralPath $venv -Recurse -Force
-    }
-    & $py -m venv $venv
-    if ($LASTEXITCODE -ne 0) { throw 'Could not create Jubi private Python runtime.' }
     $runtimePy = Join-Path $venv 'Scripts\python.exe'
-    if (-not (Test-Path -LiteralPath $runtimePy)) { throw 'Jubi private Python runtime is incomplete.' }
+    if (Test-PythonRuntime $runtimePy) {
+        Log 'Existing private Jubi Python runtime is healthy; reusing it safely.'
+    }
+    else {
+        Log 'Private Jubi Python runtime is missing or unhealthy; rebuilding it automatically.'
+        if (Test-Path -LiteralPath $venv) {
+            try { Remove-Item -LiteralPath $venv -Recurse -Force }
+            catch { throw "Could not remove unhealthy private runtime: $($_.Exception.Message)" }
+        }
+        $created = $false
+        foreach ($attempt in 1..2) {
+            & $py -m venv $venv
+            if ($LASTEXITCODE -eq 0 -and (Test-PythonRuntime $runtimePy)) { $created = $true; break }
+            Log "Private runtime creation attempt $attempt failed; retrying automatically."
+            Remove-Item -LiteralPath $venv -Recurse -Force -ErrorAction SilentlyContinue
+            if ($attempt -lt 2) { Start-Sleep -Seconds 5 }
+        }
+        if (-not $created) { throw 'Could not create a healthy Jubi private Python runtime after automatic retry.' }
+    }
 
     Push-Location $Root
-    try {
-        & $runtimePy -m jubi.acceptance
-        $accept = $LASTEXITCODE
-    }
-    finally {
-        Pop-Location
-    }
+    try { & $runtimePy -m jubi.acceptance; $accept = $LASTEXITCODE }
+    finally { Pop-Location }
     if ($accept -ne 0) { throw "Jubi acceptance failed with exit code $accept" }
     Log 'Jubi acceptance checks passed.'
 
     # ------------------------------------------------------------------
     # 6) Create a Jubi-branded direct shortcut for compatibility installs.
     # ------------------------------------------------------------------
-    # The official Inno Setup package creates a Jubi.exe shortcut itself. This
-    # shortcut is mainly useful when this compatibility script is run directly.
     $shell = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath('Desktop')
     $lnk = $shell.CreateShortcut((Join-Path $desktop 'Jubi.lnk'))
@@ -234,22 +298,15 @@ try {
     $lnk.Save()
 
     $finalRequired = @(
-        $launcher,
-        $runtimePy,
-        (Join-Path $Root 'README.md'),
-        (Join-Path $Root 'jubi\server.py'),
-        (Join-Path $Root 'sarus\server.py'),
-        (Join-Path $Root 'config\models.json'),
-        (Join-Path $Root 'config\broker_allowlist.json')
+        $launcher,$runtimePy,(Join-Path $Root 'README.md'),(Join-Path $Root 'jubi\server.py'),
+        (Join-Path $Root 'sarus\server.py'),(Join-Path $Root 'config\models.json'),(Join-Path $Root 'config\broker_allowlist.json')
     )
     foreach ($path in $finalRequired) {
         if (-not (Test-Path -LiteralPath $path)) { throw "Final installation verification failed: $path is missing." }
     }
 
     Log 'Jubi compatibility installation engine completed and verified.'
-    if (-not $NoLaunch) {
-        Start-Process -FilePath $launcher -WorkingDirectory $Root
-    }
+    if (-not $NoLaunch) { Start-Process -FilePath $launcher -WorkingDirectory $Root }
 
     Write-Host "`nJUBI INSTALL COMPLETE" -ForegroundColor Green
     if (-not $NonInteractive) { Read-Host 'Press Enter to close' | Out-Null }

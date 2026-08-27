@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import re
 from tempfile import TemporaryDirectory
 import sys
 import unittest
@@ -18,6 +19,7 @@ from sarus.core.models import OllamaRouter
 class JubiInstallerLifecycleTests(unittest.TestCase):
     def test_bootstrap_is_canonical_and_auto_update_enabled(self):
         cfg = json.loads((ROOT / "config" / "bootstrap.json").read_text(encoding="utf-8"))
+        self.assertGreaterEqual(cfg["schema_version"], 2)
         update = cfg["auto_update"]
         self.assertTrue(update["enabled"])
         self.assertEqual(update["channel"], "continuous")
@@ -25,6 +27,11 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
         self.assertEqual(update["installer_asset"], "Jubi-Setup.exe")
         self.assertIn("kautukade/JUBI", update["release_api"])
         self.assertTrue(update["require_sha256"])
+        self.assertGreaterEqual(int(cfg["background"]["repair_check_seconds"]), 1800)
+        ports = cfg["prerequisites"]["ollama"]["candidate_ports"]
+        self.assertIn(11434, ports)
+        self.assertIn(11500, ports)
+        self.assertGreaterEqual(len(ports), 3)
 
     def test_updater_is_hash_verified_and_repo_scoped(self):
         text = (ROOT / "jubi" / "updater.py").read_text(encoding="utf-8")
@@ -45,23 +52,54 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
         self.assertIn("check_for_update", background)
         self.assertIn("apply_update", background)
         self.assertIn("jubi.server", background)
+        self.assertIn("repair_check_seconds", background)
+        self.assertIn("_start_repair(full=True)", background)
 
-    def test_prerequisites_are_automatically_provisioned(self):
+    def test_background_bootstrap_repairs_private_runtime(self):
+        text = (ROOT / "installer" / "JUBI-BACKGROUND.ps1").read_text(encoding="utf-8")
+        self.assertIn("Test-PrivateRuntime", text)
+        self.assertIn("Repair-CoreRuntime", text)
+        self.assertIn("'-Repair'", text)
+        self.assertIn("'-RepairMode'", text)
+        self.assertIn("consecutiveSupervisorFailures", text)
+
+    def test_prerequisites_are_automatically_provisioned_and_self_healing(self):
         text = (ROOT / "installer" / "JUBI-PREREQUISITES.ps1").read_text(encoding="utf-8")
+        bootstrap = (ROOT / "config" / "bootstrap.json").read_text(encoding="utf-8")
         for token in ("Python.Python.3.11", "Ollama.Ollama", "Git.Git", "OpenJS.NodeJS.LTS"):
-            self.assertIn(token, (ROOT / "config" / "bootstrap.json").read_text(encoding="utf-8"))
-        self.assertIn("Install-WingetPackage", text)
-        self.assertIn("www.python.org", text)
-        self.assertIn("ollama.com", text)
-        self.assertIn("Ensure-Models", text)
-        self.assertIn("Get-AuthenticodeSignature", text)
-        self.assertIn("Normalize-LocalOllamaUrl", text)
-        self.assertIn("OLLAMA_HOST", text)
-        self.assertIn("runtime.json", text)
-        self.assertIn("$request.Proxy = $null", text)
-        self.assertIn("ollama-serve.stderr.log", text)
-        self.assertIn("$hostName = $uri.Host.ToLowerInvariant()", text)
-        self.assertNotRegex(text, r"(?im)^\s*\$host\s*=")
+            self.assertIn(token, bootstrap)
+        for token in (
+            "Install-WingetPackage",
+            "www.python.org",
+            "ollama.com",
+            "Ensure-Models",
+            "Get-AuthenticodeSignature",
+            "Normalize-LocalOllamaUrl",
+            "OLLAMA_HOST",
+            "runtime.json",
+            "$request.Proxy = $null",
+            "Start-OllamaOnCandidates",
+            "Test-LocalPortAvailable",
+            "pending_models",
+            "ForceRepair",
+            "candidate_ports",
+        ):
+            self.assertIn(token, text)
+        self.assertIsNone(re.search(r"(?im)^\s*\$host\s*=", text), "PowerShell $Host is read-only and must never be assigned")
+
+    def test_core_install_retries_transient_work_and_reuses_runtime_on_update(self):
+        text = (ROOT / "installer" / "INSTALL-SARUS.ps1").read_text(encoding="utf-8")
+        for token in (
+            "Invoke-WebDownloadRetry",
+            "Invoke-SaraDependencySetup",
+            "UpdateMode",
+            "RepairMode",
+            "Test-PythonRuntime",
+            "Existing private Jubi Python runtime is healthy; reusing it safely.",
+            "automatic retry",
+        ):
+            self.assertIn(token, text)
+        self.assertIn("Update mode: keeping previously provisioned SARA/Windows dependencies", text)
 
     def test_ollama_router_respects_local_custom_port(self):
         with TemporaryDirectory() as td:
@@ -80,12 +118,20 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
                 router = OllamaRouter(config)
                 self.assertEqual(router.base, "http://127.0.0.1:11434")
 
-    def test_outer_installer_captures_child_diagnostics(self):
+    def test_outer_installer_captures_diagnostics_and_repairs_failed_steps(self):
         text = (ROOT / "installer" / "EXE-INSTALL.ps1").read_text(encoding="utf-8")
-        self.assertIn("RedirectStandardOutput", text)
-        self.assertIn("RedirectStandardError", text)
-        self.assertIn("installer-steps", text)
-        self.assertIn("Append-ChildLog", text)
+        for token in (
+            "RedirectStandardOutput",
+            "RedirectStandardError",
+            "installer-steps",
+            "Append-ChildLog",
+            "Invoke-WithRetry",
+            "automatic repair mode",
+            "core-repair-prereq",
+            "certify-core-repair",
+            "Background task registration",
+        ):
+            self.assertIn(token, text)
 
     def test_inno_installer_supports_silent_updates_and_current_repo(self):
         iss = (ROOT / "installer" / "SARUS-Setup.iss").read_text(encoding="utf-8")

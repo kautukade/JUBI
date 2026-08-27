@@ -26,35 +26,20 @@ function Log([string]$Message) {
 function Append-ChildLog([string]$Name, [string]$Path, [string]$StreamName) {
     if (-not (Test-Path -LiteralPath $Path)) { return }
     foreach ($line in (Get-Content -LiteralPath $Path -ErrorAction SilentlyContinue)) {
-        if (-not [string]::IsNullOrWhiteSpace([string]$line)) {
-            Log "[$Name/$StreamName] $line"
-        }
+        if (-not [string]::IsNullOrWhiteSpace([string]$line)) { Log "[$Name/$StreamName] $line" }
     }
 }
 
-function Invoke-JubiPowerShell([string]$ScriptPath, [string[]]$Arguments = @()) {
-    if (-not (Test-Path -LiteralPath $ScriptPath)) {
-        throw "Required installer script is missing: $ScriptPath"
-    }
+function Invoke-JubiPowerShell([string]$ScriptPath, [string[]]$Arguments = @(), [string]$AttemptTag = '') {
+    if (-not (Test-Path -LiteralPath $ScriptPath)) { throw "Required installer script is missing: $ScriptPath" }
     $name = [IO.Path]::GetFileNameWithoutExtension($ScriptPath)
-    $stdout = Join-Path $ChildLogDir "$name.stdout.log"
-    $stderr = Join-Path $ChildLogDir "$name.stderr.log"
+    $suffix = if ([string]::IsNullOrWhiteSpace($AttemptTag)) { '' } else { '-' + $AttemptTag }
+    $stdout = Join-Path $ChildLogDir "$name$suffix.stdout.log"
+    $stderr = Join-Path $ChildLogDir "$name$suffix.stderr.log"
     Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
 
-    $argumentList = @(
-        '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-        '-File', "`"$ScriptPath`""
-    ) + $Arguments
-    $startParams = @{
-        FilePath = $PowerShell
-        ArgumentList = $argumentList
-        WorkingDirectory = $Root
-        Wait = $true
-        PassThru = $true
-        RedirectStandardOutput = $stdout
-        RedirectStandardError = $stderr
-    }
-    $process = Start-Process @startParams
+    $argumentList = @('-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',"`"$ScriptPath`"") + $Arguments
+    $process = Start-Process -FilePath $PowerShell -ArgumentList $argumentList -WorkingDirectory $Root -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
     Append-ChildLog $name $stdout 'stdout'
     Append-ChildLog $name $stderr 'stderr'
     if ($process.ExitCode -ne 0) {
@@ -63,15 +48,45 @@ function Invoke-JubiPowerShell([string]$ScriptPath, [string[]]$Arguments = @()) 
             $tail = Get-Content -LiteralPath $stderr -Tail 8 -ErrorAction SilentlyContinue
             if ($tail) { $detail = (($tail | ForEach-Object { $_.Trim() }) -join ' | ') }
         }
-        if ($detail) {
-            throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode): $detail"
+        if (-not $detail -and (Test-Path -LiteralPath $stdout)) {
+            $tail = Get-Content -LiteralPath $stdout -Tail 8 -ErrorAction SilentlyContinue
+            if ($tail) { $detail = (($tail | ForEach-Object { $_.Trim() }) -join ' | ') }
         }
+        if ($detail) { throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode): $detail" }
         throw "Installer step failed ($([IO.Path]::GetFileName($ScriptPath))) with exit code $($process.ExitCode). See $stdout and $stderr"
     }
 }
 
+function Invoke-WithRetry([string]$Label, [scriptblock]$Operation, [int]$Attempts = 2) {
+    $last = $null
+    foreach ($attempt in 1..$Attempts) {
+        try {
+            if ($attempt -gt 1) { Log "$Label automatic retry $attempt/$Attempts started." }
+            & $Operation
+            return
+        }
+        catch {
+            $last = $_
+            Log "$Label attempt $attempt/$Attempts failed: $($_.Exception.Message)"
+            if ($attempt -lt $Attempts) { Start-Sleep -Seconds (5 * $attempt) }
+        }
+    }
+    throw "$Label failed after automatic recovery attempts: $($last.Exception.Message)"
+}
+
+function Test-InstallRootWritable {
+    $probe = Join-Path $Root ('.jubi-write-test-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        'ok' | Set-Content -LiteralPath $probe -Encoding ascii
+        return (Test-Path -LiteralPath $probe)
+    }
+    finally { Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue }
+}
+
 try {
     if (-not (Test-Path -LiteralPath $PowerShell)) { throw 'Windows PowerShell 5.1 is required.' }
+    if (-not [Environment]::Is64BitOperatingSystem) { throw 'Jubi requires 64-bit Windows.' }
+    if (-not (Test-InstallRootWritable)) { throw 'Jubi install directory is not writable even with installer elevation.' }
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'sarus\server.py'))) { throw 'Jubi foundation payload is incomplete.' }
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'vendor\launcher\SARUS.exe.b64'))) { throw 'Bundled verified launcher payload is missing.' }
     if (-not (Test-Path -LiteralPath (Join-Path $Root 'vendor\launcher\SHA256.txt'))) { throw 'Bundled launcher checksum is missing.' }
@@ -82,20 +97,35 @@ try {
     $env:JUBI_INSTALL_MODE = 'exe'
     $env:SARUS_INSTALL_MODE = 'exe'
 
-    Log 'Checking Windows requirements and automatically installing missing prerequisites.'
-    Invoke-JubiPowerShell $Prerequisites
+    Log 'Checking Windows requirements and automatically installing/repairing missing prerequisites.'
+    try {
+        Invoke-JubiPowerShell $Prerequisites @() 'initial'
+    }
+    catch {
+        Log "Initial prerequisite pass failed; Jubi is entering automatic repair mode. $($_.Exception.Message)"
+        Invoke-JubiPowerShell $Prerequisites @('-Repair') 'repair'
+    }
 
     Log 'Preparing protected privileged-broker storage.'
-    Invoke-JubiPowerShell $Bootstrap
+    Invoke-WithRetry 'Broker storage setup' { Invoke-JubiPowerShell $Bootstrap @() 'broker' } 2
 
     Log 'Installing/repairing Jubi core, integrations and private Python runtime.'
-    Invoke-JubiPowerShell $Installer @('-NonInteractive', '-NoLaunch')
+    $coreArgs = @('-NonInteractive','-NoLaunch')
+    if ($UpdateMode) { $coreArgs += '-UpdateMode' }
+    try {
+        Invoke-JubiPowerShell $Installer $coreArgs 'initial'
+    }
+    catch {
+        Log "Initial core installation failed; running prerequisite repair and one clean core retry. $($_.Exception.Message)"
+        Invoke-JubiPowerShell $Prerequisites @('-Repair') 'core-repair-prereq'
+        $repairArgs = @('-NonInteractive','-NoLaunch','-RepairMode')
+        if ($UpdateMode) { $repairArgs += '-UpdateMode' }
+        Invoke-JubiPowerShell $Installer $repairArgs 'repair'
+    }
 
     $LegacyLauncher = Join-Path $Root 'SARUS.exe'
     $JubiLauncher = Join-Path $Root 'Jubi.exe'
-    if (-not (Test-Path -LiteralPath $LegacyLauncher)) {
-        throw 'Verified launcher was not reconstructed by the installer.'
-    }
+    if (-not (Test-Path -LiteralPath $LegacyLauncher)) { throw 'Verified launcher was not reconstructed by the installer.' }
     Copy-Item -LiteralPath $LegacyLauncher -Destination $JubiLauncher -Force
     $legacyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $LegacyLauncher).Hash
     $jubiHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $JubiLauncher).Hash
@@ -119,51 +149,45 @@ try {
         $signature = Get-AuthenticodeSignature -LiteralPath $Ring0Driver
         if ($signature.Status -eq 'Valid') {
             Log 'A validly signed legacy SarusRing0.sys is bundled; installing the controlled compatibility bridge.'
-            Invoke-JubiPowerShell $Ring0Installer @('-DriverPath', "`"$Ring0Driver`"")
+            Invoke-WithRetry 'Ring0 compatibility setup' { Invoke-JubiPowerShell $Ring0Installer @('-DriverPath',"`"$Ring0Driver`"") 'ring0' } 2
         }
-        else {
-            Log "Ring0 driver payload is not validly signed for this machine (status: $($signature.Status)); activation skipped."
-        }
+        else { Log "Ring0 driver payload is not validly signed for this machine (status: $($signature.Status)); activation skipped." }
     }
-    else {
-        Log 'No prebuilt signed Ring0 driver is bundled; controlled source remains available but activation is skipped.'
-    }
+    else { Log 'No prebuilt signed Ring0 driver is bundled; controlled source remains available but activation is skipped.' }
 
     $requiredFinal = @(
-        $JubiLauncher,
-        (Join-Path $Root '.sarus-venv\Scripts\python.exe'),
-        (Join-Path $Root 'README.md'),
-        (Join-Path $Root 'BUILD_MANIFEST.json'),
-        (Join-Path $Root 'config\production.json'),
-        (Join-Path $Root 'config\bootstrap.json'),
-        (Join-Path $Root 'config\models.json'),
-        (Join-Path $Root 'config\broker_allowlist.json'),
-        (Join-Path $Root 'jubi\background.py'),
-        (Join-Path $Root 'jubi\updater.py'),
-        (Join-Path $Root 'installer\JUBI-BACKGROUND.ps1'),
-        (Join-Path $Root 'installer\REGISTER-JUBI-BACKGROUND.ps1'),
-        (Join-Path $Root 'sarus\server.py')
+        $JubiLauncher,(Join-Path $Root '.sarus-venv\Scripts\python.exe'),(Join-Path $Root 'README.md'),
+        (Join-Path $Root 'BUILD_MANIFEST.json'),(Join-Path $Root 'config\production.json'),(Join-Path $Root 'config\bootstrap.json'),
+        (Join-Path $Root 'config\models.json'),(Join-Path $Root 'config\broker_allowlist.json'),(Join-Path $Root 'jubi\background.py'),
+        (Join-Path $Root 'jubi\updater.py'),(Join-Path $Root 'installer\JUBI-BACKGROUND.ps1'),
+        (Join-Path $Root 'installer\REGISTER-JUBI-BACKGROUND.ps1'),(Join-Path $Root 'sarus\server.py')
     )
     foreach ($path in $requiredFinal) {
-        if (-not (Test-Path -LiteralPath $path)) {
-            throw "Post-install verification failed; required file is missing: $path"
-        }
+        if (-not (Test-Path -LiteralPath $path)) { throw "Post-install verification failed; required file is missing: $path" }
     }
 
     Log 'Running target-machine production certification (core profile).'
-    Invoke-JubiPowerShell $Certifier
+    try {
+        Invoke-JubiPowerShell $Certifier @() 'certify-initial'
+    }
+    catch {
+        Log "Certification found a repairable problem; running one automatic repair cycle. $($_.Exception.Message)"
+        Invoke-JubiPowerShell $Prerequisites @('-Repair') 'certify-prereq-repair'
+        $certRepairArgs = @('-NonInteractive','-NoLaunch','-RepairMode')
+        if ($UpdateMode) { $certRepairArgs += '-UpdateMode' }
+        Invoke-JubiPowerShell $Installer $certRepairArgs 'certify-core-repair'
+        Invoke-JubiPowerShell $Certifier @() 'certify-final'
+    }
 
     Log 'Registering Jubi to start with Windows, self-restart on failure and check verified updates automatically.'
-    Invoke-JubiPowerShell $RegisterBackground
+    Invoke-WithRetry 'Background task registration' { Invoke-JubiPowerShell $RegisterBackground @() 'background' } 2
 
     Log 'Post-install verification, background registration and core certification passed.'
     if (-not $UpdateMode) {
         Log 'Launching Jubi dashboard.'
         Start-Process -FilePath $JubiLauncher -WorkingDirectory $Root
     }
-    else {
-        Log 'Silent update completed; background task will run the refreshed Jubi build.'
-    }
+    else { Log 'Silent update completed; background task will run the refreshed Jubi build.' }
     Log 'Jubi one-click installation completed successfully.'
     exit 0
 }

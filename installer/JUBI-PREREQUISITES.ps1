@@ -1,9 +1,15 @@
 param(
-    [switch]$Fast
+    [switch]$Fast,
+    [switch]$Repair
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+if ($Fast -and $Repair) {
+    Write-Error 'Choose either -Fast or -Repair, not both.'
+    exit 2
+}
 
 $Root = Split-Path -Parent $PSScriptRoot
 $ConfigPath = Join-Path $Root 'config\bootstrap.json'
@@ -22,11 +28,11 @@ function Test-Command([string]$Name) {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-function Invoke-Download([string]$Uri, [string]$OutFile) {
+function Invoke-Download([string]$Uri, [string]$OutFile, [int]$Attempts = 3) {
     $last = $null
-    foreach ($attempt in 1..3) {
+    foreach ($attempt in 1..$Attempts) {
         try {
-            Log "Downloading $Uri (attempt $attempt/3)"
+            Log "Downloading $Uri (attempt $attempt/$Attempts)"
             Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $OutFile -TimeoutSec 300
             if ((Test-Path -LiteralPath $OutFile) -and ((Get-Item -LiteralPath $OutFile).Length -gt 500KB)) { return }
             throw 'Downloaded file is unexpectedly small.'
@@ -34,7 +40,7 @@ function Invoke-Download([string]$Uri, [string]$OutFile) {
         catch {
             $last = $_
             Remove-Item -LiteralPath $OutFile -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds (3 * $attempt)
+            if ($attempt -lt $Attempts) { Start-Sleep -Seconds (3 * $attempt) }
         }
     }
     throw "Download failed after retries: $($last.Exception.Message)"
@@ -50,12 +56,29 @@ function Get-Winget {
 
 function Install-WingetPackage([string]$Id, [string]$DisplayName) {
     $winget = Get-Winget
-    if (-not $winget) { return $false }
-    Log "Installing missing prerequisite with Windows Package Manager: $DisplayName ($Id)"
-    & $winget install --id $Id --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
-    if ($LASTEXITCODE -eq 0) { return $true }
-    Log "winget returned exit code $LASTEXITCODE for $Id; trying fallback if available."
+    if (-not $winget) {
+        Log "Windows Package Manager is unavailable for $DisplayName; trusted fallback will be used when supported."
+        return $false
+    }
+    try {
+        Log "Installing/repairing prerequisite with Windows Package Manager: $DisplayName ($Id)"
+        & $winget install --id $Id --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity --force
+        if ($LASTEXITCODE -eq 0) { return $true }
+        Log "winget returned exit code $LASTEXITCODE for $Id; trying trusted fallback if available."
+    }
+    catch {
+        Log "winget invocation failed for ${Id}: $($_.Exception.Message)"
+    }
     return $false
+}
+
+function Test-Python311Exe([string]$Candidate) {
+    if ([string]::IsNullOrWhiteSpace($Candidate) -or -not (Test-Path -LiteralPath $Candidate)) { return $false }
+    try {
+        $value = & $Candidate -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+        return ($LASTEXITCODE -eq 0 -and (($value | Select-Object -Last 1).Trim() -eq '3.11'))
+    }
+    catch { return $false }
 }
 
 function Find-Python311 {
@@ -63,7 +86,7 @@ function Find-Python311 {
         $result = & py.exe -3.11 -c "import sys; print(sys.executable)" 2>$null
         if ($LASTEXITCODE -eq 0 -and $result) {
             $candidate = ($result | Select-Object -Last 1).Trim()
-            if (Test-Path -LiteralPath $candidate) { return $candidate }
+            if (Test-Python311Exe $candidate) { return $candidate }
         }
     } catch {}
     $candidates = @(
@@ -71,23 +94,23 @@ function Find-Python311 {
         (Join-Path $env:LOCALAPPDATA 'Programs\Python\Python311\python.exe')
     )
     foreach ($candidate in $candidates) {
-        if (Test-Path -LiteralPath $candidate) { return $candidate }
+        if (Test-Python311Exe $candidate) { return $candidate }
     }
     return $null
 }
 
 function Ensure-Python311($Bootstrap) {
-    $python = Find-Python311
-    if ($python) {
-        Log "Python 3.11 found: $python"
-        return $python
+    $pythonExe = Find-Python311
+    if ($pythonExe) {
+        Log "Python 3.11 found and executable: $pythonExe"
+        return $pythonExe
     }
-    if ($Fast) { throw 'Python 3.11 is missing during fast repair.' }
+    if ($Fast) { throw 'Python 3.11 is missing or not executable during fast health check.' }
 
     $pythonCfg = $Bootstrap.prerequisites.python
     [void](Install-WingetPackage ([string]$pythonCfg.winget_id) 'Python 3.11')
-    $python = Find-Python311
-    if ($python) { return $python }
+    $pythonExe = Find-Python311
+    if ($pythonExe) { return $pythonExe }
 
     $url = [string]$pythonCfg.fallback_url
     if (-not $url.StartsWith('https://www.python.org/')) { throw 'Python fallback URL is not trusted.' }
@@ -95,13 +118,13 @@ function Ensure-Python311($Bootstrap) {
     Invoke-Download $url $installer
     $sig = Get-AuthenticodeSignature -LiteralPath $installer
     if ($sig.Status -ne 'Valid') { throw "Python installer signature is not valid: $($sig.Status)" }
-    Log 'Installing Python 3.11 fallback silently.'
+    Log 'Installing/repairing Python 3.11 fallback silently.'
     $p = Start-Process -FilePath $installer -ArgumentList @('/quiet','InstallAllUsers=1','PrependPath=1','Include_launcher=1','Include_test=0') -Wait -PassThru
     Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
-    if ($p.ExitCode -ne 0) { throw "Python installer failed with exit code $($p.ExitCode)" }
-    $python = Find-Python311
-    if (-not $python) { throw 'Python 3.11 installation completed but python.exe could not be found.' }
-    return $python
+    if ($p.ExitCode -notin @(0,3010)) { throw "Python installer failed with exit code $($p.ExitCode)" }
+    $pythonExe = Find-Python311
+    if (-not $pythonExe) { throw 'Python 3.11 installation/repair completed but a working python.exe could not be found.' }
+    return $pythonExe
 }
 
 function Find-Ollama {
@@ -138,9 +161,16 @@ function Get-OllamaCandidates($Bootstrap) {
         $env:OLLAMA_HOST,
         [Environment]::GetEnvironmentVariable('JUBI_OLLAMA_URL', 'User'),
         [Environment]::GetEnvironmentVariable('OLLAMA_HOST', 'User'),
-        [string]$Bootstrap.prerequisites.ollama.api,
-        'http://127.0.0.1:11434'
+        [string]$Bootstrap.prerequisites.ollama.api
     )
+    foreach ($candidatePort in @($Bootstrap.prerequisites.ollama.candidate_ports)) {
+        try {
+            $portNumber = [int]$candidatePort
+            if ($portNumber -ge 1 -and $portNumber -le 65535) { $values += "http://127.0.0.1:$portNumber" }
+        } catch {}
+    }
+    $values += 'http://127.0.0.1:11434'
+
     $result = @()
     foreach ($value in $values) {
         $normalized = Normalize-LocalOllamaUrl ([string]$value)
@@ -163,33 +193,64 @@ function Test-OllamaApi([string]$BaseUrl) {
     catch { return $false }
 }
 
-function Save-JubiRuntime([string]$BaseUrl) {
-    New-Item -ItemType Directory -Force -Path $JubiDataDir | Out-Null
-    $data = [ordered]@{
-        ollama_base_url = $BaseUrl
-        updated_at = (Get-Date).ToUniversalTime().ToString('o')
+function Test-LocalPortAvailable([string]$BaseUrl) {
+    try {
+        $uri = [Uri]$BaseUrl
+        $listener = New-Object System.Net.Sockets.TcpListener([Net.IPAddress]::Loopback, $uri.Port)
+        try {
+            $listener.Start()
+            return $true
+        }
+        finally {
+            $listener.Stop()
+        }
     }
-    $data | ConvertTo-Json | Set-Content -LiteralPath $RuntimeConfig -Encoding utf8
-    [Environment]::SetEnvironmentVariable('JUBI_OLLAMA_URL', $BaseUrl, 'User')
-    $env:JUBI_OLLAMA_URL = $BaseUrl
-    Log "Jubi local Ollama endpoint saved: $BaseUrl"
+    catch { return $false }
 }
 
-function Start-OllamaLocal([string]$Ollama, [string]$BaseUrl) {
-    $bind = $BaseUrl.Substring('http://'.Length)
-    $stdout = Join-Path $LogDir 'ollama-serve.stdout.log'
-    $stderr = Join-Path $LogDir 'ollama-serve.stderr.log'
+function Install-OrRepair-Ollama($Bootstrap, [switch]$ForceRepair) {
+    $cfg = $Bootstrap.prerequisites.ollama
+    $ollamaExe = Find-Ollama
+    if (-not $ollamaExe) {
+        [void](Install-WingetPackage ([string]$cfg.winget_id) 'Ollama')
+        $ollamaExe = Find-Ollama
+    }
+    if ($ollamaExe -and -not $ForceRepair) { return $ollamaExe }
+    if ($Fast) { return $ollamaExe }
+
+    $url = [string]$cfg.fallback_url
+    if (-not $url.StartsWith('https://ollama.com/')) { throw 'Ollama fallback URL is not trusted.' }
+    $installer = Join-Path $env:TEMP 'Jubi-OllamaSetup.exe'
+    Invoke-Download $url $installer
+    $sig = Get-AuthenticodeSignature -LiteralPath $installer
+    if ($sig.Status -ne 'Valid') { throw "Ollama installer signature is not valid: $($sig.Status)" }
+    if ($ForceRepair) { Log 'Repairing the existing Ollama installation with the trusted official installer.' }
+    else { Log 'Installing Ollama fallback silently.' }
+    $p = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+    Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
+    if ($p.ExitCode -notin @(0,3010)) { throw "Ollama installer failed with exit code $($p.ExitCode)" }
+    $ollamaExe = Find-Ollama
+    return $ollamaExe
+}
+
+function Start-OllamaLocal([string]$OllamaExe, [string]$BaseUrl) {
+    if (-not (Test-LocalPortAvailable $BaseUrl)) { throw "Local port is already occupied by a non-responsive service: $BaseUrl" }
+
+    $bindAddress = $BaseUrl.Substring('http://'.Length)
+    $safePort = ([Uri]$BaseUrl).Port
+    $stdout = Join-Path $LogDir "ollama-serve-$safePort.stdout.log"
+    $stderr = Join-Path $LogDir "ollama-serve-$safePort.stderr.log"
     Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
 
-    $previousHost = $env:OLLAMA_HOST
+    $previousOllamaHost = $env:OLLAMA_HOST
     try {
-        $env:OLLAMA_HOST = $bind
+        $env:OLLAMA_HOST = $bindAddress
         Log "Starting Ollama local API at $BaseUrl"
-        $process = Start-Process -FilePath $Ollama -ArgumentList @('serve') -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        $process = Start-Process -FilePath $OllamaExe -ArgumentList @('serve') -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
     }
     finally {
-        if ($null -eq $previousHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
-        else { $env:OLLAMA_HOST = $previousHost }
+        if ($null -eq $previousOllamaHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
+        else { $env:OLLAMA_HOST = $previousOllamaHost }
     }
 
     foreach ($i in 1..45) {
@@ -205,47 +266,64 @@ function Start-OllamaLocal([string]$Ollama, [string]$BaseUrl) {
     }
     $exitText = 'still running'
     try { if ($process.HasExited) { $exitText = "exit code $($process.ExitCode)" } } catch {}
+    try { if (-not $process.HasExited) { $process.Kill() } } catch {}
     if ($details) { throw "Ollama API did not become healthy at $BaseUrl ($exitText). $details" }
     throw "Ollama API did not become healthy at $BaseUrl ($exitText). See $stderr"
 }
 
-function Ensure-Ollama($Bootstrap) {
-    $ollama = Find-Ollama
-    if (-not $ollama -and -not $Fast) {
-        $cfg = $Bootstrap.prerequisites.ollama
-        [void](Install-WingetPackage ([string]$cfg.winget_id) 'Ollama')
-        $ollama = Find-Ollama
-        if (-not $ollama) {
-            $url = [string]$cfg.fallback_url
-            if (-not $url.StartsWith('https://ollama.com/')) { throw 'Ollama fallback URL is not trusted.' }
-            $installer = Join-Path $env:TEMP 'Jubi-OllamaSetup.exe'
-            Invoke-Download $url $installer
-            $sig = Get-AuthenticodeSignature -LiteralPath $installer
-            if ($sig.Status -ne 'Valid') { throw "Ollama installer signature is not valid: $($sig.Status)" }
-            Log 'Installing Ollama fallback silently.'
-            $p = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
-            Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
-            if ($p.ExitCode -ne 0) { throw "Ollama installer failed with exit code $($p.ExitCode)" }
-            $ollama = Find-Ollama
+function Start-OllamaOnCandidates([string]$OllamaExe, [string[]]$Candidates) {
+    $failures = @()
+    foreach ($candidateUrl in $Candidates) {
+        if (Test-OllamaApi $candidateUrl) {
+            return [pscustomobject]@{ Exe = $OllamaExe; BaseUrl = $candidateUrl }
+        }
+        if (-not (Test-LocalPortAvailable $candidateUrl)) {
+            $failures += "$candidateUrl occupied"
+            continue
+        }
+        try {
+            [void](Start-OllamaLocal $OllamaExe $candidateUrl)
+            if (Test-OllamaApi $candidateUrl) {
+                return [pscustomobject]@{ Exe = $OllamaExe; BaseUrl = $candidateUrl }
+            }
+        }
+        catch {
+            $failures += "$candidateUrl -> $($_.Exception.Message)"
+            Log "Ollama start attempt failed at $candidateUrl; trying another local port. $($_.Exception.Message)"
         }
     }
-    if (-not $ollama) { throw 'Ollama is not installed and automatic provisioning was unavailable.' }
-    Log "Ollama found: $ollama"
+    $detail = if ($failures.Count -gt 0) { $failures -join ' || ' } else { 'no candidate endpoints were available' }
+    throw "Could not start a healthy local Ollama API. $detail"
+}
+
+function Ensure-Ollama($Bootstrap) {
+    $ollamaExe = Install-OrRepair-Ollama $Bootstrap
+    if (-not $ollamaExe) {
+        if ($Fast) { throw 'Ollama is missing during fast health check.' }
+        throw 'Ollama is not installed and automatic provisioning was unavailable.'
+    }
+    Log "Ollama executable found: $ollamaExe"
 
     $candidates = @(Get-OllamaCandidates $Bootstrap)
-    foreach ($candidate in $candidates) {
-        if (Test-OllamaApi $candidate) {
-            Log "Existing healthy Ollama API detected at $candidate"
-            Save-JubiRuntime $candidate
-            return [pscustomobject]@{ Exe = $ollama; BaseUrl = $candidate }
+    foreach ($candidateUrl in $candidates) {
+        if (Test-OllamaApi $candidateUrl) {
+            Log "Existing healthy Ollama API detected at $candidateUrl"
+            return [pscustomobject]@{ Exe = $ollamaExe; BaseUrl = $candidateUrl }
         }
     }
 
-    $startUrl = if ($candidates.Count -gt 0) { $candidates[0] } else { 'http://127.0.0.1:11434' }
-    [void](Start-OllamaLocal $ollama $startUrl)
-    if (-not (Test-OllamaApi $startUrl)) { throw "Ollama API recovery failed at $startUrl." }
-    Save-JubiRuntime $startUrl
-    return [pscustomobject]@{ Exe = $ollama; BaseUrl = $startUrl }
+    try {
+        return Start-OllamaOnCandidates $ollamaExe $candidates
+    }
+    catch {
+        $firstFailure = $_.Exception.Message
+        if ($Fast) { throw $firstFailure }
+        Log "Initial Ollama recovery failed. Attempting one trusted Ollama repair. $firstFailure"
+        $ollamaExe = Install-OrRepair-Ollama $Bootstrap -ForceRepair
+        if (-not $ollamaExe) { throw 'Ollama repair completed but ollama.exe could not be found.' }
+        Start-Sleep -Seconds 2
+        return Start-OllamaOnCandidates $ollamaExe $candidates
+    }
 }
 
 function Ensure-OptionalTool([string]$Command, [string]$WingetId, [string]$DisplayName) {
@@ -253,8 +331,8 @@ function Ensure-OptionalTool([string]$Command, [string]$WingetId, [string]$Displ
         Log "$DisplayName found."
         return
     }
-    if ($Fast) {
-        Log "$DisplayName is not available; it is optional for Jubi core."
+    if ($Fast -or $Repair) {
+        Log "$DisplayName is optional for Jubi core; automatic repair mode will not block on it."
         return
     }
     if (-not (Install-WingetPackage $WingetId $DisplayName)) {
@@ -262,30 +340,75 @@ function Ensure-OptionalTool([string]$Command, [string]$WingetId, [string]$Displ
     }
 }
 
-function Ensure-Models([string]$Ollama, [string]$BaseUrl, $Production) {
-    if ($Fast) { return }
+function Ensure-Models([string]$OllamaExe, [string]$BaseUrl, $Production) {
+    if ($Fast) { return @() }
     $required = @($Production.required_models)
-    if ($required.Count -eq 0) { return }
-    $previousHost = $env:OLLAMA_HOST
+    if ($required.Count -eq 0) { return @() }
+    $pending = @()
+    $previousOllamaHost = $env:OLLAMA_HOST
     try {
         $env:OLLAMA_HOST = $BaseUrl.Substring('http://'.Length)
-        $list = (& $Ollama list 2>$null | Out-String)
+        $list = (& $OllamaExe list 2>$null | Out-String)
         foreach ($model in $required) {
             $name = [string]$model
-            $base = ($name -split ':')[0]
-            if ($list -match [regex]::Escape($name) -or $list -match [regex]::Escape($base)) {
+            $baseName = ($name -split ':')[0]
+            if ($list -match [regex]::Escape($name) -or $list -match [regex]::Escape($baseName)) {
                 Log "Required Ollama model already present: $name"
                 continue
             }
-            Log "Pulling required Ollama model automatically: $name"
-            & $Ollama pull $name
-            if ($LASTEXITCODE -ne 0) { throw "Ollama could not pull required model $name (exit $LASTEXITCODE)." }
+
+            $pulled = $false
+            foreach ($attempt in 1..3) {
+                Log "Pulling required Ollama model automatically: $name (attempt $attempt/3)"
+                try {
+                    & $OllamaExe pull $name
+                    if ($LASTEXITCODE -eq 0) {
+                        $pulled = $true
+                        break
+                    }
+                    Log "Ollama model pull returned exit code $LASTEXITCODE for $name."
+                }
+                catch {
+                    Log "Ollama model pull failed for ${name}: $($_.Exception.Message)"
+                }
+                if ($attempt -lt 3) { Start-Sleep -Seconds (5 * $attempt) }
+            }
+            if (-not $pulled) {
+                $pending += $name
+                Log "WARNING: model $name is still pending. Jubi installation will continue and background self-repair will retry automatically."
+            }
         }
     }
     finally {
-        if ($null -eq $previousHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
-        else { $env:OLLAMA_HOST = $previousHost }
+        if ($null -eq $previousOllamaHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue }
+        else { $env:OLLAMA_HOST = $previousOllamaHost }
     }
+    return ,$pending
+}
+
+function Save-JubiRuntime([string]$PythonExe, [string]$OllamaBaseUrl, [string[]]$PendingModels) {
+    New-Item -ItemType Directory -Force -Path $JubiDataDir | Out-Null
+    $data = @{}
+    if (Test-Path -LiteralPath $RuntimeConfig) {
+        try {
+            $existing = Get-Content -LiteralPath $RuntimeConfig -Raw | ConvertFrom-Json
+            foreach ($property in $existing.PSObject.Properties) { $data[$property.Name] = $property.Value }
+        }
+        catch {}
+    }
+    $data['python_exe'] = $PythonExe
+    $data['ollama_base_url'] = $OllamaBaseUrl
+    $data['pending_models'] = @($PendingModels)
+    $data['updated_at'] = (Get-Date).ToUniversalTime().ToString('o')
+    $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $RuntimeConfig -Encoding utf8
+    try {
+        [Environment]::SetEnvironmentVariable('JUBI_OLLAMA_URL', $OllamaBaseUrl, 'User')
+        $env:JUBI_OLLAMA_URL = $OllamaBaseUrl
+    }
+    catch {
+        Log "WARNING: could not persist JUBI_OLLAMA_URL user environment value: $($_.Exception.Message)"
+    }
+    Log "Jubi runtime state saved. Ollama=$OllamaBaseUrl PendingModels=$(@($PendingModels).Count)"
 }
 
 try {
@@ -297,17 +420,18 @@ try {
 
     $drive = Get-PSDrive -Name ([IO.Path]::GetPathRoot($Root).Substring(0,1)) -ErrorAction SilentlyContinue
     if ($drive -and $drive.Free -lt 20GB) {
-        Log "WARNING: less than 20 GB free on the Jubi install drive. Required AI models may need additional storage."
+        Log "WARNING: less than 20 GB free on the Jubi install drive. Core installation can continue, but local AI models may need more storage."
     }
 
-    Log "Jubi prerequisite check started. Fast=$Fast"
-    $python = Ensure-Python311 $bootstrap
+    Log "Jubi prerequisite check started. Fast=$Fast Repair=$Repair"
+    $pythonExe = Ensure-Python311 $bootstrap
     $ollamaState = Ensure-Ollama $bootstrap
     Ensure-OptionalTool 'git.exe' ([string]$bootstrap.prerequisites.git.winget_id) 'Git'
     Ensure-OptionalTool 'node.exe' ([string]$bootstrap.prerequisites.node.winget_id) 'Node.js LTS'
-    Ensure-Models ([string]$ollamaState.Exe) ([string]$ollamaState.BaseUrl) $production
+    $pendingModels = @(Ensure-Models ([string]$ollamaState.Exe) ([string]$ollamaState.BaseUrl) $production)
+    Save-JubiRuntime $pythonExe ([string]$ollamaState.BaseUrl) $pendingModels
 
-    Log "Prerequisite check passed. Python=$python Ollama=$($ollamaState.Exe) OllamaApi=$($ollamaState.BaseUrl)"
+    Log "Prerequisite check passed. Python=$pythonExe Ollama=$($ollamaState.Exe) OllamaApi=$($ollamaState.BaseUrl) PendingModels=$($pendingModels.Count)"
     exit 0
 }
 catch {
