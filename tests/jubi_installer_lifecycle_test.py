@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
+
+from sarus.core.models import OllamaRouter
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +53,35 @@ class JubiInstallerLifecycleTests(unittest.TestCase):
         self.assertIn("ollama.com", text)
         self.assertIn("Ensure-Models", text)
         self.assertIn("Get-AuthenticodeSignature", text)
+        self.assertIn("Normalize-LocalOllamaUrl", text)
+        self.assertIn("OLLAMA_HOST", text)
+        self.assertIn("runtime.json", text)
+        self.assertIn("$request.Proxy = $null", text)
+        self.assertIn("ollama-serve.stderr.log", text)
+
+    def test_ollama_router_respects_local_custom_port(self):
+        with TemporaryDirectory() as td:
+            config = Path(td) / "models.json"
+            config.write_text('{"general":["qwen2.5:7b"]}', encoding="utf-8")
+            with patch.dict(os.environ, {"JUBI_OLLAMA_URL": "http://127.0.0.1:11500"}, clear=False):
+                router = OllamaRouter(config)
+                self.assertEqual(router.base, "http://127.0.0.1:11500")
+
+    def test_ollama_router_rejects_remote_env_endpoint(self):
+        with TemporaryDirectory() as td:
+            config = Path(td) / "models.json"
+            config.write_text('{"general":["qwen2.5:7b"]}', encoding="utf-8")
+            env = {"JUBI_OLLAMA_URL": "http://192.168.1.50:11434", "OLLAMA_HOST": ""}
+            with patch.dict(os.environ, env, clear=False):
+                router = OllamaRouter(config)
+                self.assertEqual(router.base, "http://127.0.0.1:11434")
+
+    def test_outer_installer_captures_child_diagnostics(self):
+        text = (ROOT / "installer" / "EXE-INSTALL.ps1").read_text(encoding="utf-8")
+        self.assertIn("RedirectStandardOutput", text)
+        self.assertIn("RedirectStandardError", text)
+        self.assertIn("installer-steps", text)
+        self.assertIn("Append-ChildLog", text)
 
     def test_inno_installer_supports_silent_updates_and_current_repo(self):
         iss = (ROOT / "installer" / "SARUS-Setup.iss").read_text(encoding="utf-8")
