@@ -1,6 +1,6 @@
 {
   "name": "Jubi One-Click Bootstrap",
-  "schema_version": 2,
+  "schema_version": 3,
   "background": {
     "task_name": "Jubi Background Agent",
     "restart_seconds": 60,
@@ -27,7 +27,7 @@
       "winget_id": "Ollama.Ollama",
       "fallback_url": "https://ollama.com/download/OllamaSetup.exe",
       "api": "http://127.0.0.1:11434",
-      "candidate_ports": [11434, 11500, 11435, 11436, 11437]
+      "candidate_ports": [11434, 11500, 11435, 11436, 11437, 11438, 11439, 11440, 11501, 11502, 11503, 11504, 11505]
     },
     "git": {
       "winget_id": "Git.Git",
