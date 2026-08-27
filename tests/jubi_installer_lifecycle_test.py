@@ -4,13 +4,15 @@ import json
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import sys
 import unittest
 from unittest.mock import patch
 
-from sarus.core.models import OllamaRouter
-
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from sarus.core.models import OllamaRouter
 
 
 class JubiInstallerLifecycleTests(unittest.TestCase):
