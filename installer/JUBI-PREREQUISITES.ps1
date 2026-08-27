@@ -75,7 +75,7 @@ function Invoke-Download([string]$Uri, [string]$OutFile) {
     throw "Download failed after retries: $($last.Exception.Message)"
 }
 
-function Install-WithWinget([string]$Id, [string]$Name) {
+function Install-WingetPackage([string]$Id, [string]$Name) {
     $winget = Get-Winget
     if (-not $winget) { return $false }
     try {
@@ -93,7 +93,7 @@ function Ensure-Python311($Bootstrap) {
     if ($p) { Log "Python 3.11 found and executable: $p"; return $p }
     if ($Fast) { throw 'Python 3.11 is missing during fast health check.' }
     $cfg = $Bootstrap.prerequisites.python
-    [void](Install-WithWinget ([string]$cfg.winget_id) 'Python 3.11')
+    [void](Install-WingetPackage ([string]$cfg.winget_id) 'Python 3.11')
     $p = Find-Python311
     if ($p) { Log "Python 3.11 provisioned: $p"; return $p }
     $url = [string]$cfg.fallback_url
@@ -151,7 +151,9 @@ function Get-OllamaCandidates($Bootstrap) {
         $n = Normalize-OllamaUrl ([string]$v)
         if ($n -and ($out -notcontains $n)) { $out += $n }
     }
-    return [string[]]$out
+    # Keep this return flat: the lifecycle tests and the real installer depend on
+    # each candidate being a distinct string, not a nested PowerShell array.
+    return $out
 }
 
 function Test-OllamaApi([string]$BaseUrl) {
@@ -232,13 +234,13 @@ function Ensure-Ollama($Bootstrap) {
     if (-not $exe -and $Fast) { throw 'Ollama is missing during fast health check.' }
     if (-not $exe) {
         $cfg = $Bootstrap.prerequisites.ollama
-        [void](Install-WithWinget ([string]$cfg.winget_id) 'Ollama')
+        [void](Install-WingetPackage ([string]$cfg.winget_id) 'Ollama')
         $exe = Find-Ollama
     }
     if (-not $exe) {
         $url = [string]$Bootstrap.prerequisites.ollama.fallback_url
         if ($url -notlike 'https://ollama.com/*') { throw 'Ollama fallback URL is not trusted.' }
-        $installer = Join-Path $env:TEMP "Jubi-Ollama-$([guid]::NewGuid().ToString('N')).exe"
+        $installer = Join-Path $env:TEMP "Jubi-OllamaSetup-$([guid]::NewGuid().ToString('N')).exe"
         try {
             Invoke-Download $url $installer
             $sig = Get-AuthenticodeSignature -LiteralPath $installer
@@ -272,9 +274,6 @@ function Ensure-Ollama($Bootstrap) {
         }
     }
 
-    # Never launch the vendor repair installer merely because an existing Ollama
-    # server is unhealthy. That repair path was the source of locked temporary
-    # installer files and parent-process termination on real machines.
     throw 'Could not start a healthy local Ollama API after safe process recovery and port selection.'
 }
 
