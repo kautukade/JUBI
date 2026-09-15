@@ -1,0 +1,535 @@
+{
+  "scope": "All files recursively, including hidden source directories. Excludes .git metadata and this audit output directory. Hash inventory is not a claim of line-by-line semantic review.",
+  "files": 17381,
+  "bytes": 559992068,
+  "errors": [
+    {
+      "path": "sources/cai-main(3)/cai-main/src/cai/caibench/cyber_ranges/CobaltGroupRansomware/c2/payload.py",
+      "error": "[Errno 22] Invalid argument: 'C:\\\\Users\\\\hp\\\\Desktop\\\\JUBI\\\\sources\\\\cai-main(3)\\\\cai-main\\\\src\\\\cai\\\\caibench\\\\cyber_ranges\\\\CobaltGroupRansomware\\\\c2\\\\payload.py'"
+    },
+    {
+      "path": "sources/cai-main(3)/cai-main/src/cai/tools/web/webshell_suit.py",
+      "error": "[Errno 22] Invalid argument: 'C:\\\\Users\\\\hp\\\\Desktop\\\\JUBI\\\\sources\\\\cai-main(3)\\\\cai-main\\\\src\\\\cai\\\\tools\\\\web\\\\webshell_suit.py'"
+    }
+  ],
+  "groups": {
+    ".gitignore": {
+      "files": 1,
+      "bytes": 226,
+      "extensions": {
+        "(none)": 1
+      }
+    },
+    "BUILD_MANIFEST.json": {
+      "files": 1,
+      "bytes": 1184,
+      "extensions": {
+        ".json": 1
+      }
+    },
+    "INSTALL-RING0.bat": {
+      "files": 1,
+      "bytes": 652,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "INSTALL-SARUS-FALLBACK.bat": {
+      "files": 1,
+      "bytes": 824,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "INSTALL-SARUS.bat": {
+      "files": 1,
+      "bytes": 330,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "README.md": {
+      "files": 1,
+      "bytes": 15000,
+      "extensions": {
+        ".md": 1
+      }
+    },
+    "RUN_ACCEPTANCE.bat": {
+      "files": 1,
+      "bytes": 48,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "RUN_JUBI_ACCEPTANCE.bat": {
+      "files": 1,
+      "bytes": 421,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "SARUS-script.pyw": {
+      "files": 1,
+      "bytes": 2708,
+      "extensions": {
+        ".pyw": 1
+      }
+    },
+    "START_JUBI.bat": {
+      "files": 1,
+      "bytes": 839,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "START_SARUS.bat": {
+      "files": 1,
+      "bytes": 48,
+      "extensions": {
+        ".bat": 1
+      }
+    },
+    "package-lock.json": {
+      "files": 1,
+      "bytes": 19210,
+      "extensions": {
+        ".json": 1
+      }
+    },
+    "package.json": {
+      "files": 1,
+      "bytes": 326,
+      "extensions": {
+        ".json": 1
+      }
+    },
+    ".github": {
+      "files": 4,
+      "bytes": 28864,
+      "extensions": {
+        ".yml": 4
+      }
+    },
+    "config": {
+      "files": 9,
+      "bytes": 14079,
+      "extensions": {
+        ".json": 9
+      }
+    },
+    "docs": {
+      "files": 14,
+      "bytes": 83967,
+      "extensions": {
+        ".md": 14
+      }
+    },
+    "driver": {
+      "files": 6,
+      "bytes": 13774,
+      "extensions": {
+        ".ps1": 2,
+        ".md": 1,
+        ".vcxproj": 1,
+        ".c": 1,
+        ".h": 1
+      }
+    },
+    "evidence": {
+      "files": 1,
+      "bytes": 1801,
+      "extensions": {
+        ".json": 1
+      }
+    },
+    "installer": {
+      "files": 13,
+      "bytes": 71511,
+      "extensions": {
+        ".ps1": 11,
+        ".cs": 1,
+        ".iss": 1
+      }
+    },
+    "jubi": {
+      "files": 5,
+      "bytes": 18168,
+      "extensions": {
+        ".py": 5
+      }
+    },
+    "sarus": {
+      "files": 69,
+      "bytes": 477655,
+      "extensions": {
+        ".py": 42,
+        ".html": 18,
+        ".js": 8,
+        ".css": 1
+      }
+    },
+    "scripts": {
+      "files": 4,
+      "bytes": 6764,
+      "extensions": {
+        ".ps1": 1,
+        ".bat": 2,
+        ".py": 1
+      }
+    },
+    "sources/ECC-main(20260807-042951)": {
+      "files": 3437,
+      "bytes": 50828398,
+      "extensions": {
+        ".yaml": 45,
+        ".example": 2,
+        "(none)": 14,
+        ".json": 112,
+        ".yml": 18,
+        ".md": 2507,
+        ".js": 480,
+        ".py": 63,
+        ".ps1": 3,
+        ".sh": 34,
+        ".toml": 8,
+        ".lock": 2,
+        ".hook": 13,
+        ".ts": 18,
+        ".txt": 25,
+        ".svg": 8,
+        ".png": 34,
+        ".jpeg": 9,
+        ".mp4": 2,
+        ".gif": 1,
+        ".webm": 1,
+        ".rs": 17,
+        ".mdc": 1,
+        ".mjs": 13,
+        ".css": 1,
+        ".swift": 1,
+        ".tsx": 3,
+        ".jsonl": 2
+      }
+    },
+    "sources/SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK(4)": {
+      "files": 16,
+      "bytes": 14780,
+      "extensions": {
+        "(none)": 2,
+        ".example": 1,
+        ".txt": 2,
+        ".md": 2,
+        ".yml": 1,
+        ".ts": 7,
+        ".log": 1
+      }
+    },
+    "sources/agency-agents-main(3)": {
+      "files": 343,
+      "bytes": 4405249,
+      "extensions": {
+        "(none)": 3,
+        ".md": 316,
+        ".json": 4,
+        ".yml": 7,
+        ".sh": 9,
+        ".example": 1,
+        ".py": 2,
+        ".ps1": 1
+      }
+    },
+    "sources/autoresearch-master(3)": {
+      "files": 10,
+      "bytes": 765126,
+      "extensions": {
+        "(none)": 2,
+        ".md": 2,
+        ".ipynb": 1,
+        ".py": 2,
+        ".png": 1,
+        ".toml": 1,
+        ".lock": 1
+      }
+    },
+    "sources/awesome-llm-apps-main(2)": {
+      "files": 1802,
+      "bytes": 86348917,
+      "extensions": {
+        "(none)": 43,
+        ".md": 270,
+        ".yml": 5,
+        ".py": 527,
+        ".txt": 162,
+        ".example": 61,
+        ".sh": 9,
+        ".toml": 14,
+        ".lock": 6,
+        ".sql": 6,
+        ".json": 91,
+        ".mjs": 13,
+        ".ts": 93,
+        ".yaml": 14,
+        ".ico": 9,
+        ".css": 22,
+        ".tsx": 204,
+        ".prisma": 1,
+        ".js": 55,
+        ".png": 55,
+        ".mp3": 1,
+        ".wav": 2,
+        ".html": 13,
+        ".map": 3,
+        ".in": 1,
+        ".csv": 4,
+        ".gif": 2,
+        ".jpg": 78,
+        ".mp4": 1,
+        ".svg": 27,
+        ".bat": 6,
+        ".agent": 2,
+        ".app": 2
+      }
+    },
+    "sources/cai-main(3)": {
+      "files": 1533,
+      "bytes": 249855442,
+      "extensions": {
+        "(none)": 40,
+        ".toml": 3,
+        ".cff": 1,
+        ".md": 207,
+        ".yml": 12,
+        ".sh": 16,
+        ".lock": 1,
+        ".json": 11,
+        ".txt": 40,
+        ".py": 1077,
+        ".csv": 3,
+        ".png": 39,
+        ".tsv": 4,
+        ".svg": 4,
+        ".jpg": 1,
+        ".gif": 5,
+        ".mp4": 2,
+        ".css": 2,
+        ".yaml": 2,
+        ".ipynb": 1,
+        ".cfg": 1,
+        ".html": 14,
+        ".conf": 3,
+        ".go": 2,
+        ".mod": 1,
+        ".2": 1,
+        ".6": 1,
+        ".pcapng": 1,
+        ".java": 12,
+        ".rs": 5,
+        ".v": 1,
+        ".sage": 1,
+        ".jsonl": 3,
+        ".pdf": 1,
+        ".sql": 2,
+        ".ldif": 1,
+        ".php": 8,
+        ".config": 1,
+        ".typed": 1,
+        ".ini": 1,
+        ".bash": 1
+      }
+    },
+    "sources/fable-os-main(3)": {
+      "files": 1194,
+      "bytes": 20151160,
+      "extensions": {
+        ".example": 2,
+        "(none)": 60,
+        ".md": 5,
+        ".sh": 10,
+        ".ld": 1,
+        ".c": 427,
+        ".h": 456,
+        ".json": 7,
+        ".py": 7,
+        ".plan": 2,
+        ".asm": 3,
+        ".cfg": 1,
+        ".txt": 28,
+        ".cmake": 7,
+        ".mk": 6,
+        ".sln": 3,
+        ".csproj": 5,
+        ".cs": 100,
+        ".config": 2,
+        ".resx": 3,
+        ".settings": 1,
+        ".snk": 1,
+        ".cmd": 2,
+        ".ci": 1,
+        ".html": 8,
+        ".shtml": 1,
+        ".gif": 2,
+        ".vcxproj": 6,
+        ".filters": 6,
+        ".bat": 1,
+        ".doxyfile": 1,
+        ".in": 2,
+        ".bin": 6,
+        ".case": 6,
+        ".dvm": 1,
+        ".png": 3,
+        ".log": 11
+      }
+    },
+    "sources/hermes-agent-main(3)": {
+      "files": 8515,
+      "bytes": 143067917,
+      "extensions": {
+        "(none)": 43,
+        ".example": 2,
+        ".yaml": 128,
+        ".md": 1475,
+        ".py": 3852,
+        ".txt": 14,
+        ".yml": 37,
+        ".mjs": 94,
+        ".lock": 2,
+        ".nix": 16,
+        ".json": 94,
+        ".toml": 2,
+        ".sh": 33,
+        ".png": 60,
+        ".jpg": 5,
+        ".html": 9,
+        ".ts": 1371,
+        ".tsx": 637,
+        ".css": 12,
+        ".rs": 9,
+        ".manifest": 1,
+        ".icns": 2,
+        ".ico": 4,
+        ".plist": 2,
+        ".webp": 4,
+        ".jsonl": 2,
+        ".woff2": 6,
+        ".com": 333,
+        ".xyz": 2,
+        ".local": 21,
+        ".ai": 6,
+        ".dev": 7,
+        ".io": 2,
+        ".cloud": 1,
+        ".cn": 7,
+        ".il": 1,
+        ".net": 8,
+        ".au": 4,
+        ".se": 1,
+        ".no": 1,
+        ".me": 4,
+        ".tw": 1,
+        ".br": 1,
+        ".co": 2,
+        ".de": 2,
+        ".gg": 1,
+        ".mesh": 1,
+        ".fr": 2,
+        ".to": 2,
+        ".eu": 2,
+        ".uk": 2,
+        ".tech": 1,
+        ".org": 3,
+        ".lan": 2,
+        ".in": 1,
+        ".computer": 1,
+        ".sg": 1,
+        ".team": 1,
+        ".it": 2,
+        ".edu": 3,
+        ".tr": 1,
+        ".pw": 1,
+        ".id": 1,
+        ".ca": 2,
+        ".kitchen": 1,
+        ".club": 1,
+        ".inc": 1,
+        ".pdf": 5,
+        ".c": 1,
+        ".h": 2,
+        ".tmpl": 3,
+        ".js": 13,
+        ".service": 1,
+        ".cmd": 1,
+        ".ps1": 5,
+        ".cnf": 1,
+        ".ini": 1,
+        ".xsd": 78,
+        ".xml": 5,
+        ".tex": 11,
+        ".bib": 5,
+        ".bst": 5,
+        ".sty": 13,
+        ".wav": 1,
+        ".onnx": 1,
+        ".tflite": 1,
+        ".mdx": 5,
+        ".svg": 3,
+        ".mp4": 1
+      }
+    },
+    "sources/second-brain-skills-main(3)": {
+      "files": 97,
+      "bytes": 759144,
+      "extensions": {
+        ".md": 57,
+        ".json": 5,
+        ".py": 26,
+        ".pptx": 2,
+        ".png": 1,
+        ".html": 1,
+        "(none)": 1,
+        ".tsx": 3,
+        ".txt": 1
+      }
+    },
+    "sources/superpowers-main(3)": {
+      "files": 180,
+      "bytes": 1590929,
+      "extensions": {
+        "(none)": 7,
+        ".yaml": 1,
+        ".json": 13,
+        ".md": 89,
+        ".yml": 2,
+        ".js": 10,
+        ".ts": 2,
+        ".png": 1,
+        ".svg": 1,
+        ".cmd": 1,
+        ".sh": 38,
+        ".html": 1,
+        ".cjs": 1,
+        ".dot": 1,
+        ".py": 1,
+        ".txt": 9,
+        ".mjs": 2
+      }
+    },
+    "tests": {
+      "files": 23,
+      "bytes": 140954,
+      "extensions": {
+        ".py": 22,
+        ".cjs": 1
+      }
+    },
+    "vendor": {
+      "files": 93,
+      "bytes": 1305653,
+      "extensions": {
+        ".b64": 82,
+        ".txt": 10,
+        ".md": 1
+      }
+    }
+  }
+}

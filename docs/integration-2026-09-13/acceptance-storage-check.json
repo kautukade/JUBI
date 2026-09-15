@@ -1,0 +1,49 @@
+{
+  "task_id": "t_077523b1",
+  "home": "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\data\\development-acceptance\\e2bd2ce9f7674767829e3baca0fe523e",
+  "files": {
+    "project/pricing.py": {
+      "sha256": "230d15d1eb1bfbc1adce0cd2926e2f236e1cc0fd6c50163db733fa3eef382734",
+      "bytes": 71
+    },
+    "project/test_pricing.py": {
+      "sha256": "1549c5a376f8cd5d0954eb1447a34808a34993c6c004e9226d1d87a88a19127f",
+      "bytes": 301
+    },
+    "project/README.md": {
+      "sha256": "48e2e36b965895ef7f9222e3ecef7eff176707e3d2d4e552d8708c868529751e",
+      "bytes": 191
+    },
+    "run_tests.py": {
+      "sha256": "90082d9f6a758d40cfbf334590cce34dfc3ebdfe7b43abd6bb1ffeb6daaab567",
+      "bytes": 801
+    },
+    "evidence.json": {
+      "sha256": "04c3ce4b7b9104b3c6ab7a7163afb61a5376e1c932652ce0101d630d10e9b586",
+      "bytes": 13468
+    }
+  },
+  "sessions": [
+    {
+      "id": "20260915_095333_e5590c",
+      "parent_session_id": null
+    },
+    {
+      "id": "20260915_095334_44a54e",
+      "parent_session_id": "20260915_095333_e5590c"
+    }
+  ],
+  "experience": [
+    {
+      "id": "364da917-c531-4bcf-be96-edc00c6aca64",
+      "success": 0,
+      "model": "glm4:latest"
+    }
+  ],
+  "kanban_rows": [
+    {
+      "id": "t_077523b1",
+      "status": "blocked"
+    }
+  ]
+}

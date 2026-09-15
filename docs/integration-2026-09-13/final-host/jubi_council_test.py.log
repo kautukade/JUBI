@@ -1,0 +1,10 @@
+test_council_keeps_high_privacy_prompt_local (__main__.CouncilSupervisorTests.test_council_keeps_high_privacy_prompt_local) ... ok
+test_council_uses_multiple_members_and_judge (__main__.CouncilSupervisorTests.test_council_uses_multiple_members_and_judge) ... ok
+test_supervisor_is_reasoning_only_in_source (__main__.CouncilSupervisorTests.test_supervisor_is_reasoning_only_in_source) ... ok
+test_supervisor_plan_uses_local_context_and_json_plan (__main__.CouncilSupervisorTests.test_supervisor_plan_uses_local_context_and_json_plan) ... ok
+test_supervisor_run_specialists_reviewer_and_history (__main__.CouncilSupervisorTests.test_supervisor_run_specialists_reviewer_and_history) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.115s
+
+OK

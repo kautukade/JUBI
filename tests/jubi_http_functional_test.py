@@ -98,6 +98,12 @@ class HttpFunctionalTests(unittest.TestCase):
 
     def test_core_certification_does_not_weaken_full_native_requirements(self):
         import sarus.acceptance as acceptance
+        production_path = self.fixture.root/'config/production.json'
+        original = production_path.read_text()
+        production = json.loads(original)
+        production['require_sara_on_windows'] = True  # explicit native certification still must fail without SARA
+        production_path.write_text(json.dumps(production))
+        self.addCleanup(production_path.write_text, original)
         shutil.copyfile(ROOT/'BUILD_MANIFEST.json', self.fixture.root/'BUILD_MANIFEST.json')
         # Simulate only acceptance's platform selection; the native runtime is
         # deliberately absent. Keep the real Windows APIs outside this test.

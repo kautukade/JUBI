@@ -1,0 +1,4302 @@
+[
+  {
+    "path": "jubi/__init__.py",
+    "definitions": [],
+    "syntax": "pass"
+  },
+  {
+    "path": "jubi/acceptance.py",
+    "definitions": [],
+    "syntax": "pass"
+  },
+  {
+    "path": "jubi/background.py",
+    "definitions": [
+      {
+        "name": "_load_bootstrap",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_state_root",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_log",
+        "line": 42,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_listening",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_start_server",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_stop_server",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_powershell",
+        "line": 91,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_start_repair",
+        "line": 98,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 131,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "jubi/server.py",
+    "definitions": [],
+    "syntax": "pass"
+  },
+  {
+    "path": "jubi/updater.py",
+    "definitions": [
+      {
+        "name": "_load_json",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "bootstrap_config",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "build_info",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "state_root",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_request",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_json_from_url",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_asset",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_current_commit",
+        "line": 97,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_current_epoch",
+        "line": 102,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check_for_update",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_sha256",
+        "line": 157,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "download_update",
+        "line": 165,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "apply_update",
+        "line": 196,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 216,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/__init__.py",
+    "definitions": [],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/acceptance.py",
+    "definitions": [
+      {
+        "name": "_load_json",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_find_ollama",
+        "line": 19,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_runtime_state",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_runtime_pending_models",
+        "line": 46,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_wait_for_ollama",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_start_ollama_for_install",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_provision_required_models",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_install_mode",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_acceptance",
+        "line": 114,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 253,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "memory_roundtrip",
+        "line": 151,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/server.py",
+    "definitions": [
+      {
+        "name": "loopback_host",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_env",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "H",
+        "line": 54,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "run",
+        "line": 640,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "log_message",
+        "line": 58,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "end_headers",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_local_request",
+        "line": 73,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "do_HEAD",
+        "line": 94,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_json",
+        "line": 98,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_body",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_safe_error",
+        "line": 139,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "do_GET",
+        "line": 145,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "do_POST",
+        "line": 303,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "LocalServer",
+        "line": 645,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "reject_constant",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "finite_float",
+        "line": 120,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/agency_agents.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/autoresearch.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 6,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/awesome_llm_apps.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/base.py",
+    "definitions": [
+      {
+        "name": "AdapterStatus",
+        "line": 5,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SourceAdapter",
+        "line": 7,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "PromptCatalogAdapter",
+        "line": 21,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 9,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "probe",
+        "line": 10,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 11,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/cai.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 6,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/ecc.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/fable_os.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 4,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 20,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/hermes.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 3,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 5,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/sara.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 4,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 6,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_call",
+        "line": 13,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "probe",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 24,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/second_brain.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/adapters/superpowers.py",
+    "definitions": [
+      {
+        "name": "Adapter",
+        "line": 2,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "probe",
+        "line": 4,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/adapters.py",
+    "definitions": [
+      {
+        "name": "AdapterManager",
+        "line": 3,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 4,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "connect",
+        "line": 6,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 13,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/app.py",
+    "definitions": [
+      {
+        "name": "Jubi",
+        "line": 29,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "shutdown",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 100,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/brain.py",
+    "definitions": [
+      {
+        "name": "BrainDecision",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "BrainRouter",
+        "line": 29,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_config",
+        "line": 100,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 128,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_contains",
+        "line": 137,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "classify",
+        "line": 155,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_performance_rows",
+        "line": 204,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_score_model",
+        "line": 220,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "route",
+        "line": 265,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_record_decision",
+        "line": 340,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_record_model_outcome",
+        "line": 355,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 371,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent_decisions",
+        "line": 433,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "performance",
+        "line": 451,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 463,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/capabilities.py",
+    "definitions": [
+      {
+        "name": "CapabilityRegistry",
+        "line": 5,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 6,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "build",
+        "line": 8,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "load",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "summary",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "path_for",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "read",
+        "line": 46,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "best",
+        "line": 54,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/conversations.py",
+    "definitions": [
+      {
+        "name": "ConversationStore",
+        "line": 12,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_id",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "history",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "send",
+        "line": 50,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/council.py",
+    "definitions": [
+      {
+        "name": "AICouncil",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "MultiAgentSupervisor",
+        "line": 146,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_members",
+        "line": 42,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 63,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 131,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 165,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 179,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_extract_json",
+        "line": 187,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_context",
+        "line": 202,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "plan",
+        "line": 215,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 268,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 324,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/credentials.py",
+    "definitions": [
+      {
+        "name": "_DATA_BLOB",
+        "line": 19,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "CredentialStore",
+        "line": 23,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_provider",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_env_names",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_read_file",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_write_file",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_blob",
+        "line": 87,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_protect",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_unprotect",
+        "line": 120,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_entropy",
+        "line": 149,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 152,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set",
+        "line": 174,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete",
+        "line": 192,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 204,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/database.py",
+    "definitions": [
+      {
+        "name": "connect",
+        "line": 13,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "read_connection",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "transaction",
+        "line": 41,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/doctor.py",
+    "definitions": [
+      {
+        "name": "Doctor",
+        "line": 10,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_production",
+        "line": 14,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_minimum_python",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 37,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/events.py",
+    "definitions": [
+      {
+        "name": "EventBus",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "emit",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 46,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/execution.py",
+    "definitions": [
+      {
+        "name": "ExecutionEngine",
+        "line": 24,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_save_task",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_save_state",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_state",
+        "line": 103,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "create_approval",
+        "line": 125,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "approvals",
+        "line": 152,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_approval",
+        "line": 168,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_approval",
+        "line": 183,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_task_payload",
+        "line": 238,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_execute_step",
+        "line": 251,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_continue_task",
+        "line": 292,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 408,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_task",
+        "line": 420,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent_tasks",
+        "line": 428,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/experience.py",
+    "definitions": [
+      {
+        "name": "ExperienceEngine",
+        "line": 14,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_embed_best_effort",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_cosine",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "record",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "record_chat",
+        "line": 96,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 111,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "similar",
+        "line": 132,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete",
+        "line": 171,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "stats",
+        "line": 180,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/fable.py",
+    "definitions": [
+      {
+        "name": "FableCommandResult",
+        "line": 21,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FableTraceStore",
+        "line": 38,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "LearnedCapabilityStore",
+        "line": 118,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FableLabManager",
+        "line": 227,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FableAgendaEngine",
+        "line": 437,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FableIntegration",
+        "line": 567,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "as_dict",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_insert",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "verified",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "import_serial",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 98,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_norm_name",
+        "line": 140,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_digest",
+        "line": 148,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "save",
+        "line": 156,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 180,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list",
+        "line": 196,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_enabled",
+        "line": 204,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "record_result",
+        "line": 215,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 243,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_pin",
+        "line": 255,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_required",
+        "line": 263,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_tool_count",
+        "line": 267,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_pid_alive",
+        "line": 271,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_saved_state",
+        "line": 289,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 295,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_native_cmd",
+        "line": 325,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_action",
+        "line": 344,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start",
+        "line": 367,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "stop",
+        "line": 393,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tail",
+        "line": 425,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 449,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 463,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 485,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list",
+        "line": 496,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_enabled",
+        "line": 501,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_run",
+        "line": 509,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_boot",
+        "line": 532,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tick",
+        "line": 540,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start",
+        "line": 552,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 570,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_capability",
+        "line": 580,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 597,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "loop",
+        "line": 557,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/knowledge.py",
+    "definitions": [
+      {
+        "name": "SemanticKnowledge",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_clean",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "chunk_text",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_embed",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_cosine",
+        "line": 97,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ingest",
+        "line": 105,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "documents",
+        "line": 144,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete_document",
+        "line": 161,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 171,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "answer",
+        "line": 215,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 250,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/memory.py",
+    "definitions": [
+      {
+        "name": "MemoryStore",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 58,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/models.py",
+    "definitions": [
+      {
+        "name": "_normalize_local_ollama_url",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_runtime_ollama_url",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "OllamaRouter",
+        "line": 56,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_json",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_kind",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_models",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "choose",
+        "line": 107,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate_text",
+        "line": 170,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed",
+        "line": 173,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/native.py",
+    "definitions": [
+      {
+        "name": "NativeRuntimeManager",
+        "line": 3,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 4,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_source",
+        "line": 5,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_exe",
+        "line": 6,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 7,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/network.py",
+    "definitions": [
+      {
+        "name": "NetworkManager",
+        "line": 19,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_host",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_services",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "register",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 114,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_devices",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete",
+        "line": 140,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_passive_command",
+        "line": 150,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_parse_neighbors",
+        "line": 158,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "passive_discover",
+        "line": 180,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 199,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_store_check",
+        "line": 256,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent_observations",
+        "line": 271,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 290,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/orchestrator.py",
+    "definitions": [
+      {
+        "name": "Step",
+        "line": 6,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Orchestrator",
+        "line": 14,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "plan",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute_dry",
+        "line": 31,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 19,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/policy.py",
+    "definitions": [
+      {
+        "name": "PolicyEngine",
+        "line": 3,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 4,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "evaluate",
+        "line": 5,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/privileged_broker.py",
+    "definitions": [
+      {
+        "name": "PrivilegedBroker",
+        "line": 17,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_approval_secret_path",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_approval_secret",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_timestamp",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_check_freshness",
+        "line": 95,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_mark_once",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_validate_parameters",
+        "line": 110,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_resolve_resource",
+        "line": 149,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_parameters_hash",
+        "line": 160,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_approval_message",
+        "line": 164,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "create_approval_proof",
+        "line": 168,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_approval_ok",
+        "line": 186,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_redacted_value",
+        "line": 205,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_audit_parameters",
+        "line": 220,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_audit_result",
+        "line": 230,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_receipt",
+        "line": 240,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle",
+        "line": 249,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/providers.py",
+    "definitions": [
+      {
+        "name": "OpenAICompatibleProvider",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ProviderManager",
+        "line": 182,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_credential",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_json",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_pricing_zero",
+        "line": 77,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_models",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "health",
+        "line": 114,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "chat",
+        "line": 150,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 196,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_config",
+        "line": 225,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_init_db",
+        "line": 293,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 313,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_get_setting",
+        "line": 321,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_set_setting",
+        "line": 331,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "mode",
+        "line": 340,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_mode",
+        "line": 344,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_default_model",
+        "line": 352,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_default_model",
+        "line": 361,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_provider_id",
+        "line": 366,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "save_credential",
+        "line": 372,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete_credential",
+        "line": 379,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_enabled",
+        "line": 386,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "models",
+        "line": 389,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "validate",
+        "line": 421,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_performance_rows",
+        "line": 431,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "performance",
+        "line": 455,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent_requests",
+        "line": 458,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_record_outcome",
+        "line": 475,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_record_request",
+        "line": 491,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_provider_score",
+        "line": 505,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_ordered_cloud_providers",
+        "line": 517,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_looks_coding",
+        "line": 529,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_looks_vision",
+        "line": 534,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_model_candidates",
+        "line": 540,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "route_preview",
+        "line": 584,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_cloud_attempts",
+        "line": 609,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_local",
+        "line": 650,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 667,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 737,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/receipts.py",
+    "definitions": [
+      {
+        "name": "ReceiptStore",
+        "line": 7,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_preferred_key_path",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_validate_key",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_write_key_exclusive",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_or_create_key",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_digest",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_sign",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "create",
+        "line": 85,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "verify_chain",
+        "line": 134,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/research.py",
+    "definitions": [
+      {
+        "name": "_TextExtractor",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_DuckParser",
+        "line": 61,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_SafeRedirectHandler",
+        "line": 90,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_public_connection",
+        "line": 103,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_PublicHTTPConnection",
+        "line": 116,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_PublicHTTPSConnection",
+        "line": 122,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_PublicHTTPHandler",
+        "line": 128,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_PublicHTTPSHandler",
+        "line": 133,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "PublicWebResearch",
+        "line": 138,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle_starttag",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle_endtag",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle_data",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "text",
+        "line": 54,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle_starttag",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle_data",
+        "line": 78,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handle_endtag",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "redirect_request",
+        "line": 97,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 117,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 123,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "http_open",
+        "line": 129,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "https_open",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 153,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 164,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_public_host",
+        "line": 172,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_normalize_public_url",
+        "line": 195,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_direct_result_url",
+        "line": 211,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_request",
+        "line": 221,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 245,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 274,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "research",
+        "line": 289,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 354,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/ring0.py",
+    "definitions": [
+      {
+        "name": "_ctl_code",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_Ring0Status",
+        "line": 23,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Ring0Bridge",
+        "line": 34,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "available",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_kernel32",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_fixed_call",
+        "line": 78,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ping",
+        "line": 154,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 157,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/vision.py",
+    "definitions": [
+      {
+        "name": "VisionEngine",
+        "line": 10,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_decode",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_detect",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "analyze",
+        "line": 80,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/windows.py",
+    "definitions": [
+      {
+        "name": "WindowsBroker",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_file_roots",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "available",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_ensure_workspace",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_run",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "action",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute_typed",
+        "line": 88,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "sarus/core/workflows.py",
+    "definitions": [
+      {
+        "name": "WorkflowScheduler",
+        "line": 12,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 13,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_enabled",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tick",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_tick",
+        "line": 87,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start",
+        "line": 128,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "stop",
+        "line": 143,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "loop",
+        "line": 133,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "scripts/create_broker_approval.py",
+    "definitions": [
+      {
+        "name": "canonical_hash",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "load_secret",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 37,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/broker_security_test.py",
+    "definitions": [
+      {
+        "name": "BrokerSecurityTest",
+        "line": 21,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_default_deny_and_signed_denial_receipt",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_legacy_powershell_is_blocked_even_with_boolean_approval",
+        "line": 54,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_json_approved_flag_is_not_authorization",
+        "line": 58,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_high_risk_action_requires_out_of_band_proof",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_approval_proof_is_bound_to_request_action_and_parameters",
+        "line": 75,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_protected_secret_file_can_be_loaded_without_environment_secret",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_receipt_key_migrates_outside_workspace",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_kernel_memory_action_permanently_denied",
+        "line": 130,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unknown_resource_is_denied",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_parameter_schema_rejects_extra_fields",
+        "line": 141,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_allowlisted_workspace_read",
+        "line": 148,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_sensitive_write_content_is_redacted_from_receipt",
+        "line": 159,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_sarus_source_and_security_config_are_not_workspace_writable",
+        "line": 172,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_path_outside_approved_workspace_is_denied_for_read",
+        "line": 186,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_non_http_url_is_invalid",
+        "line": 194,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_replay_is_denied",
+        "line": 201,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_receipt_chain_detects_signed_rows",
+        "line": 216,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_windows_readonly_system_actions",
+        "line": 224,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/dashboard_ui_test.py",
+    "definitions": [
+      {
+        "name": "UnifiedDashboardTests",
+        "line": 67,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_all_feature_pages_exist_and_use_one_design_system",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_page_controls_match_client_runtime",
+        "line": 85,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_client_is_real_api_wired_and_not_placeholder_navigation",
+        "line": 92,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_navigation_covers_every_feature_page",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_server_still_serves_unified_web_root",
+        "line": 125,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_provider_page_never_renders_a_secret_value_from_status",
+        "line": 140,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/fable_integration_test.py",
+    "definitions": [
+      {
+        "name": "FakeRegistry",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeExecution",
+        "line": 21,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeApp",
+        "line": 30,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FableIntegrationUnit",
+        "line": 38,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "RepositoryFableIntegration",
+        "line": 130,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 31,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_01_source_probe_and_pin",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_02_verified_trace_is_receipted_but_imported_text_is_not_promoted",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_03_learned_capability_versions_and_runs_through_sarus_execution",
+        "line": 80,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_04_agenda_once_runs_one_capability_then_disables",
+        "line": 92,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_05_agenda_enforces_min_period_and_active_item_limit",
+        "line": 103,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_06_lab_rejects_free_form_actions_before_execution",
+        "line": 112,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_07_integration_status_exposes_all_four_native_layers",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_20_pinned_fable_source_is_configured_and_materialized",
+        "line": 131,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_21_real_source_probe_does_not_require_qemu_to_prove_integration",
+        "line": 143,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/integration_test.py",
+    "definitions": [
+      {
+        "name": "safe_file",
+        "line": 5,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "T",
+        "line": 9,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "HttpSmoke",
+        "line": 49,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUpClass",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDownClass",
+        "line": 14,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_01_all_10_sources_connected",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_02_registry_exact_original_file_count",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_03_orchestrator_cross_repo_pipeline",
+        "line": 19,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_04_real_execution_engine_all_10_adapters",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_05_cai_isolation",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_06_high_risk_approval",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_07_never_auto_kernel",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_08_model_router_has_local_roles",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_09_capability_read_and_search",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_10_receipt_chain_content_verified",
+        "line": 31,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_11_workspace_path_guard",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_12_legacy_powershell_is_blocked_even_if_approved",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_13_unknown_broker_action_default_denied_and_receipted",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_14_allowlisted_workspace_read",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_15_high_risk_broker_action_needs_out_of_band_approval",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_16_kernel_action_is_permanently_denied",
+        "line": 42,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_17_replay_request_is_denied",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_18_receipt_signatures_verify",
+        "line": 46,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUpClass",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDownClass",
+        "line": 54,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "post",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_20_get_status",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_21_post_requires_session_token",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_22_post_and_cross_origin_protection",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_23_broker_status_endpoint",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_24_system_action_uses_typed_request",
+        "line": 74,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_25_legacy_system_action_shape_rejected",
+        "line": 76,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_brain_test.py",
+    "definitions": [
+      {
+        "name": "FakeModels",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "BrainRouterTests",
+        "line": 52,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_models",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 53,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_classifies_common_task_types",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_automatic_route_uses_installed_compatible_local_model",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_explicit_model_must_exist_and_cannot_be_embedding",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_generate_falls_back_and_records_outcomes",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_performance_history_influences_ranking",
+        "line": 96,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_high_privacy_request_remains_local",
+        "line": 105,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_council_test.py",
+    "definitions": [
+      {
+        "name": "FakeBrain",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeProviders",
+        "line": 33,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeKnowledge",
+        "line": 77,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeExperience",
+        "line": 82,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "CouncilSupervisorTests",
+        "line": 94,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "classify",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "route",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "route_preview",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 78,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "similar",
+        "line": 86,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "record",
+        "line": 89,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 95,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 101,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_council_uses_multiple_members_and_judge",
+        "line": 104,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_council_keeps_high_privacy_prompt_local",
+        "line": 112,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_supervisor_plan_uses_local_context_and_json_plan",
+        "line": 119,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_supervisor_run_specialists_reviewer_and_history",
+        "line": 129,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_supervisor_is_reasoning_only_in_source",
+        "line": 140,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_functional_regression_test.py",
+    "definitions": [
+      {
+        "name": "TempTest",
+        "line": 31,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ChatTests",
+        "line": 39,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ProviderModeTests",
+        "line": 84,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "WorkflowTests",
+        "line": 106,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "PersistenceAndOperatorTests",
+        "line": 136,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "KnowledgeAndNetworkTests",
+        "line": 165,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SupervisorAndUpdateTests",
+        "line": 209,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "make_store",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_follow_up_uses_persisted_context",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_new_conversation_has_no_other_conversation_context",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_failed_turn_does_not_save_a_false_success",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_invalid_or_unknown_id_does_not_start_new_conversation",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_context_is_bounded",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_concurrent_messages_keep_user_assistant_pairs",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 85,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_local_only_blocks_explicit_cloud",
+        "line": 91,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_local_only_preview_never_advertises_cloud_route",
+        "line": 96,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_sensitive_system_context_remains_local",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "scheduler",
+        "line": 107,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_failed_task_is_not_recorded_as_success",
+        "line": 114,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_pending_approval_pauses_recurrence",
+        "line": 120,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_runner_result_is_failure",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_empty_automation_is_rejected",
+        "line": 132,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_receipts_are_serialized_across_instances_and_clock_changes",
+        "line": 137,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_move_onto_itself_preserves_file",
+        "line": 147,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_native_runtime_never_reports_completed_actions",
+        "line": 157,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "knowledge",
+        "line": 166,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_different_embedding_models_are_not_compared",
+        "line": 170,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_nonfinite_embedding_is_rejected_before_storage",
+        "line": 175,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_embedding_change_during_ingestion_rolls_back_all_chunks",
+        "line": 180,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unreachable_service_is_not_green_health",
+        "line": 185,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_binary_page_is_rejected",
+        "line": 193,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_dns_rebinding_is_rejected_before_connection",
+        "line": 198,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_search_challenge_is_not_silent_zero_results",
+        "line": 203,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "supervisor",
+        "line": 210,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_invalid_planner_steps_fail_cleanly",
+        "line": 215,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_dependencies_are_ordered",
+        "line": 219,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_powershell_bom_build_identity_is_read",
+        "line": 223,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_http_functional_test.py",
+    "definitions": [
+      {
+        "name": "HttpFunctionalTests",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUpClass",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDownClass",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "request",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_all_dashboard_pages_and_assets_load",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_all_read_only_feature_endpoints",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_host_origin_and_session_checks",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_bind_only_loopback",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_malformed_bodies_are_client_errors",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_chat_round_trip_persists_and_passes_context_to_ollama",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_actual_workspace_lifecycle_and_signed_delete",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_file_has_failure_receipt",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_knowledge_memory_and_task_details",
+        "line": 87,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_core_certification_does_not_weaken_full_native_requirements",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "action",
+        "line": 71,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_installer_lifecycle_test.py",
+    "definitions": [
+      {
+        "name": "JubiInstallerLifecycleTests",
+        "line": 19,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_bootstrap_is_canonical_and_auto_update_enabled",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_updater_is_hash_verified_and_repo_scoped",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_background_task_is_persistent_but_user_session_scoped",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_background_bootstrap_repairs_private_runtime",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_prerequisites_are_automatically_provisioned_and_self_healing",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_real_target_ollama_candidate_list_is_not_nested",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_vendor_installer_downloads_use_unique_temp_paths",
+        "line": 100,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_pending_models_do_not_force_reinstall_loop",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_core_install_retries_transient_work_and_reuses_runtime_on_update",
+        "line": 120,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ollama_router_respects_local_custom_port",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ollama_router_rejects_remote_env_endpoint",
+        "line": 142,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_outer_installer_captures_diagnostics_and_repairs_failed_steps",
+        "line": 151,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_inno_installer_supports_silent_updates_and_current_repo",
+        "line": 166,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_uninstall_removes_background_task",
+        "line": 174,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_workflow_publishes_continuous_release_manifest",
+        "line": 179,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_knowledge_test.py",
+    "definitions": [
+      {
+        "name": "FakeModels",
+        "line": 19,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeProviders",
+        "line": 43,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "KnowledgeTests",
+        "line": 57,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "choose",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_vector",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 58,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 66,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_chunk_ingest_search_and_delete",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rag_answer_returns_visible_sources",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_experience_record_stats_and_similarity",
+        "line": 91,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_record_chat_keeps_provider_route",
+        "line": 109,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_network_test.py",
+    "definitions": [
+      {
+        "name": "NetworkManagerTests",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_register_list_and_delete_device",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rejects_invalid_hosts_and_ports",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_parses_windows_and_linux_neighbor_cache_without_active_scan",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_registered_health_check_does_not_scan_ports",
+        "line": 63,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_network_vision_ui_test.py",
+    "definitions": [
+      {
+        "name": "NetworkVisionUITests",
+        "line": 10,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_pages_and_assets_exist",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_advanced_shell_exposes_real_feature_pages",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_client_uses_real_network_and_vision_apis",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_computer_page_wires_typed_operator_controls",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_server_exposes_bounded_endpoints",
+        "line": 62,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_operator_test.py",
+    "definitions": [
+      {
+        "name": "TypedOperatorTests",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_workspace_lifecycle_is_scoped",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_workspace_escape_is_rejected",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_config_keeps_arbitrary_shell_forbidden_and_delete_approved",
+        "line": 60,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_phase0_test.py",
+    "definitions": [
+      {
+        "name": "PersistenceTests",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "RouterTests",
+        "line": 47,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Bus",
+        "line": 74,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Policy",
+        "line": 82,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Adapter",
+        "line": 89,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Adapters",
+        "line": 98,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Registry",
+        "line": 106,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Receipts",
+        "line": 111,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Memory",
+        "line": 120,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_Orchestrator",
+        "line": 125,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_FakeApp",
+        "line": 130,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ApprovalResumeTests",
+        "line": 143,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_memory_survives_reopen",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_events_survive_reopen",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_automation_survives_reopen",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_configured_model_is_never_returned",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_embedding_has_no_general_fallback",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 75,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "emit",
+        "line": 78,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "evaluate",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 102,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 107,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 112,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "create",
+        "line": 115,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 121,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "plan",
+        "line": 126,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 131,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_approval_survives_restart_and_resumes_exact_step",
+        "line": 144,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rejected_approval_never_executes",
+        "line": 170,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_provider_manager_test.py",
+    "definitions": [
+      {
+        "name": "FakeModels",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeCredentials",
+        "line": 51,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeCloud",
+        "line": 76,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ProviderManagerTests",
+        "line": 114,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_models",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "status",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete",
+        "line": 71,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 77,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_models",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "health",
+        "line": 96,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "chat",
+        "line": 107,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 115,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_local_only_never_calls_cloud",
+        "line": 130,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_mode_persists_in_sqlite",
+        "line": 138,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_hybrid_complex_request_can_prefer_cloud",
+        "line": 145,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_high_privacy_request_stays_local_even_in_cloud_boost",
+        "line": 159,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_explicit_cloud_is_blocked_for_high_privacy",
+        "line": 165,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_cloud_failure_falls_back_to_local",
+        "line": 170,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_provider_outcomes_persist_without_prompt_text",
+        "line": 179,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_explicit_provider_routes_only_to_that_provider",
+        "line": 191,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_openai_compatible_model_normalization",
+        "line": 199,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_credential_status_never_exposes_environment_secret",
+        "line": 214,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_windows_dpapi_round_trip_does_not_write_plaintext",
+        "line": 225,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_research_test.py",
+    "definitions": [
+      {
+        "name": "FakeProviders",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "OfflineResearch",
+        "line": 28,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResearchTests",
+        "line": 43,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 19,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_duck_result_parser_extracts_results",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_html_extractor_drops_script_and_style",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_public_browser_blocks_loopback_and_private_targets",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_redirect_handler_validates_destination_before_follow",
+        "line": 78,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_research_synthesis_marks_web_as_untrusted_and_persists_metadata",
+        "line": 92,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_research_source_has_no_system_execution_calls",
+        "line": 106,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "validator",
+        "line": 80,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "Req",
+        "line": 86,
+        "kind": "ClassDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_research_ui_test.py",
+    "definitions": [
+      {
+        "name": "ResearchUITests",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_research_page_is_real_and_linked_from_agents",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_server_has_research_routes_and_public_research_is_separate_from_system_broker",
+        "line": 29,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/jubi_vision_test.py",
+    "definitions": [
+      {
+        "name": "FakeModels",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "VisionTests",
+        "line": 44,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_models",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "choose",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_status_is_local_only",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_valid_png_is_forwarded_to_local_ollama_images",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rejects_invalid_base64_and_unknown_format",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rejects_non_vision_model",
+        "line": 70,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/production_readiness_test.py",
+    "definitions": [
+      {
+        "name": "ProductionReadinessTest",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_versions_are_synchronized",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_acceptance_is_manifest_driven",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_required_models_are_local_configured_models",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_installer_has_production_certification_model_provisioning_and_jubi_launcher",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_legacy_pe_launcher_script_routes_to_jubi",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_model_router_never_returns_missing_configured_model",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_doctor_reads_production_config",
+        "line": 73,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_persistent_execution_state_is_present",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_sqlite_transaction_helper_exists",
+        "line": 86,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_release_signing_is_sha256_and_timestamped",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_obsolete_transfer_automation_is_removed",
+        "line": 102,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_active_workflows_keep_repository_write_permission_narrow",
+        "line": 131,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_installer_workflow_keeps_one_canonical_jubi_artifact_and_release",
+        "line": 143,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_no_security_disable_in_release_scripts",
+        "line": 156,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/ring0_bridge_test.py",
+    "definitions": [
+      {
+        "name": "Ring0BridgeTest",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tearDown",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ring0_actions_are_explicitly_allowlisted",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_raw_driver_and_kernel_memory_actions_stay_denied",
+        "line": 42,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ring0_action_reaches_executor_instead_of_policy_block",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_bridge_has_fixed_ioctl_surface_only",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_windows_missing_or_installed_driver_is_reported_cleanly",
+        "line": 65,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/run_dashboard_runtime.py",
+    "definitions": [],
+    "syntax": "pass"
+  },
+  {
+    "path": "tests/runtime_fixture.py",
+    "definitions": [
+      {
+        "name": "RuntimeFixture",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__enter__",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__exit__",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "OllamaTestHandler",
+        "line": 24,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "log_message",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "reply",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "do_GET",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "do_POST",
+        "line": 30,
+        "kind": "FunctionDef"
+      }
+    ],
+    "syntax": "pass"
+  }
+]

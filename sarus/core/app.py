@@ -12,7 +12,9 @@ from .research import PublicWebResearch
 from .network import NetworkManager
 from .vision import VisionEngine
 from .policy import PolicyEngine
-from .capabilities import CapabilityRegistry
+from .capabilities import CapabilityRegistry, CapabilitySpec
+from .hardware import profile_hardware
+from .hermes import HermesRuntime
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -51,6 +53,30 @@ class Jubi:
         self.vision = VisionEngine(self.models, self.bus)
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
+        self.hermes = HermesRuntime(root, self.models)
+        self.registry.register_executor(CapabilitySpec(
+            id='core.hardware.profile', name='Inspect local hardware', source='jubi', version='1',
+            category='system', description='Read hardware and installed software without starting services.',
+            platforms=('Windows',), dependencies=(), permissions=('hardware.read',),
+            privacy='local_only', risk=0, input_schema={'type': 'object', 'properties': {}},
+            output_schema={'type': 'object'}, health_check='bounded device probes', executor='profile_hardware',
+            timeout_seconds=25, resource_requirements={'network': False}, isolation='read-only host probes',
+            availability='AVAILABLE', verification='Per-field probe status; failed probes are explicit'),
+            lambda: profile_hardware(self.root, self.models))
+        self.registry.register_executor(CapabilitySpec(
+            id='hermes.analysis', name='Hermes delegated analysis', source='hermes', version='0.20.0-jubi-pilot1',
+            category='reasoning', description='One real Hermes child analyzes supplied evidence using a local model.',
+            platforms=('Windows',), dependencies=('Hermes Python dependencies', 'local Ollama model'),
+            permissions=('model.inference',), privacy='local_only', risk=1,
+            input_schema={'type': 'object', 'required': ['prompt', 'model'], 'properties': {
+                'prompt': {'type': 'string', 'maxLength': 16000},
+                'model': {'type': 'string', 'maxLength': 200},
+                'context': {'type': 'string', 'maxLength': 16000}}}, output_schema={'type': 'object'},
+            health_check='Runtime, model metadata and free RAM admission', executor='HermesRuntime.analyze',
+            timeout_seconds=180, resource_requirements={'max_workers': 1, 'context_tokens': 4096},
+            isolation='dedicated process; tools and direct network disabled; no general OS sandbox',
+            availability='EXPERIMENTAL', verification='Inference receipts and real session archive; no task completion'),
+            self.hermes.analyze)
         self.adapters = AdapterManager(root, root / 'config/sources.json')
         self.orchestrator = Orchestrator(self.bus, self.models, self.policy)
         self.memory = MemoryStore(self.db_path)

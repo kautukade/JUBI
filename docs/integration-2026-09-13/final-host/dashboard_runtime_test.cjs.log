@@ -1,0 +1,26 @@
+PASS page initialization: activity.html
+PASS page initialization: agents.html
+PASS page initialization: automation.html
+PASS page initialization: brain.html
+PASS page initialization: chat.html
+PASS page initialization: computer.html
+PASS page initialization: development.html
+PASS page initialization: fable.html
+PASS page initialization: health.html
+PASS page initialization: index.html
+PASS page initialization: knowledge.html
+PASS page initialization: models.html
+PASS page initialization: network.html
+PASS page initialization: providers.html
+PASS page initialization: research.html
+PASS page initialization: security.html
+PASS page initialization: tasks.html
+PASS page initialization: vision.html
+PASS page initialization: chat.html
+PASS chat follow-up, duplicate prevention, persisted reload, new conversation
+PASS memory write with session recovery without duplicate mutation
+PASS create and pause persistent automation
+PASS workspace file write/read and request-bound approval display
+PASS health checks render actual server check results
+PASS invalid image clears stale image and prevents unintended analysis
+PASS all 18 dashboard pages and 7 DOM interaction flows (controlled inference fixture).

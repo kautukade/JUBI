@@ -1,0 +1,520 @@
+{
+  "schema_version": 1,
+  "captured_at": 1789445777.3009195,
+  "os": {
+    "system": "Windows",
+    "release": "11",
+    "version": "10.0.26200",
+    "architecture": "AMD64",
+    "build": "26200",
+    "update_build_revision": 9168,
+    "display_version": "25H2",
+    "source": "Windows registry"
+  },
+  "cpu": {
+    "name": "AMD Ryzen 5 7530U with Radeon Graphics",
+    "logical_cores": 12,
+    "physical_cores": 6,
+    "vendor": "AuthenticAMD",
+    "source": "Windows registry"
+  },
+  "memory": {
+    "status": "AVAILABLE",
+    "total_bytes": 16474791936,
+    "available_bytes": 346488832,
+    "available_commit_bytes": 2811068416,
+    "source": "GlobalMemoryStatusEx"
+  },
+  "gpu": {
+    "status": "PARTIAL",
+    "devices": [
+      {
+        "name": "AMD Radeon (TM) Graphics",
+        "vendor": "Advanced Micro Devices, Inc.",
+        "vram_bytes": 536870912,
+        "driver": "31.0.21910.4002",
+        "source": "Windows display registry",
+        "vram_kind": "reported dedicated; shared RAM is not added"
+      }
+    ]
+  },
+  "devices": {
+    "status": "PARTIAL",
+    "items": [
+      {
+        "kind": "microphone",
+        "name": "Buds T200 Lite Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "MIDI function",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Buds T200 Lite Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "moto g34 5G A2DP SNK",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Rockerz 450 Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Stone 193 Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "MIDI function",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "EB-367 Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "moto g34 5G Hands-Free HF Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "AMD Audio Device",
+        "active": true,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "MIDI function",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "moto g34 5G Hands-Free HF Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "moto g34 5G A2DP SNK",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "GHW-123P",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "microphone",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "MIDI function",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Rockerz 450",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "EB-367",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Stone 193",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "MIDI function",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Buds T200 Lite",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "moto g34 5G Hands-Free HF Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "MIDI function",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Stone 193 Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Realtek(R) Audio",
+        "active": true,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Realtek(R) Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Buds T200 Lite Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "GHW-123P",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "AMD High Definition Audio Device",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Buds T200 Lite Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "EB-367 Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Rockerz 450 Hands-Free",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "moto g34 5G Hands-Free HF Audio",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "speaker",
+        "name": "Buds T200 Lite",
+        "active": false,
+        "source": "Windows audio endpoint registry"
+      },
+      {
+        "kind": "camera_or_imaging",
+        "name": "USB Video Device",
+        "active": null,
+        "source": "installed device driver registry"
+      }
+    ],
+    "note": "Inventory only; no capture or playback attempted"
+  },
+  "storage": {
+    "status": "AVAILABLE",
+    "total_bytes": 536861470720,
+    "free_bytes": 26790846464,
+    "disk_type": "unknown"
+  },
+  "programs": {
+    "ollama": {
+      "status": "FAILED",
+      "path": null,
+      "error": "[WinError 5] Access is denied: 'C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Programs\\\\Ollama\\\\ollama.exe'"
+    },
+    "git": {
+      "status": "AVAILABLE",
+      "path": "C:\\Program Files\\Git\\cmd\\git.EXE"
+    },
+    "code": {
+      "status": "AVAILABLE",
+      "path": "C:\\Users\\hp\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.CMD"
+    },
+    "docker": {
+      "status": "AVAILABLE",
+      "path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.EXE"
+    },
+    "wsl": {
+      "status": "AVAILABLE",
+      "path": "C:\\WINDOWS\\system32\\wsl.EXE"
+    },
+    "chrome": {
+      "status": "AVAILABLE",
+      "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    },
+    "msedge": {
+      "status": "AVAILABLE",
+      "path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
+    },
+    "firefox": {
+      "status": "AVAILABLE",
+      "path": "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+    }
+  },
+  "probe_errors": [
+    {
+      "probe": "CIM",
+      "error": "Get-CimInstance : Access denied \r\nAt line:4 char:9\r\n+   gpu=@(Get-CimInstance Win32_VideoController | Select-Object Name,Ad ...\r\n+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : PermissionDenied: (root\\cimv2:Win32_VideoController:String) [Get-CimInstance], CimExcept \r\n   ion\r\n    + FullyQualifiedErrorId : HRESULT 0x80041003,Microsoft.Management.Infrastructure.CimCmdlets.GetCimInstanceCommand"
+    }
+  ],
+  "ollama": {
+    "endpoint": "http://127.0.0.1:11500",
+    "online": true,
+    "models": [
+      "nomic-embed-text-v2-moe:latest",
+      "qwen2.5-coder:7b",
+      "qwen2.5vl:3b",
+      "qwen2.5:7b",
+      "glm4:latest",
+      "qwen3-coder:480b-cloud"
+    ],
+    "items": [
+      {
+        "name": "nomic-embed-text-v2-moe:latest",
+        "kind": "embedding",
+        "size": 957680763,
+        "modified_at": "2026-08-05T11:59:22.1110946+05:30",
+        "details": {
+          "parent_model": "/Users/nicole/.ollama/models/blobs/sha256-a5db3381f2e514d3490a3a31fe70eb1a65e95016c85c6c2c23223b810806594f",
+          "format": "gguf",
+          "family": "nomic-bert-moe",
+          "families": [
+            "nomic-bert-moe"
+          ],
+          "parameter_size": "475.29M",
+          "quantization_level": "F16",
+          "context_length": 512,
+          "embedding_length": 768
+        }
+      },
+      {
+        "name": "qwen2.5-coder:7b",
+        "kind": "coding",
+        "size": 4683087561,
+        "modified_at": "2026-08-04T16:32:34.9801445+05:30",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen2",
+          "families": [
+            "qwen2"
+          ],
+          "parameter_size": "7.6B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 32768,
+          "embedding_length": 3584
+        }
+      },
+      {
+        "name": "qwen2.5vl:3b",
+        "kind": "vision",
+        "size": 3200627168,
+        "modified_at": "2026-08-04T16:24:06.2524871+05:30",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen25vl",
+          "families": [
+            "qwen25vl"
+          ],
+          "parameter_size": "3.8B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 128000,
+          "embedding_length": 2048
+        }
+      },
+      {
+        "name": "qwen2.5:7b",
+        "kind": "general",
+        "size": 4683087332,
+        "modified_at": "2026-07-30T10:18:31.7070621+05:30",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen2",
+          "families": [
+            "qwen2"
+          ],
+          "parameter_size": "7.6B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 32768,
+          "embedding_length": 3584
+        }
+      },
+      {
+        "name": "glm4:latest",
+        "kind": "general",
+        "size": 5455326235,
+        "modified_at": "2026-05-13T18:39:35.7864903+05:30",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "chatglm",
+          "families": [
+            "chatglm"
+          ],
+          "parameter_size": "9.4B",
+          "quantization_level": "Q4_0",
+          "context_length": 131072,
+          "embedding_length": 4096
+        }
+      },
+      {
+        "name": "qwen3-coder:480b-cloud",
+        "kind": "cloud-through-ollama",
+        "size": 382,
+        "modified_at": "2026-05-09T22:58:58.8835602+05:30",
+        "details": {
+          "parent_model": "",
+          "format": "",
+          "family": "qwen3moe",
+          "families": [
+            "qwen3moe"
+          ],
+          "parameter_size": "480B",
+          "quantization_level": "BF16",
+          "context_length": 262144,
+          "embedding_length": 2048
+        }
+      }
+    ]
+  },
+  "wsl": {
+    "status": "FAILED",
+    "exit_code": 4294967295,
+    "error": "Access is denied. \r\nError code: Wsl/EnumerateDistros/Service/E_ACCESSDENIED"
+  },
+  "docker": {
+    "status": "FAILED",
+    "exit_code": 1,
+    "error": "WARNING: Error loading config file: open C:\\Users\\hp\\.docker\\config.json: Access is denied.\nerror during connect: in the default daemon configuration on Windows, the docker client must be run with elevated privileges to connect: Get \"http://%2F%2F.%2Fpipe%2Fdocker_engine/v1.51/version\": open //./pipe/docker_engine: The system cannot find the file specified."
+  }
+}

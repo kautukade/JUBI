@@ -1,0 +1,40 @@
+{
+  "explicit_cloud_model_in_local_only": {
+    "reproduced": true,
+    "mode": "local_only",
+    "route": {
+      "provider": "ollama",
+      "selected_model": "example:cloud",
+      "mode": "local_only",
+      "task_type": "general",
+      "intent": "general",
+      "complexity": 1,
+      "privacy": "local",
+      "cloud": false,
+      "fallback_errors": []
+    },
+    "note": "No real model/provider called."
+  },
+  "experience_compares_different_embedding_models": {
+    "reproduced": true,
+    "score": 0.94,
+    "stored_model": "embed-a",
+    "query_model": "embed-b"
+  },
+  "isolated_policy_runs_adapter_in_process": {
+    "reproduced": true,
+    "policy": {
+      "decision": "isolated",
+      "reason": "experiment_isolation"
+    },
+    "status": "completed",
+    "marker": true,
+    "note": "Adapter was a harmless test double; no benchmark executed."
+  },
+  "broker_replay_state_lost_on_recreation": {
+    "reproduced": true,
+    "first": "completed",
+    "second": "completed",
+    "note": "No process list command executed; harmless executor double."
+  }
+}

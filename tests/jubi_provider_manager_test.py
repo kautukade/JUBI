@@ -135,15 +135,17 @@ class ProviderManagerTests(unittest.TestCase):
         self.assertFalse(result['jubi_provider_route']['cloud'])
         self.assertTrue(all(not provider.calls for provider in self.cloud.values()))
 
-    def test_mode_persists_in_sqlite(self):
-        self.manager.set_mode('hybrid_auto')
+    def test_legacy_mode_does_not_override_transport_authority(self):
+        self.manager._set_setting('mode', 'hybrid_auto')
         other = ProviderManager(
             self.db, self.brain, ROOT / 'config/providers.json', credentials=self.credentials
         )
-        self.assertEqual(other.mode(), 'hybrid_auto')
+        self.assertEqual(other.mode(), 'local_only')
+        with self.assertRaises(ValueError):
+            other.set_mode('hybrid_auto')
 
-    def test_hybrid_complex_request_can_prefer_cloud(self):
-        self.manager.set_mode('hybrid_auto')
+    def test_complex_request_stays_local_despite_saved_hybrid_preference(self):
+        self.manager._set_setting('mode', 'hybrid_auto')
         text = (
             'Design a complete production architecture and detailed migration strategy for this entire '
             'application with security performance testing rollback monitoring and implementation steps '
@@ -151,48 +153,48 @@ class ProviderManagerTests(unittest.TestCase):
         )
         preview = self.manager.route_preview(text)
         self.assertGreaterEqual(preview['complexity'], 4)
-        self.assertEqual(preview['provider_order'][0], 'nvidia')
+        self.assertEqual(preview['provider_order'][0], 'ollama')
         result = self.manager.generate(text)
-        self.assertEqual(result['jubi_provider_route']['provider'], 'nvidia')
-        self.assertTrue(result['jubi_provider_route']['cloud'])
+        self.assertEqual(result['jubi_provider_route']['provider'], 'ollama')
+        self.assertFalse(result['jubi_provider_route']['cloud'])
 
     def test_high_privacy_request_stays_local_even_in_cloud_boost(self):
-        self.manager.set_mode('cloud_boost')
+        self.manager._set_setting('mode', 'cloud_boost')
         result = self.manager.generate('My API key is SECRET-123456789. Explain how to store this credential securely.')
         self.assertEqual(result['jubi_provider_route']['provider'], 'ollama')
         self.assertTrue(all(not provider.calls for provider in self.cloud.values()))
 
     def test_explicit_cloud_is_blocked_for_high_privacy(self):
-        self.manager.set_mode('cloud_boost')
+        self.manager._set_setting('mode', 'cloud_boost')
         with self.assertRaises(PermissionError):
             self.manager.generate('Use this password secret-123456 to answer.', provider='openrouter')
 
-    def test_cloud_failure_falls_back_to_local(self):
-        self.manager.set_mode('cloud_boost')
+    def test_saved_cloud_preference_does_not_attempt_cloud(self):
+        self.manager._set_setting('mode', 'cloud_boost')
         for provider in self.cloud.values():
             provider.fail = True
         result = self.manager.generate('Write a short public project plan for a demo website.')
         self.assertEqual(result['response'], 'LOCAL_OK')
         self.assertEqual(result['jubi_provider_route']['provider'], 'ollama')
-        self.assertTrue(result['jubi_provider_route']['fallback_errors'])
+        self.assertTrue(all(not provider.calls for provider in self.cloud.values()))
 
     def test_provider_outcomes_persist_without_prompt_text(self):
-        self.manager.set_mode('cloud_boost')
+        self.manager._set_setting('mode', 'cloud_boost')
         secret_prompt = 'Create a public architecture overview with enough detail for a technical presentation.'
         result = self.manager.generate(secret_prompt)
-        self.assertTrue(result['jubi_provider_route']['cloud'])
+        self.assertFalse(result['jubi_provider_route']['cloud'])
         rows = self.manager.recent_requests()
         self.assertEqual(len(rows), 1)
         self.assertNotIn(secret_prompt, json.dumps(rows))
         self.assertEqual(len(rows[0]['prompt_hash']), 64)
         perf = self.manager.performance()
-        self.assertTrue(any(x['provider'] == 'nvidia' and x['successes'] == 1 for x in perf))
+        self.assertTrue(any(x['provider'] == 'ollama' and x['successes'] == 1 for x in perf))
 
-    def test_explicit_provider_routes_only_to_that_provider(self):
-        self.manager.set_mode('hybrid_auto')
-        result = self.manager.generate('Write a friendly greeting.', provider='huggingface')
-        self.assertEqual(result['jubi_provider_route']['provider'], 'huggingface')
-        self.assertEqual(len(self.cloud['huggingface'].calls), 1)
+    def test_explicit_external_provider_is_blocked_despite_saved_mode(self):
+        self.manager._set_setting('mode', 'hybrid_auto')
+        with self.assertRaises(PermissionError):
+            self.manager.generate('Write a friendly greeting.', provider='huggingface')
+        self.assertEqual(len(self.cloud['huggingface'].calls), 0)
         self.assertEqual(len(self.cloud['nvidia'].calls), 0)
         self.assertEqual(len(self.cloud['openrouter'].calls), 0)
 

@@ -1,0 +1,10 @@
+test_advanced_shell_exposes_real_feature_pages (__main__.NetworkVisionUITests.test_advanced_shell_exposes_real_feature_pages) ... ok
+test_client_uses_real_network_and_vision_apis (__main__.NetworkVisionUITests.test_client_uses_real_network_and_vision_apis) ... ok
+test_computer_page_wires_typed_operator_controls (__main__.NetworkVisionUITests.test_computer_page_wires_typed_operator_controls) ... ok
+test_pages_and_assets_exist (__main__.NetworkVisionUITests.test_pages_and_assets_exist) ... ok
+test_server_exposes_bounded_endpoints (__main__.NetworkVisionUITests.test_server_exposes_bounded_endpoints) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+OK

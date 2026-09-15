@@ -1,0 +1,12 @@
+{
+  "gpu_error": "Access denied ",
+  "storage": [
+    {
+      "Name": "C",
+      "Used": 511061037056,
+      "Free": 25800433664
+    }
+  ],
+  "cpu_error": "Access denied ",
+  "ram_error": "Access denied "
+}

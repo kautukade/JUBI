@@ -234,6 +234,8 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/models':
                 return self._json(APP.models.list_models())
             if p == '/api/capabilities':
+                if q.get('view', [''])[0] == 'executors':
+                    return self._json(APP.registry.executors())
                 if 'limit' in q or q.get('q', [''])[0] or q.get('source', [''])[0] or q.get('kind', [''])[0]:
                     kinds = [x for x in q.get('kind', []) if x] or None
                     return self._json(
@@ -506,23 +508,15 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.experience.delete(str(data.get('id', ''))))
             if p == '/api/capability/run':
                 cid = str(data.get('id', ''))
-                cap = APP.registry.get(cid)
-                if not cap:
-                    return self._json({'error': 'capability not found'}, 404)
-                adapter = APP.adapters.get(cap['source'])
-                out = adapter.execute(
-                    str(data.get('text', 'Use this capability for its intended purpose.')),
-                    APP,
-                    capability_id=cid,
-                )
+                out = APP.registry.execute(cid, data.get('parameters', {}))
                 receipt = APP.receipts.create(
                     'direct-capability',
                     cid,
-                    cap['source'],
-                    'completed' if out.get('ok') else 'failed',
+                    'registered-executor',
+                    'observed',
                     out,
                 )
-                return self._json({'capability': cap, 'result': out, 'receipt': receipt})
+                return self._json({'capability_id': cid, 'result': out, 'receipt': receipt})
             if p == '/api/memory':
                 return self._json(
                     APP.memory.add(

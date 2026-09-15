@@ -1,0 +1,162 @@
+{
+  "fixture_root": "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-audit-afbt7s99",
+  "fixture_note": "Core copied unchanged; config/sources.json in disposable copy uses absolute original read-only source paths. Real external credentials removed from child environment. Ollama points to unavailable loopback port except explicit test doubles. No packages installed.",
+  "results": [
+    {
+      "suite": "broker_security_test.py",
+      "returncode": 1,
+      "tests": 18,
+      "seconds": 1.33
+    },
+    {
+      "suite": "dashboard_ui_test.py",
+      "returncode": 0,
+      "tests": 6,
+      "seconds": 0.44
+    },
+    {
+      "suite": "fable_integration_test.py",
+      "returncode": 0,
+      "tests": 9,
+      "seconds": 1.2
+    },
+    {
+      "suite": "integration_test.py",
+      "returncode": 1,
+      "tests": 24,
+      "seconds": 22.25
+    },
+    {
+      "suite": "jubi_brain_test.py",
+      "returncode": 0,
+      "tests": 6,
+      "seconds": 0.5
+    },
+    {
+      "suite": "jubi_council_test.py",
+      "returncode": 0,
+      "tests": 5,
+      "seconds": 0.31
+    },
+    {
+      "suite": "jubi_functional_regression_test.py",
+      "returncode": 0,
+      "tests": 26,
+      "seconds": 1.75
+    },
+    {
+      "suite": "jubi_http_functional_test.py",
+      "returncode": 5,
+      "tests": 0,
+      "seconds": 0.5
+    },
+    {
+      "suite": "jubi_installer_lifecycle_test.py",
+      "returncode": 0,
+      "tests": 15,
+      "seconds": 0.48
+    },
+    {
+      "suite": "jubi_knowledge_test.py",
+      "returncode": 0,
+      "tests": 4,
+      "seconds": 0.39
+    },
+    {
+      "suite": "jubi_network_test.py",
+      "returncode": 0,
+      "tests": 4,
+      "seconds": 0.38
+    },
+    {
+      "suite": "jubi_network_vision_ui_test.py",
+      "returncode": 0,
+      "tests": 5,
+      "seconds": 0.3
+    },
+    {
+      "suite": "jubi_operator_test.py",
+      "returncode": 0,
+      "tests": 3,
+      "seconds": 0.31
+    },
+    {
+      "suite": "jubi_phase0_test.py",
+      "returncode": 0,
+      "tests": 7,
+      "seconds": 0.7
+    },
+    {
+      "suite": "jubi_provider_manager_test.py",
+      "returncode": 1,
+      "tests": 11,
+      "seconds": 1.22
+    },
+    {
+      "suite": "jubi_research_test.py",
+      "returncode": 0,
+      "tests": 6,
+      "seconds": 0.38
+    },
+    {
+      "suite": "jubi_research_ui_test.py",
+      "returncode": 0,
+      "tests": 2,
+      "seconds": 0.23
+    },
+    {
+      "suite": "jubi_vision_test.py",
+      "returncode": 0,
+      "tests": 4,
+      "seconds": 0.2
+    },
+    {
+      "suite": "production_readiness_test.py",
+      "returncode": 0,
+      "tests": 14,
+      "seconds": 0.47
+    },
+    {
+      "suite": "ring0_bridge_test.py",
+      "returncode": 0,
+      "tests": 5,
+      "seconds": 0.42
+    },
+    {
+      "suite": "node --check app.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check council.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check knowledge.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check network.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check operator.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check research.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check shell-extension.js",
+      "returncode": 0
+    },
+    {
+      "suite": "node --check vision.js",
+      "returncode": 0
+    },
+    {
+      "suite": "dashboard_runtime_test.cjs",
+      "returncode": 1
+    }
+  ]
+}

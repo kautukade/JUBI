@@ -44,6 +44,9 @@ class Doctor:
         )
         add('Writable data directory', os.access(self.app.root / 'data', os.W_OK), self.app.root / 'data')
         add('Ollama service', models.get('online', False), models.get('error', 'online'))
+        local_chat = [item['name'] for item in models.get('items', [])
+                      if item.get('kind') in {'general', 'coding'}]
+        add('Installed local chat candidate', bool(local_chat), ', '.join(local_chat) or 'User-approved model setup required')
         for model in required:
             add('Ollama model ' + model, model in installed, 'installed' if model in installed else 'missing')
 

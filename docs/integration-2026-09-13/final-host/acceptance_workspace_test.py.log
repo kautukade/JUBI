@@ -1,0 +1,10 @@
+test_arbitrary_python_is_rejected_before_execution (__main__.WorkspaceTests.test_arbitrary_python_is_rejected_before_execution) ... ok
+test_changed_test_harness_and_cancellation_fail_closed (__main__.WorkspaceTests.test_changed_test_harness_and_cancellation_fail_closed) ... ok
+test_real_failure_edit_test_success_and_independent_verification (__main__.WorkspaceTests.test_real_failure_edit_test_success_and_independent_verification) ... ok
+test_review_has_no_write_permission_and_worker_cannot_verify (__main__.WorkspaceTests.test_review_has_no_write_permission_and_worker_cannot_verify) ... ok
+test_worker_cannot_change_tests_or_escape_workspace (__main__.WorkspaceTests.test_worker_cannot_change_tests_or_escape_workspace) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.846s
+
+OK

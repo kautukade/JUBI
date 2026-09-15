@@ -228,12 +228,15 @@ function Start-Ollama([string]$Exe,[string]$BaseUrl) {
     $err = Join-Path $LogDir "ollama-$port.stderr.log"
     Remove-Item -LiteralPath $out,$err -Force -ErrorAction SilentlyContinue
     $oldHost = $env:OLLAMA_HOST
+    $oldCloud = $env:OLLAMA_NO_CLOUD
     try {
         $env:OLLAMA_HOST = "127.0.0.1:$port"
+        $env:OLLAMA_NO_CLOUD = '1'
         Log "Starting Ollama local API at $BaseUrl."
         $proc = Start-Process -FilePath $Exe -ArgumentList @('serve') -WindowStyle Hidden -PassThru -RedirectStandardOutput $out -RedirectStandardError $err
     } finally {
         if ($null -eq $oldHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue } else { $env:OLLAMA_HOST = $oldHost }
+        if ($null -eq $oldCloud) { Remove-Item Env:OLLAMA_NO_CLOUD -ErrorAction SilentlyContinue } else { $env:OLLAMA_NO_CLOUD = $oldCloud }
     }
     foreach ($i in 1..45) {
         Start-Sleep -Seconds 1
@@ -315,30 +318,16 @@ function Ensure-Ollama($Bootstrap) {
 }
 
 function Ensure-Models([string]$Exe,[string]$BaseUrl,$Production) {
-    if ($Fast) { return @() }
-    $pending = @()
-    $oldHost = $env:OLLAMA_HOST
-    try {
-        $env:OLLAMA_HOST = $BaseUrl.Substring('http://'.Length)
-        foreach ($model in @($Production.required_models)) {
-            $name = [string]$model
-            $list = (& $Exe list 2>$null | Out-String)
-            if ($list -match [regex]::Escape($name)) { Log "Required Ollama model already present: $name"; continue }
-            $ok = $false
-            foreach ($attempt in 1..3) {
-                try {
-                    Log "Pulling required Ollama model: $name (attempt $attempt/3)"
-                    & $Exe pull $name
-                    if ($LASTEXITCODE -eq 0) { $ok = $true; break }
-                } catch { Log "Model pull error for ${name}: $($_.Exception.Message)" }
-                if ($attempt -lt 3) { Start-Sleep -Seconds (5*$attempt) }
-            }
-            if (-not $ok) { $pending += $name; Log "WARNING: model $name remains pending; background repair will retry it." }
-        }
-    } finally {
-        if ($null -eq $oldHost) { Remove-Item Env:OLLAMA_HOST -ErrorAction SilentlyContinue } else { $env:OLLAMA_HOST = $oldHost }
+    $catalogue = Invoke-RestMethod -Uri "$BaseUrl/api/tags" -TimeoutSec 8
+    $installed = @($catalogue.models | Where-Object { $_.name -notmatch 'cloud' -and $_.details.format -eq 'gguf' })
+    Log "Reusing $($installed.Count) installed local model candidates. Role compatibility is checked by Jubi."
+    # Acquisition is a separate consented operation. Repair must not silently
+    # restore a fixed multi-GB download list on a small/offline machine.
+    if ($installed.Count -eq 0) {
+        Log 'MODEL SETUP REQUIRED: no local model candidate found. User-approved acquisition is pending.'
+        return @('local-model-acquisition-requires-consent')
     }
-    return [string[]]$pending
+    return @()
 }
 
 function Save-Runtime([string]$PythonExe,[string]$OllamaUrl,[string[]]$Pending) {
@@ -370,6 +359,9 @@ try {
     $ollama = Ensure-Ollama $bootstrap
     $pending = Ensure-Models $ollama.Exe $ollama.BaseUrl $production
     Save-Runtime $python $ollama.BaseUrl $pending
+    $profilePath = Join-Path $JubiDataDir 'hardware.json'
+    & $python (Join-Path $Root 'scripts\profile_hardware.py') --root $Root --output $profilePath --ollama-url $ollama.BaseUrl
+    if ($LASTEXITCODE -ne 0) { throw 'Hardware profiling failed. See prerequisite logs; setup is not fully configured.' }
     Log 'Jubi prerequisite check completed successfully.'
     exit 0
 } catch {

@@ -1,0 +1,19 @@
+test_acceptance_is_manifest_driven (__main__.ProductionReadinessTest.test_acceptance_is_manifest_driven) ... ok
+test_active_workflows_keep_repository_write_permission_narrow (__main__.ProductionReadinessTest.test_active_workflows_keep_repository_write_permission_narrow) ... ok
+test_doctor_reads_production_config (__main__.ProductionReadinessTest.test_doctor_reads_production_config) ... ok
+test_installed_model_discovery_requires_a_local_chat_candidate (__main__.ProductionReadinessTest.test_installed_model_discovery_requires_a_local_chat_candidate) ... ok
+test_installer_has_production_certification_model_provisioning_and_jubi_launcher (__main__.ProductionReadinessTest.test_installer_has_production_certification_model_provisioning_and_jubi_launcher) ... ok
+test_installer_workflow_keeps_one_canonical_jubi_artifact_and_release (__main__.ProductionReadinessTest.test_installer_workflow_keeps_one_canonical_jubi_artifact_and_release) ... ok
+test_legacy_pe_launcher_script_routes_to_jubi (__main__.ProductionReadinessTest.test_legacy_pe_launcher_script_routes_to_jubi) ... ok
+test_model_router_never_returns_missing_configured_model (__main__.ProductionReadinessTest.test_model_router_never_returns_missing_configured_model) ... ok
+test_no_security_disable_in_release_scripts (__main__.ProductionReadinessTest.test_no_security_disable_in_release_scripts) ... ok
+test_obsolete_transfer_automation_is_removed (__main__.ProductionReadinessTest.test_obsolete_transfer_automation_is_removed) ... ok
+test_persistent_execution_state_is_present (__main__.ProductionReadinessTest.test_persistent_execution_state_is_present) ... ok
+test_release_signing_is_sha256_and_timestamped (__main__.ProductionReadinessTest.test_release_signing_is_sha256_and_timestamped) ... ok
+test_sqlite_transaction_helper_exists (__main__.ProductionReadinessTest.test_sqlite_transaction_helper_exists) ... ok
+test_versions_are_synchronized (__main__.ProductionReadinessTest.test_versions_are_synchronized) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.474s
+
+OK

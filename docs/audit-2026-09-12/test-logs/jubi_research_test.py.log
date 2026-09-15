@@ -1,0 +1,11 @@
+test_duck_result_parser_extracts_results (__main__.ResearchTests.test_duck_result_parser_extracts_results) ... ok
+test_html_extractor_drops_script_and_style (__main__.ResearchTests.test_html_extractor_drops_script_and_style) ... ok
+test_public_browser_blocks_loopback_and_private_targets (__main__.ResearchTests.test_public_browser_blocks_loopback_and_private_targets) ... ok
+test_redirect_handler_validates_destination_before_follow (__main__.ResearchTests.test_redirect_handler_validates_destination_before_follow) ... ok
+test_research_source_has_no_system_execution_calls (__main__.ResearchTests.test_research_source_has_no_system_execution_calls) ... ok
+test_research_synthesis_marks_web_as_untrusted_and_persists_metadata (__main__.ResearchTests.test_research_synthesis_marks_web_as_untrusted_and_persists_metadata) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.045s
+
+OK

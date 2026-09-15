@@ -1,0 +1,13 @@
+test_cloud_alias_rejected_before_any_request (__main__.ProviderPolicyTests.test_cloud_alias_rejected_before_any_request) ... ok
+test_new_threads_and_recreated_transports_keep_policy (__main__.ProviderPolicyTests.test_new_threads_and_recreated_transports_keep_policy) ... ok
+test_real_local_generation_and_embedding (__main__.ProviderPolicyTests.test_real_local_generation_and_embedding) ... ok
+test_redirects_never_followed (__main__.ProviderPolicyTests.test_redirects_never_followed) ... ok
+test_remote_endpoints_and_direct_source_provider_calls_denied (__main__.ProviderPolicyTests.test_remote_endpoints_and_direct_source_provider_calls_denied) ... ok
+test_renamed_remote_alias_never_receives_prompt (__main__.ProviderPolicyTests.test_renamed_remote_alias_never_receives_prompt) ... ok
+test_saved_hybrid_setting_cannot_enable_fallback_after_restart (__main__.ProviderPolicyTests.test_saved_hybrid_setting_cannot_enable_fallback_after_restart) ... ok
+test_uninstalled_model_cannot_trigger_remote_or_download (__main__.ProviderPolicyTests.test_uninstalled_model_cannot_trigger_remote_or_download) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 4.596s
+
+OK

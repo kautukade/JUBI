@@ -1,0 +1,58 @@
+[
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\BUILD-LAUNCHER.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\CERTIFY-SARUS.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\EXE-INSTALL.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\INSTALL-SARUS.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\JUBI-BACKGROUND.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\JUBI-PREREQUISITES.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\REGISTER-JUBI-BACKGROUND.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\SETUP-BROKER.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\SIGN-RELEASE.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\UNINSTALL-SARUS.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\installer\\UNREGISTER-JUBI-BACKGROUND.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\scripts\\VERIFY-SARUS-REPO.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\driver\\SarusRing0\\BUILD-RING0.ps1",
+    "Errors": []
+  },
+  {
+    "Path": "C:\\Users\\hp\\Desktop\\JUBI\\driver\\SarusRing0\\INSTALL-RING0.ps1",
+    "Errors": []
+  }
+]

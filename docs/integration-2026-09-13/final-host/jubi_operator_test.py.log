@@ -1,0 +1,8 @@
+test_config_keeps_arbitrary_shell_forbidden_and_delete_approved (__main__.TypedOperatorTests.test_config_keeps_arbitrary_shell_forbidden_and_delete_approved) ... ok
+test_workspace_escape_is_rejected (__main__.TypedOperatorTests.test_workspace_escape_is_rejected) ... ok
+test_workspace_lifecycle_is_scoped (__main__.TypedOperatorTests.test_workspace_lifecycle_is_scoped) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.091s
+
+OK

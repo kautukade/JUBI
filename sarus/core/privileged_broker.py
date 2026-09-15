@@ -9,9 +9,11 @@ import secrets
 import threading
 import time
 import uuid
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
+from .database import transaction
 
 
 class PrivilegedBroker:
@@ -33,8 +35,9 @@ class PrivilegedBroker:
         self.receipts = receipts
         self.max_request_bytes = int(self.cfg.get('max_request_bytes', 65536))
         self.replay_window = int(self.cfg.get('replay_window_seconds', 300))
-        self._seen: dict[str, float] = {}
-        self._lock = threading.Lock()
+        self._replay_db = self.root / 'data/broker-replay.db'
+        with transaction(self._replay_db) as connection:
+            connection.execute('CREATE TABLE IF NOT EXISTS consumed_requests(key TEXT PRIMARY KEY, ts REAL NOT NULL)')
         self._approval_secret, self._approval_secret_source = self._load_approval_secret()
 
     @staticmethod
@@ -98,14 +101,16 @@ class PrivilegedBroker:
 
     def _mark_once(self, request_id: str, nonce: str):
         now = time.time()
-        with self._lock:
-            cutoff = now - self.replay_window
-            self._seen = {k: v for k, v in self._seen.items() if v >= cutoff}
-            keys = (f'id:{request_id}', f'nonce:{nonce}')
-            if any(k in self._seen for k in keys):
-                raise PermissionError('replayed broker request')
-            for k in keys:
-                self._seen[k] = now
+        try:
+            with transaction(self._replay_db) as connection:
+                # Keep consumed IDs at least as long as any valid proof or
+                # timestamp, across restarts and concurrent broker instances.
+                cutoff = now - max(self.replay_window, self.MAX_APPROVAL_TTL) * 2
+                connection.execute('DELETE FROM consumed_requests WHERE ts < ?', (cutoff,))
+                connection.executemany('INSERT INTO consumed_requests(key,ts) VALUES(?,?)',
+                                       [(f'id:{request_id}', now), (f'nonce:{nonce}', now)])
+        except sqlite3.IntegrityError as exc:
+            raise PermissionError('replayed broker request') from exc
 
     def _validate_parameters(self, spec: dict, parameters: dict) -> dict:
         if not isinstance(parameters, dict):

@@ -1,0 +1,17 @@
+{
+  "model": "glm4:latest",
+  "created_at": "2026-09-15T04:16:09.7115493Z",
+  "message": {
+    "role": "assistant",
+    "content": "\nTo read the contents of a file named `README.md` using a native tool call, you would typically use a programming language's built-in file handling functions. Below are examples of how to do this in a few different programming languages:\n\n### Python\n```python\n# Python example using the built-in open function\nwith open('README.md', 'r') as file:\n    content = file.read()\nprint(content)\n```\n\n### JavaScript (Node.js)\n```javascript\n// Node.js example using the fs module\nconst fs = require('fs');\n\nfs.readFile('README.md', 'utf8', (err, data) =>"
+  },
+  "done": true,
+  "done_reason": "length",
+  "total_duration": 30075734300,
+  "load_duration": 7439436800,
+  "prompt_eval_count": 30,
+  "prompt_eval_duration": 1581581000,
+  "eval_count": 128,
+  "eval_duration": 21040809000,
+  "seconds": 30.25
+}

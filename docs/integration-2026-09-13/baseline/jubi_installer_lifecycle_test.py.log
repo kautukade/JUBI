@@ -1,0 +1,20 @@
+test_background_bootstrap_repairs_private_runtime (__main__.JubiInstallerLifecycleTests.test_background_bootstrap_repairs_private_runtime) ... ok
+test_background_task_is_persistent_but_user_session_scoped (__main__.JubiInstallerLifecycleTests.test_background_task_is_persistent_but_user_session_scoped) ... ok
+test_bootstrap_is_canonical_and_auto_update_enabled (__main__.JubiInstallerLifecycleTests.test_bootstrap_is_canonical_and_auto_update_enabled) ... ok
+test_core_install_retries_transient_work_and_reuses_runtime_on_update (__main__.JubiInstallerLifecycleTests.test_core_install_retries_transient_work_and_reuses_runtime_on_update) ... ok
+test_inno_installer_supports_silent_updates_and_current_repo (__main__.JubiInstallerLifecycleTests.test_inno_installer_supports_silent_updates_and_current_repo) ... ok
+test_ollama_router_rejects_remote_env_endpoint (__main__.JubiInstallerLifecycleTests.test_ollama_router_rejects_remote_env_endpoint) ... ok
+test_ollama_router_respects_local_custom_port (__main__.JubiInstallerLifecycleTests.test_ollama_router_respects_local_custom_port) ... ok
+test_outer_installer_captures_diagnostics_and_repairs_failed_steps (__main__.JubiInstallerLifecycleTests.test_outer_installer_captures_diagnostics_and_repairs_failed_steps) ... ok
+test_pending_models_do_not_force_reinstall_loop (__main__.JubiInstallerLifecycleTests.test_pending_models_do_not_force_reinstall_loop) ... ok
+test_prerequisites_are_automatically_provisioned_and_self_healing (__main__.JubiInstallerLifecycleTests.test_prerequisites_are_automatically_provisioned_and_self_healing) ... ok
+test_real_target_ollama_candidate_list_is_not_nested (__main__.JubiInstallerLifecycleTests.test_real_target_ollama_candidate_list_is_not_nested) ... ok
+test_uninstall_removes_background_task (__main__.JubiInstallerLifecycleTests.test_uninstall_removes_background_task) ... ok
+test_updater_is_hash_verified_and_repo_scoped (__main__.JubiInstallerLifecycleTests.test_updater_is_hash_verified_and_repo_scoped) ... ok
+test_vendor_installer_downloads_use_unique_temp_paths (__main__.JubiInstallerLifecycleTests.test_vendor_installer_downloads_use_unique_temp_paths) ... ok
+test_workflow_publishes_continuous_release_manifest (__main__.JubiInstallerLifecycleTests.test_workflow_publishes_continuous_release_manifest) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.080s
+
+OK

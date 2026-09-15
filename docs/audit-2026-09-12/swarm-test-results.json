@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-12",
+  "scope": "Focused offline checks only; no production readiness claim.",
+  "results": [
+    {
+      "command": "node tests/lib/agent-proximity.test.js",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "dcafda",
+        "wall_time_seconds": 0.0000057,
+        "exit_code": 0,
+        "original_token_count": 315,
+        "output": "\n=== Testing agent-proximity ===\n\n  PASS treeDistance: identical path is 0\n  PASS treeDistance: siblings are closer than cousins\n  PASS lineRangeOverlap: full overlap when whole-file (no ranges)\n  PASS lineRangeOverlap: partial overlapping ranges (overlap coefficient)\n  PASS lineRangeOverlap: smaller edit fully inside the larger ⇒ 1\n  PASS lineRangeOverlap: disjoint ranges are 0\n  PASS builds a dependency graph from require/import sources\n  PASS extractRelativeSpecifiers ignores bare (node_modules) specifiers\n  PASS graphDistance: direct edge is 1, two hops is 2, unreachable is Infinity\n  PASS collisionRisk: two agents editing the SAME file ⇒ high risk\n  PASS collisionRisk: same file but heavily-overlapping lines ⇒ still high\n  PASS collisionRisk: unrelated far-apart files ⇒ low risk\n  PASS collisionRisk: dependency edge raises risk even when tree-distant\n  PASS advise: clear when far apart\n  PASS advise: resolution on same-file, lower-priority agent steers\n  PASS advise: deterministic — same inputs give same maneuver\n  PASS closureRate: positive when approaching\n  PASS embedAgents: tree-close agents embed closer than far ones\n  PASS scanAirspace: surfaces only non-clear advisories, sorted by risk\n\nResults: Passed: 19, Failed: 0\n"
+      }
+    },
+    {
+      "command": "node tests/scripts/catalog.test.js",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "68375c",
+        "wall_time_seconds": 0.7284425,
+        "exit_code": 0,
+        "original_token_count": 83,
+        "output": "\n=== Testing catalog.js ===\n\n  ✓ shows help with no arguments\n  ✓ shows help with an explicit help flag\n  ✓ lists install profiles\n  ✓ filters components by family and emits JSON\n  ✓ shows a resolved component payload\n  ✓ fails on unknown subcommands\n  ✓ fails on unknown component ids\n\nResults: Passed: 7, Failed: 0\n"
+      }
+    },
+    {
+      "command": "node tests/brainstorm-server/ws-protocol.test.js",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "38aeda",
+        "wall_time_seconds": 0.5307413,
+        "exit_code": 0,
+        "original_token_count": 463,
+        "output": "\n--- WebSocket Handshake ---\n  PASS: computeAcceptKey produces correct RFC 6455 accept value\n  PASS: computeAcceptKey produces valid base64 for random keys\n\n--- Frame Encoding (server -> client) ---\n  PASS: encodes small text frame (< 126 bytes)\n  PASS: encodes empty text frame\n  PASS: encodes medium text frame (126-65535 bytes)\n  PASS: encodes frame at exactly 126 bytes (boundary)\n  PASS: encodes frame at exactly 125 bytes (max small)\n  PASS: encodes large frame (> 65535 bytes)\n  PASS: encodes close frame\n  PASS: encodes pong frame with payload\n  PASS: server frames are never masked (per RFC 6455)\n\n--- Frame Decoding (client -> server) ---\n  PASS: decodes small masked text frame\n  PASS: decodes empty masked text frame\n  PASS: decodes medium masked text frame (126-65535 bytes)\n  PASS: decodes large masked text frame (> 65535 bytes)\n  PASS: decodes masked close frame\n  PASS: decodes masked ping frame\n  PASS: returns null for incomplete frame (not enough header bytes)\n  PASS: returns null for incomplete frame (header ok, payload truncated)\n  PASS: returns null for incomplete extended-length header\n  PASS: rejects unmasked client frame\n  PASS: handles multiple frames in a single buffer\n  PASS: correctly unmasks with all mask byte values\n\n--- Frame Size Boundaries ---\n  PASS: encodes frame at exactly 65535 bytes (max 16-bit)\n  PASS: encodes frame at exactly 65536 bytes (min 64-bit)\n  PASS: decodes frame at 65535 bytes boundary\n  PASS: decodes frame at 65536 bytes boundary\n  PASS: rejects oversized 64-bit frames before payload allocation\n\n--- Close Frame Details ---\n  PASS: decodes close frame with status code\n  PASS: decodes close frame with status code and reason\n\n--- JSON Message Roundtrip ---\n  PASS: roundtrip encode/decode of JSON message\n  PASS: roundtrip masked client JSON message\n\n--- Results: 32 passed, 0 failed ---\n"
+      }
+    },
+    {
+      "command": "node tests/opencode/test-bootstrap-caching.mjs <source-absolute-plugin-path> present",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "dc56ca",
+        "wall_time_seconds": 0.5840088,
+        "exit_code": 0,
+        "original_token_count": 78,
+        "output": "{\n  \"scenario\": \"present\",\n  \"firstBootstrapParts\": 1,\n  \"secondBootstrapParts\": 1,\n  \"staleMentionMapping\": false,\n  \"staleTaskMapping\": false,\n  \"mapsSubagentToTask\": true,\n  \"mapsMutationToApplyPatch\": true,\n  \"firstReadCount\": 1,\n  \"secondReadCount\": 1,\n  \"firstExistsCount\": 1,\n  \"secondExistsCount\": 1\n}\n"
+      }
+    },
+    {
+      "command": "python -B scripts/check-hermes-plugin.py",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "751263",
+        "wall_time_seconds": 0.7399727,
+        "exit_code": 0,
+        "original_token_count": 19,
+        "output": "PASSED: generated Hermes plugin schemas and routing behavior are valid.\r\n"
+      }
+    }
+  ],
+  "hermes": {
+    "command": "Git Bash scripts/run_tests.sh tests/tools/test_delegate.py -q",
+    "exit_code": 1,
+    "output": "error: no virtualenv with pytest found in source .venv or venv; HERMES_PYTHON is not a python with pytest",
+    "tests_executed": 0
+  }
+}

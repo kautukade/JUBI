@@ -1,0 +1,31 @@
+test_concurrent_messages_keep_user_assistant_pairs (__main__.ChatTests.test_concurrent_messages_keep_user_assistant_pairs) ... ok
+test_context_is_bounded (__main__.ChatTests.test_context_is_bounded) ... ok
+test_failed_turn_does_not_save_a_false_success (__main__.ChatTests.test_failed_turn_does_not_save_a_false_success) ... ok
+test_follow_up_uses_persisted_context (__main__.ChatTests.test_follow_up_uses_persisted_context) ... ok
+test_invalid_or_unknown_id_does_not_start_new_conversation (__main__.ChatTests.test_invalid_or_unknown_id_does_not_start_new_conversation) ... ok
+test_new_conversation_has_no_other_conversation_context (__main__.ChatTests.test_new_conversation_has_no_other_conversation_context) ... ok
+test_binary_page_is_rejected (__main__.KnowledgeAndNetworkTests.test_binary_page_is_rejected) ... ok
+test_different_embedding_models_are_not_compared (__main__.KnowledgeAndNetworkTests.test_different_embedding_models_are_not_compared) ... ok
+test_dns_rebinding_is_rejected_before_connection (__main__.KnowledgeAndNetworkTests.test_dns_rebinding_is_rejected_before_connection) ... ok
+test_embedding_change_during_ingestion_rolls_back_all_chunks (__main__.KnowledgeAndNetworkTests.test_embedding_change_during_ingestion_rolls_back_all_chunks) ... ok
+test_nonfinite_embedding_is_rejected_before_storage (__main__.KnowledgeAndNetworkTests.test_nonfinite_embedding_is_rejected_before_storage) ... ok
+test_search_challenge_is_not_silent_zero_results (__main__.KnowledgeAndNetworkTests.test_search_challenge_is_not_silent_zero_results) ... ok
+test_unreachable_service_is_not_green_health (__main__.KnowledgeAndNetworkTests.test_unreachable_service_is_not_green_health) ... ok
+test_missing_native_runtime_never_reports_completed_actions (__main__.PersistenceAndOperatorTests.test_missing_native_runtime_never_reports_completed_actions) ... ok
+test_move_onto_itself_preserves_file (__main__.PersistenceAndOperatorTests.test_move_onto_itself_preserves_file) ... ok
+test_receipts_are_serialized_across_instances_and_clock_changes (__main__.PersistenceAndOperatorTests.test_receipts_are_serialized_across_instances_and_clock_changes) ... ok
+test_local_only_blocks_explicit_cloud (__main__.ProviderModeTests.test_local_only_blocks_explicit_cloud) ... ok
+test_local_only_preview_never_advertises_cloud_route (__main__.ProviderModeTests.test_local_only_preview_never_advertises_cloud_route) ... ok
+test_sensitive_system_context_remains_local (__main__.ProviderModeTests.test_sensitive_system_context_remains_local) ... ok
+test_dependencies_are_ordered (__main__.SupervisorAndUpdateTests.test_dependencies_are_ordered) ... ok
+test_invalid_planner_steps_fail_cleanly (__main__.SupervisorAndUpdateTests.test_invalid_planner_steps_fail_cleanly) ... ok
+test_powershell_bom_build_identity_is_read (__main__.SupervisorAndUpdateTests.test_powershell_bom_build_identity_is_read) ... ok
+test_empty_automation_is_rejected (__main__.WorkflowTests.test_empty_automation_is_rejected) ... ok
+test_failed_task_is_not_recorded_as_success (__main__.WorkflowTests.test_failed_task_is_not_recorded_as_success) ... ok
+test_missing_runner_result_is_failure (__main__.WorkflowTests.test_missing_runner_result_is_failure) ... ok
+test_pending_approval_pauses_recurrence (__main__.WorkflowTests.test_pending_approval_pauses_recurrence) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 1.418s
+
+OK

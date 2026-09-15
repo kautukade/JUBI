@@ -1,0 +1,10 @@
+test_concurrency_is_bounded_by_ram_and_product_cap (__main__.HardwareTests.test_concurrency_is_bounded_by_ram_and_product_cap) ... ok
+test_live_memory_snapshot_is_consistent_when_available (__main__.HardwareTests.test_live_memory_snapshot_is_consistent_when_available) ... ok
+test_missing_probe_and_windows_utf16_output_degrade_gracefully (__main__.HardwareTests.test_missing_probe_and_windows_utf16_output_degrade_gracefully) ... ok
+test_paging_requires_explicit_opt_in_commit_and_single_worker (__main__.HardwareTests.test_paging_requires_explicit_opt_in_commit_and_single_worker) ... ok
+test_unknown_or_pressure_denies_admission (__main__.HardwareTests.test_unknown_or_pressure_denies_admission) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+OK
