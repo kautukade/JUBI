@@ -52,8 +52,16 @@ try {
 finally { Remove-Item $tmpLauncher -Force -ErrorAction SilentlyContinue }
 
 try {
-  $specs=@(Get-Content (Join-Path $Root 'config\online_sources.json') -Raw | ConvertFrom-Json)
-  if($specs.Count -eq 9){ Pass '9 pinned upstream source specifications' } else { Fail "Expected 9 upstream sources, found $($specs.Count)" }
+  $decoded = Get-Content (Join-Path $Root 'config\online_sources.json') -Raw | ConvertFrom-Json
+  $baseObject = $decoded.PSObject.BaseObject
+  if ($baseObject -is [System.Array]) {
+    $specCount = $baseObject.Length
+  } elseif ($null -eq $baseObject) {
+    $specCount = 0
+  } else {
+    $specCount = 1
+  }
+  if($specCount -eq 9){ Pass '9 pinned upstream source specifications' } else { Fail "Expected 9 upstream sources, found $specCount" }
 } catch { Fail "online_sources.json invalid: $($_.Exception.Message)" }
 
 if($fail.Count -gt 0){
