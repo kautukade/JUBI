@@ -17,6 +17,12 @@ from pathlib import Path
 
 from .hardware import admission, memory_snapshot
 from .provider_policy import LOCAL_ONLY, InferenceTransport
+from sarus.integrations.hermes_compact import (
+    ANALYSIS_MIN_CONTEXT,
+    ANALYSIS_TARGET_CONTEXT,
+    compact_excerpt,
+    compact_profile,
+)
 
 
 class HermesRuntime:
@@ -40,11 +46,12 @@ class HermesRuntime:
         transport = InferenceTransport(self.models.base)
         metadata = transport.json('/api/show', {'model': model})
         LOCAL_ONLY.check_model(model, metadata)
-        capacity = max([v for k, v in metadata['model_info'].items()
-                        if k.endswith('.context_length') and type(v) is int] or [0])
-        if capacity < 64000:
-            return {'status': 'DEPENDENCY_MISSING', 'reason': 'Model is below Hermes native 64K context minimum',
-                    'tools_executed': False}
+        profile = compact_profile(metadata, require_tools=False,
+                                  min_context=ANALYSIS_MIN_CONTEXT,
+                                  target_context=ANALYSIS_TARGET_CONTEXT)
+        if not profile['eligible']:
+            return {'status': 'DEPENDENCY_MISSING', 'reason': profile['reason'],
+                    'compact_profile': profile, 'tools_executed': False}
         if not (self.source / 'run_agent.py').is_file():
             return {'status': 'DEPENDENCY_MISSING', 'reason': 'Hermes runtime source missing'}
         workspace = self.root / 'data/hermes-analysis'
@@ -54,8 +61,8 @@ class HermesRuntime:
             # JSON is valid YAML; no runtime YAML dependency in the Jubi server.
             config = {
                 'model': {'default': model, 'provider': 'custom', 'base_url': self.models.base + '/v1',
-                          'context_length': capacity},
-                'agent': {'api_max_retries': 1},
+                          'context_length': profile['runtime_context']},
+                'agent': {'api_max_retries': 0},
                 'delegation': {'max_concurrent_children': 1, 'max_spawn_depth': 1,
                                'max_iterations': 2, 'child_timeout_seconds': min(timeout, 150),
                                'inherit_mcp_toolsets': False, 'subagent_auto_approve': False},
@@ -66,8 +73,14 @@ class HermesRuntime:
             }
             (home / 'config.yaml').write_text(json.dumps(config), encoding='utf-8')
             output = home / 'result.json'
-            request = {'source': str(self.source), 'base_url': self.models.base, 'model': model,
-                       'prompt': str(prompt)[:16000], 'context': str(context)[:16000], 'output': str(output)}
+            request = {
+                'source': str(self.source),
+                'base_url': self.models.base,
+                'model': model,
+                'prompt': compact_excerpt(str(prompt), 6000),
+                'context': compact_excerpt(str(context), 6000),
+                'output': str(output),
+            }
             # No inherited credentials, proxy, source config or plugin search paths.
             env = {k: v for k, v in os.environ.items() if k.upper() in
                    {'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'PATH'}}
@@ -83,13 +96,15 @@ class HermesRuntime:
                                          creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
             except subprocess.TimeoutExpired:
                 return {'status': 'FAILED', 'reason': 'Hermes analysis process timed out',
-                        'tools_executed': False, 'admission': admitted}
+                        'tools_executed': False, 'admission': admitted,
+                        'compact_profile': profile}
             if process.returncode or not output.is_file():
                 return {'status': 'FAILED', 'reason': 'Hermes runtime did not produce valid evidence',
                         'diagnostic': process.stderr[-6000:], 'tools_executed': False,
-                        'admission': admitted}
+                        'admission': admitted, 'compact_profile': profile}
             result = json.loads(output.read_text(encoding='utf-8'))
             result['admission'] = admitted
+            result['compact_profile'] = profile
             # Preserve actual Hermes sessions before temporary runtime cleanup.
             import sqlite3
             session_ids = []
