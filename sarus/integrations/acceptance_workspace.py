@@ -72,6 +72,17 @@ class AcceptanceWorkspace:
             raise PermissionError('Workspace links are not permitted')
         return candidate
 
+    def _observed_coding_tests(self):
+        return [row['result']['exit_code'] for row in self.evidence
+                if row.get('phase') == 'coding' and row.get('operation') == 'test'
+                and row.get('status') == 'OBSERVED' and isinstance(row.get('result'), dict)
+                and isinstance(row['result'].get('exit_code'), int)]
+
+    def _observed_coding_write(self):
+        return any(row.get('phase') == 'coding' and row.get('operation') == 'write'
+                   and row.get('status') == 'OBSERVED' and isinstance(row.get('result'), dict)
+                   for row in self.evidence)
+
     def execute(self, operation: str, path='', content=''):
         self._check()
         started = time.monotonic()
@@ -86,6 +97,11 @@ class AcceptanceWorkspace:
             elif operation == 'write':
                 if self.phase != 'coding' or path != 'pricing.py':
                     raise PermissionError('Only the coding worker can edit pricing.py')
+                tests = self._observed_coding_tests()
+                if not tests or tests[-1] == 0:
+                    raise PermissionError(
+                        'Run the fixed test and observe it failing before editing pricing.py'
+                    )
                 validate_module(content)
                 target = self._file(path)
                 row['before_sha256'] = hashlib.sha256(target.read_bytes()).hexdigest()
@@ -102,6 +118,12 @@ class AcceptanceWorkspace:
                 result = {'command': command, 'cwd': str(self.project), 'exit_code': cp.returncode,
                           'stdout': cp.stdout[-6000:], 'stderr': cp.stderr[-6000:]}
             elif operation == 'diff':
+                if self.phase == 'coding' and self._observed_coding_write():
+                    tests = self._observed_coding_tests()
+                    if not tests or tests[-1] != 0:
+                        raise PermissionError(
+                            'Run the fixed test and observe it passing after the edit before inspecting the diff'
+                        )
                 after = self._file('pricing.py').read_text(encoding='utf-8')
                 result = {'diff': ''.join(difflib.unified_diff(self.baseline.splitlines(True), after.splitlines(True),
                                                                fromfile='a/pricing.py', tofile='b/pricing.py'))}
