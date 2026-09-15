@@ -36,6 +36,25 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self.workspace.execute('verify')['exit_code'], 0)
         self.assertIn('-    return unit_price + quantity', self.workspace.execute('diff')['diff'])
 
+    def test_write_is_denied_until_worker_observes_a_failing_test(self):
+        fixed = 'def subtotal(unit_price, quantity):\n    return unit_price * quantity\n'
+        with self.assertRaisesRegex(PermissionError, 'observe it failing'):
+            self.workspace.execute('write', 'pricing.py', fixed)
+        self.assertEqual((self.project / 'pricing.py').read_text(),
+                         'def subtotal(unit_price, quantity):\n    return unit_price + quantity\n')
+        self.assertEqual(self.workspace.execute('test')['exit_code'], 1)
+        self.workspace.execute('write', 'pricing.py', fixed)
+        self.assertEqual((self.project / 'pricing.py').read_text(), fixed)
+
+    def test_diff_after_edit_is_denied_until_worker_observes_passing_test(self):
+        fixed = 'def subtotal(unit_price, quantity):\n    return unit_price * quantity\n'
+        self.assertEqual(self.workspace.execute('test')['exit_code'], 1)
+        self.workspace.execute('write', 'pricing.py', fixed)
+        with self.assertRaisesRegex(PermissionError, 'observe it passing'):
+            self.workspace.execute('diff')
+        self.assertEqual(self.workspace.execute('test')['exit_code'], 0)
+        self.assertIn('+    return unit_price * quantity', self.workspace.execute('diff')['diff'])
+
     def test_worker_cannot_change_tests_or_escape_workspace(self):
         for path in ('test_pricing.py', '../kanban.db', str(self.root / 'sessions.db')):
             with self.assertRaises(PermissionError):
