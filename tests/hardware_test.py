@@ -23,6 +23,13 @@ class HardwareTests(unittest.TestCase):
         memory = {'available_bytes': 3 * GIB, 'total_bytes': 16 * GIB, 'available_commit_bytes': 12 * GIB}
         self.assertFalse(admission(4 * GIB, memory)['admitted'])
         self.assertEqual(admission(4 * GIB, memory, 12, allow_cpu_paging=True)['max_workers'], 1)
+        # Physical headroom is already reserved separately. The commit budget
+        # only needs to cover the estimated worker, not worker + headroom again.
+        memory['available_commit_bytes'] = 5 * GIB
+        result = admission(4 * GIB, memory, allow_cpu_paging=True)
+        self.assertTrue(result['admitted'])
+        self.assertEqual(result['mode'], 'cpu_paging')
+        self.assertLessEqual(result['required_commit_bytes'], result['available_commit_bytes'])
         memory['available_commit_bytes'] = 4 * GIB
         self.assertFalse(admission(4 * GIB, memory, allow_cpu_paging=True)['admitted'])
 
