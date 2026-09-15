@@ -73,6 +73,42 @@ def _apply_jubi_compact_context_floor(context_tokens: int, *, tool_mode: bool) -
     }
 
 
+def _normalize_jubi_structured_tool_result(original, name: str, result):
+    """Bridge Jubi capability dicts to Hermes' string tool-result contract.
+
+    Jubi executors intentionally return structured dictionaries so the trusted
+    verifier can reason over typed fields. Hermes' registry, however, treats a
+    plain dict as a tool contract error unless it is the special multimodal
+    envelope. Inside the isolated Jubi worker we serialize ordinary dicts to
+    compact JSON before Hermes appends them to model context. This changes only
+    representation, never execution authority or result meaning.
+    """
+    if isinstance(result, dict) and result.get('_multimodal') is not True:
+        return json.dumps(result, ensure_ascii=False, separators=(',', ':'))
+    return original(name, result)
+
+
+def _install_jubi_tool_result_bridge() -> None:
+    """Install the structured-result adapter on the isolated Hermes registry."""
+    try:
+        registry_module = importlib.import_module('tools.registry')
+        registry_obj = getattr(registry_module, 'registry', None)
+        registry_type = type(registry_obj)
+        if registry_obj is None or getattr(registry_type, '_jubi_result_bridge_installed', False):
+            return
+        original = getattr(registry_type, '_normalize_handler_result', None)
+        if not callable(original):
+            raise AttributeError('_normalize_handler_result missing')
+
+        def normalize(name, result):
+            return _normalize_jubi_structured_tool_result(original, name, result)
+
+        registry_type._normalize_handler_result = staticmethod(normalize)
+        registry_type._jubi_result_bridge_installed = True
+    except Exception as exc:
+        raise ProviderPolicyError('Hermes tool-result bridge could not be installed') from exc
+
+
 def install_transport(agent_class, base_url: str, receipts: list[dict], max_tokens=512,
                       *, process_commands=(), max_calls=12, cancel_check=lambda: False, context_tokens=4096,
                       request_timeout=120):
@@ -84,6 +120,7 @@ def install_transport(agent_class, base_url: str, receipts: list[dict], max_toke
     # already verified by Jubi through /api/show; this only adjusts Hermes'
     # generic 64K product floor to the bounded Jubi worker's actual num_ctx.
     _apply_jubi_compact_context_floor(context_tokens, tool_mode=bool(process_commands))
+    _install_jubi_tool_result_bridge()
 
     permission = threading.local()
     call_lock = threading.Lock()
