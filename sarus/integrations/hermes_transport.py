@@ -5,16 +5,71 @@ scoped to that process; it never patches the desktop/server Python process.
 """
 from __future__ import annotations
 
+import copy
+import importlib
 import json
+import os
+import subprocess
 import sys
 import threading
 import time
 import uuid
-import copy
-import os
-import subprocess
 
 from sarus.core.provider_policy import InferenceTransport, LOCAL_ONLY, ProviderPolicyError
+
+
+_JUBI_TOOL_CONTEXT_FLOOR = 8192
+_JUBI_ANALYSIS_CONTEXT_FLOOR = 4096
+
+
+def _apply_jubi_compact_context_floor(context_tokens: int, *, tool_mode: bool) -> dict:
+    """Relax Hermes' upstream 64K startup floor only inside Jubi's worker.
+
+    Hermes upstream deliberately rejects contexts below 64K. Jubi's compact
+    runtime has a much smaller, allowlisted tool surface and progressive
+    context, so its isolated worker can truthfully run at the actual context
+    configured for the local model. We patch the imported metadata constant
+    before ``run_agent`` imports ``agent_init``; no model capacity is faked and
+    the vendored source default remains unchanged outside this process.
+    """
+    if isinstance(context_tokens, bool):
+        raise ProviderPolicyError('Hermes compact context must be an integer token count')
+    try:
+        requested = int(context_tokens)
+    except (TypeError, ValueError) as exc:
+        raise ProviderPolicyError('Hermes compact context must be an integer token count') from exc
+    minimum = _JUBI_TOOL_CONTEXT_FLOOR if tool_mode else _JUBI_ANALYSIS_CONTEXT_FLOOR
+    if requested < minimum:
+        raise ProviderPolicyError(
+            f'Jubi compact Hermes requires at least {minimum} tokens for this worker mode'
+        )
+
+    try:
+        metadata = importlib.import_module('agent.model_metadata')
+    except Exception as exc:
+        raise ProviderPolicyError('Hermes model metadata is unavailable for compact admission') from exc
+    upstream = getattr(metadata, 'MINIMUM_CONTEXT_LENGTH', None)
+    if not isinstance(upstream, int) or isinstance(upstream, bool) or upstream <= 0:
+        raise ProviderPolicyError('Hermes minimum context metadata is invalid')
+    original = getattr(metadata, '_JUBI_ORIGINAL_MINIMUM_CONTEXT_LENGTH', upstream)
+    if not isinstance(original, int) or original <= 0:
+        original = upstream
+    metadata._JUBI_ORIGINAL_MINIMUM_CONTEXT_LENGTH = original
+    effective = min(original, requested)
+    metadata.MINIMUM_CONTEXT_LENGTH = effective
+
+    # If some Hermes module imported agent_init earlier in this isolated worker,
+    # update only its copied module-global constant as well. We never import
+    # agent_init here, avoiding premature runtime/config initialization.
+    loaded_init = sys.modules.get('agent.agent_init')
+    if loaded_init is not None and hasattr(loaded_init, 'MINIMUM_CONTEXT_LENGTH'):
+        loaded_init.MINIMUM_CONTEXT_LENGTH = effective
+    return {
+        'upstream_minimum': original,
+        'effective_minimum': effective,
+        'requested_context': requested,
+        'tool_mode': bool(tool_mode),
+    }
 
 
 def install_transport(agent_class, base_url: str, receipts: list[dict], max_tokens=512,
@@ -24,6 +79,11 @@ def install_transport(agent_class, base_url: str, receipts: list[dict], max_toke
     from openai import OpenAI
 
     LOCAL_ONLY.authorize('ollama', base_url + '/api/tags')
+    # This runs before callers import run_agent. The model's real capacity was
+    # already verified by Jubi through /api/show; this only adjusts Hermes'
+    # generic 64K product floor to the bounded Jubi worker's actual num_ctx.
+    _apply_jubi_compact_context_floor(context_tokens, tool_mode=bool(process_commands))
+
     permission = threading.local()
     call_lock = threading.Lock()
     call_count = 0
