@@ -1,0 +1,17 @@
+[
+  {
+    "suite": "broker_security_test.py",
+    "returncode": 1,
+    "note": "Audit fixture correction: valid test secret, original relative source config for RuntimeFixture."
+  },
+  {
+    "suite": "jubi_http_functional_test.py",
+    "returncode": 0,
+    "note": "Audit fixture correction: valid test secret, original relative source config for RuntimeFixture."
+  },
+  {
+    "suite": "run_dashboard_runtime.py",
+    "returncode": 1,
+    "note": "Audit fixture correction: valid test secret, original relative source config for RuntimeFixture."
+  }
+]

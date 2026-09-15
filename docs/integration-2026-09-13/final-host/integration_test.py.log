@@ -1,0 +1,38 @@
+test_20_get_status (__main__.HttpSmoke.test_20_get_status) ... ok
+test_21_post_requires_session_token (__main__.HttpSmoke.test_21_post_requires_session_token) ... ok
+test_22_post_and_cross_origin_protection (__main__.HttpSmoke.test_22_post_and_cross_origin_protection) ... ok
+test_23_broker_status_endpoint (__main__.HttpSmoke.test_23_broker_status_endpoint) ... ok
+test_24_system_action_uses_typed_request (__main__.HttpSmoke.test_24_system_action_uses_typed_request) ... ok
+test_25_legacy_system_action_shape_rejected (__main__.HttpSmoke.test_25_legacy_system_action_shape_rejected) ... ok
+test_01_all_10_sources_connected (__main__.T.test_01_all_10_sources_connected) ... ok
+test_02_registry_exact_original_file_count (__main__.T.test_02_registry_exact_original_file_count) ... FAIL
+test_03_orchestrator_cross_repo_pipeline (__main__.T.test_03_orchestrator_cross_repo_pipeline) ... ok
+test_04_execution_cannot_complete_through_unattested_sara_relay (__main__.T.test_04_execution_cannot_complete_through_unattested_sara_relay) ... ok
+test_05_cai_isolation (__main__.T.test_05_cai_isolation) ... ok
+test_06_high_risk_approval (__main__.T.test_06_high_risk_approval) ... ok
+test_07_never_auto_kernel (__main__.T.test_07_never_auto_kernel) ... ok
+test_08_model_router_has_local_roles (__main__.T.test_08_model_router_has_local_roles) ... ok
+test_09_capability_read_and_search (__main__.T.test_09_capability_read_and_search) ... ok
+test_10_receipt_chain_content_verified (__main__.T.test_10_receipt_chain_content_verified) ... ok
+test_11_workspace_path_guard (__main__.T.test_11_workspace_path_guard) ... ok
+test_12_legacy_powershell_is_blocked_even_if_approved (__main__.T.test_12_legacy_powershell_is_blocked_even_if_approved) ... ok
+test_13_unknown_broker_action_default_denied_and_receipted (__main__.T.test_13_unknown_broker_action_default_denied_and_receipted) ... ok
+test_14_allowlisted_workspace_read (__main__.T.test_14_allowlisted_workspace_read) ... ok
+test_15_high_risk_broker_action_needs_out_of_band_approval (__main__.T.test_15_high_risk_broker_action_needs_out_of_band_approval) ... ok
+test_16_kernel_action_is_permanently_denied (__main__.T.test_16_kernel_action_is_permanently_denied) ... ok
+test_17_replay_request_is_denied (__main__.T.test_17_replay_request_is_denied) ... ok
+test_18_receipt_signatures_verify (__main__.T.test_18_receipt_signatures_verify) ... ok
+
+======================================================================
+FAIL: test_02_registry_exact_original_file_count (__main__.T.test_02_registry_exact_original_file_count)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\hp\AppData\Local\Temp\jubi-regression-r0jkbzfj\tests\integration_test.py", line 18, in test_02_registry_exact_original_file_count
+    summary=self.app.registry.summary(); manifest=json.loads((ROOT/'BUILD_MANIFEST.json').read_text()); self.assertEqual(sum(x['files'] for x in summary.values()),manifest['indexed_original_files']); self.assertEqual(len(summary),manifest['source_repositories']); self.assertEqual(set(summary),set(json.loads((ROOT/'config/sources.json').read_text())))
+                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 17127 != 17129
+
+----------------------------------------------------------------------
+Ran 24 tests in 12.598s
+
+FAILED (failures=1)

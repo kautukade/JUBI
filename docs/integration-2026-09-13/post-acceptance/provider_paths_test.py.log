@@ -1,0 +1,12 @@
+test_brain_fallback_never_uses_cloud_after_local_failure (__main__.ProviderPaths.test_brain_fallback_never_uses_cloud_after_local_failure) ... ok
+test_council_members_stay_local_and_external_judge_is_denied (__main__.ProviderPaths.test_council_members_stay_local_and_external_judge_is_denied) ... ok
+test_direct_source_adapter_uses_guarded_local_provider (__main__.ProviderPaths.test_direct_source_adapter_uses_guarded_local_provider) ... ok
+test_persisted_approval_resume_cannot_bypass_transport (__main__.ProviderPaths.test_persisted_approval_resume_cannot_bypass_transport) ... ok
+test_reopened_automation_cannot_release_cloud_prompt (__main__.ProviderPaths.test_reopened_automation_cannot_release_cloud_prompt) ... ok
+test_sara_agent_relay_cannot_bypass_local_only_even_with_token (__main__.ProviderPaths.test_sara_agent_relay_cannot_bypass_local_only_even_with_token) ... ok
+test_supervisor_cannot_override_local_policy (__main__.ProviderPaths.test_supervisor_cannot_override_local_policy) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 4.175s
+
+OK

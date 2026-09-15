@@ -1,0 +1,30 @@
+{
+  "python_ast": "PASS",
+  "files": [
+    "sarus/adapters/sara.py",
+    "sarus/core/brain.py",
+    "sarus/core/capabilities.py",
+    "sarus/core/hardware.py",
+    "sarus/core/hermes.py",
+    "sarus/core/models.py",
+    "sarus/core/provider_policy.py",
+    "sarus/integrations/acceptance_workspace.py",
+    "sarus/integrations/development_acceptance.py",
+    "sarus/integrations/hermes_transport.py",
+    "sarus/integrations/hermes_worker.py",
+    "scripts/run_core_regressions.py",
+    "scripts/run_development_acceptance.py",
+    "tests/acceptance_workspace_test.py",
+    "tests/hardware_test.py",
+    "tests/hermes_policy_probe.py",
+    "tests/hermes_policy_test.py",
+    "tests/integration_test.py",
+    "tests/jubi_functional_regression_test.py",
+    "tests/jubi_http_functional_test.py",
+    "tests/production_readiness_test.py",
+    "tests/provider_paths_test.py",
+    "tests/trust_foundation_test.py"
+  ],
+  "powershell_parser": "PASS: installer/JUBI-PREREQUISITES.ps1",
+  "git_diff_check": "PASS"
+}

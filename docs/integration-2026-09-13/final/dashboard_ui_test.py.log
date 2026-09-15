@@ -1,0 +1,11 @@
+test_all_feature_pages_exist_and_use_one_design_system (__main__.UnifiedDashboardTests.test_all_feature_pages_exist_and_use_one_design_system) ... ok
+test_client_is_real_api_wired_and_not_placeholder_navigation (__main__.UnifiedDashboardTests.test_client_is_real_api_wired_and_not_placeholder_navigation) ... ok
+test_navigation_covers_every_feature_page (__main__.UnifiedDashboardTests.test_navigation_covers_every_feature_page) ... ok
+test_page_controls_match_client_runtime (__main__.UnifiedDashboardTests.test_page_controls_match_client_runtime) ... ok
+test_provider_page_never_renders_a_secret_value_from_status (__main__.UnifiedDashboardTests.test_provider_page_never_renders_a_secret_value_from_status) ... ok
+test_server_still_serves_unified_web_root (__main__.UnifiedDashboardTests.test_server_still_serves_unified_web_root) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.507s
+
+OK

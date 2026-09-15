@@ -1,0 +1,31 @@
+test_allowlisted_workspace_read (__main__.BrokerSecurityTest.test_allowlisted_workspace_read) ... ok
+test_approval_proof_is_bound_to_request_action_and_parameters (__main__.BrokerSecurityTest.test_approval_proof_is_bound_to_request_action_and_parameters) ... ok
+test_default_deny_and_signed_denial_receipt (__main__.BrokerSecurityTest.test_default_deny_and_signed_denial_receipt) ... ok
+test_high_risk_action_requires_out_of_band_proof (__main__.BrokerSecurityTest.test_high_risk_action_requires_out_of_band_proof) ... ok
+test_json_approved_flag_is_not_authorization (__main__.BrokerSecurityTest.test_json_approved_flag_is_not_authorization) ... ok
+test_kernel_memory_action_permanently_denied (__main__.BrokerSecurityTest.test_kernel_memory_action_permanently_denied) ... ok
+test_legacy_powershell_is_blocked_even_with_boolean_approval (__main__.BrokerSecurityTest.test_legacy_powershell_is_blocked_even_with_boolean_approval) ... ok
+test_non_http_url_is_invalid (__main__.BrokerSecurityTest.test_non_http_url_is_invalid) ... ok
+test_parameter_schema_rejects_extra_fields (__main__.BrokerSecurityTest.test_parameter_schema_rejects_extra_fields) ... ok
+test_path_outside_approved_workspace_is_denied_for_read (__main__.BrokerSecurityTest.test_path_outside_approved_workspace_is_denied_for_read) ... ok
+test_protected_secret_file_can_be_loaded_without_environment_secret (__main__.BrokerSecurityTest.test_protected_secret_file_can_be_loaded_without_environment_secret) ... ok
+test_receipt_chain_detects_signed_rows (__main__.BrokerSecurityTest.test_receipt_chain_detects_signed_rows) ... ok
+test_receipt_key_migrates_outside_workspace (__main__.BrokerSecurityTest.test_receipt_key_migrates_outside_workspace) ... ok
+test_replay_is_denied (__main__.BrokerSecurityTest.test_replay_is_denied) ... ok
+test_sarus_source_and_security_config_are_not_workspace_writable (__main__.BrokerSecurityTest.test_sarus_source_and_security_config_are_not_workspace_writable) ... ok
+test_sensitive_write_content_is_redacted_from_receipt (__main__.BrokerSecurityTest.test_sensitive_write_content_is_redacted_from_receipt) ... ok
+test_unknown_resource_is_denied (__main__.BrokerSecurityTest.test_unknown_resource_is_denied) ... ok
+test_windows_readonly_system_actions (__main__.BrokerSecurityTest.test_windows_readonly_system_actions) ... FAIL
+
+======================================================================
+FAIL: test_windows_readonly_system_actions (__main__.BrokerSecurityTest.test_windows_readonly_system_actions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\hp\AppData\Local\Temp\jubi-regression-jsm9slgp\tests\broker_security_test.py", line 227, in test_windows_readonly_system_actions
+    self.assertTrue(processes['ok'])
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 18 tests in 1.680s
+
+FAILED (failures=1)

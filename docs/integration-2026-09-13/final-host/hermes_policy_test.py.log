@@ -1,0 +1,6 @@
+test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked (__main__.HermesPolicyTests.test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 5.695s
+
+OK

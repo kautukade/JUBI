@@ -1,0 +1,11 @@
+test_broker_replay_is_rejected_after_recreation (__main__.TrustFoundationTests.test_broker_replay_is_rejected_after_recreation) ... ok
+test_indexed_source_id_is_not_execution_authority (__main__.TrustFoundationTests.test_indexed_source_id_is_not_execution_authority) ... ok
+test_nonfinite_embeddings_fall_back_without_poisoning_memory (__main__.TrustFoundationTests.test_nonfinite_embeddings_fall_back_without_poisoning_memory) ... ok
+test_registry_denies_unknown_inputs_and_cyber_registration (__main__.TrustFoundationTests.test_registry_denies_unknown_inputs_and_cyber_registration) ... ok
+test_semantic_search_never_compares_different_embedding_spaces (__main__.TrustFoundationTests.test_semantic_search_never_compares_different_embedding_spaces) ... ok
+test_two_broker_instances_cannot_consume_same_proof_concurrently (__main__.TrustFoundationTests.test_two_broker_instances_cannot_consume_same_proof_concurrently) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.131s
+
+OK

@@ -1,0 +1,54 @@
+{
+  "status": "EXPERIMENTAL",
+  "tools_executed": false,
+  "parent_session": "20260912_233211_f48d74",
+  "delegation": {
+    "results": [
+      {
+        "task_index": 0,
+        "status": "completed",
+        "summary": "Checking only a model name is insufficient to guarantee local inference because local inference requires more context, such as the specific model version, the dataset used for training, and the environment in which the model was trained. Additionally, the model's architecture, hyperparameters, and the training process can significantly impact its performance and reliability in local settings.",
+        "api_calls": 1,
+        "duration_seconds": 16.81,
+        "model": "qwen2.5vl:3b",
+        "exit_reason": "completed",
+        "tokens": {
+          "input": 859,
+          "output": 67
+        },
+        "tool_trace": [],
+        "live_transcript": "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\data\\hermes-analysis\\run-piauk8om\\cache\\delegation\\live\\deleg_ce37b523\\task-0.log"
+      }
+    ],
+    "total_duration_seconds": 16.94,
+    "live_transcripts": [
+      "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\data\\hermes-analysis\\run-piauk8om\\cache\\delegation\\live\\deleg_ce37b523\\task-0.log"
+    ]
+  },
+  "inference_receipts": [
+    {
+      "model": "qwen2.5vl:3b",
+      "policy_revision": "local-only-v1",
+      "endpoint": "http://127.0.0.1:11500",
+      "status": "SUCCEEDED",
+      "usage": {
+        "prompt_tokens": 859,
+        "completion_tokens": 67,
+        "total_tokens": 926
+      },
+      "latency_ms": 16234.0
+    }
+  ],
+  "policy_revision": "local-only-v1",
+  "admission": {
+    "admitted": true,
+    "max_workers": 1,
+    "estimated_worker_bytes": 4377623513,
+    "budget_bytes": 4586803200,
+    "reason": "Conservative RAM estimate; live latency/quality calibration pending"
+  },
+  "session_ids": [
+    "20260912_233211_33125e"
+  ],
+  "session_archive": "data\\hermes-analysis\\20260912_233211_f48d74.db"
+}

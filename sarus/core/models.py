@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import json
 import os
+import copy
+import time
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+from .provider_policy import InferenceTransport, LOCAL_ONLY
 
 
 def _normalize_local_ollama_url(value: str | None) -> str | None:
@@ -58,15 +63,11 @@ class OllamaRouter:
         self.config_path = config
         self.cfg = json.loads(config.read_text(encoding='utf-8'))
         self.base = (base_url or _runtime_ollama_url() or 'http://127.0.0.1:11434').rstrip('/')
+        self._catalogue_cache = None
+        self._catalogue_lock = threading.Lock()
 
     def _json(self, path, body=None, timeout=10):
-        data = None if body is None else json.dumps(body).encode('utf-8')
-        headers = {'Content-Type': 'application/json'} if data else {}
-        req = urllib.request.Request(self.base + path, data, headers)
-        # Local Ollama requests must never be sent through a configured HTTP proxy.
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        with opener.open(req, timeout=timeout) as r:
-            return json.load(r)
+        return InferenceTransport(self.base).json(path, body, timeout)
 
     @staticmethod
     def _kind(name: str) -> str:
@@ -82,6 +83,17 @@ class OllamaRouter:
         return 'general'
 
     def list_models(self):
+        # A status page queries several consumers. Share one short-lived
+        # catalogue observation; inference still checks fresh metadata at I/O.
+        with self._catalogue_lock:
+            cached = self._catalogue_cache
+            if cached and cached[0] == self.base and time.monotonic() - cached[1] < 2:
+                return copy.deepcopy(cached[2])
+            result = self._list_models()
+            self._catalogue_cache = (self.base, time.monotonic(), result)
+            return copy.deepcopy(result)
+
+    def _list_models(self):
         try:
             raw = self._json('/api/tags', timeout=3)
             items = []
@@ -112,7 +124,7 @@ class OllamaRouter:
         installed_set = set(installed)
         candidates = list(self.cfg.get(task_type, self.cfg.get('general', [])))
         for model in candidates:
-            if model in installed_set:
+            if model in installed_set and self._kind(model) != 'cloud-through-ollama':
                 return model
 
         # Never return a configured-but-missing model. Fallback is restricted to

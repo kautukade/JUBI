@@ -1,0 +1,16 @@
+test_complex_request_stays_local_despite_saved_hybrid_preference (__main__.ProviderManagerTests.test_complex_request_stays_local_despite_saved_hybrid_preference) ... ok
+test_credential_status_never_exposes_environment_secret (__main__.ProviderManagerTests.test_credential_status_never_exposes_environment_secret) ... ok
+test_explicit_cloud_is_blocked_for_high_privacy (__main__.ProviderManagerTests.test_explicit_cloud_is_blocked_for_high_privacy) ... ok
+test_explicit_external_provider_is_blocked_despite_saved_mode (__main__.ProviderManagerTests.test_explicit_external_provider_is_blocked_despite_saved_mode) ... ok
+test_high_privacy_request_stays_local_even_in_cloud_boost (__main__.ProviderManagerTests.test_high_privacy_request_stays_local_even_in_cloud_boost) ... ok
+test_legacy_mode_does_not_override_transport_authority (__main__.ProviderManagerTests.test_legacy_mode_does_not_override_transport_authority) ... ok
+test_local_only_never_calls_cloud (__main__.ProviderManagerTests.test_local_only_never_calls_cloud) ... ok
+test_openai_compatible_model_normalization (__main__.ProviderManagerTests.test_openai_compatible_model_normalization) ... ok
+test_provider_outcomes_persist_without_prompt_text (__main__.ProviderManagerTests.test_provider_outcomes_persist_without_prompt_text) ... ok
+test_saved_cloud_preference_does_not_attempt_cloud (__main__.ProviderManagerTests.test_saved_cloud_preference_does_not_attempt_cloud) ... ok
+test_windows_dpapi_round_trip_does_not_write_plaintext (__main__.ProviderManagerTests.test_windows_dpapi_round_trip_does_not_write_plaintext) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.680s
+
+OK

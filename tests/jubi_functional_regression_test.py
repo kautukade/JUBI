@@ -97,7 +97,7 @@ class ProviderModeTests(unittest.TestCase):
         self.assertEqual(self.manager.route_preview('Hello', provider='nvidia')['provider_order'], ['ollama'])
 
     def test_sensitive_system_context_remains_local(self):
-        self.manager.set_mode('cloud_boost')
+        self.manager._set_setting('mode', 'cloud_boost')  # legacy preference cannot grant network access
         result = self.manager.generate('Summarize', system='My API key is private-credential')
         self.assertFalse(result['jubi_provider_route']['cloud'])
         self.assertTrue(all(not p.calls for p in self.fixture.cloud.values()))

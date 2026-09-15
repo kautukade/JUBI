@@ -1,0 +1,47 @@
+{
+  "validated_date": "2026-09-15",
+  "head": "231739f9eb373ba0d6ef3a2ab01eb0507dc70c15",
+  "first_party_files_changed_since_checkpoint": 23,
+  "tested_fixture_matches_final_changed_files": true,
+  "core": {
+    "passed": 215,
+    "failed": 1,
+    "skipped": 0,
+    "suite_errors": 0
+  },
+  "core_suites": 26,
+  "dashboard": {
+    "pages_passed": 18,
+    "flows_passed": 7,
+    "exit_code": 0
+  },
+  "real_development_acceptance": "FAIL",
+  "M0": "FAIL",
+  "M1": "FAIL",
+  "merged": false,
+  "required_bypass_paths": [
+    "explicit cloud override",
+    "Ollama cloud aliases",
+    "Hermes workers",
+    "nested workers",
+    "Brain fallback",
+    "Council/Supervisor",
+    "automations",
+    "persisted task resume",
+    "direct source adapters"
+  ],
+  "policy_tests": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0
+  },
+  "evidence": [
+    "post-acceptance/results.json",
+    "development-acceptance-final.json",
+    "acceptance-storage-check.json",
+    "hardware-host.json",
+    "hardware-final.json",
+    "changes-since-checkpoint.json",
+    "REPORT.md"
+  ]
+}

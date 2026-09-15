@@ -1,0 +1,9 @@
+test_parses_windows_and_linux_neighbor_cache_without_active_scan (__main__.NetworkManagerTests.test_parses_windows_and_linux_neighbor_cache_without_active_scan) ... ok
+test_register_list_and_delete_device (__main__.NetworkManagerTests.test_register_list_and_delete_device) ... ok
+test_registered_health_check_does_not_scan_ports (__main__.NetworkManagerTests.test_registered_health_check_does_not_scan_ports) ... ok
+test_rejects_invalid_hosts_and_ports (__main__.NetworkManagerTests.test_rejects_invalid_hosts_and_ports) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.113s
+
+OK

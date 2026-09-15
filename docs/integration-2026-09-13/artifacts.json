@@ -1,0 +1,610 @@
+{
+  "scope": "Validation artifact inventory; documentation was excluded from the code checkpoint",
+  "files": [
+    {
+      "path": "docs/integration-2026-09-13/acceptance-storage-check.json",
+      "sha256": "1f93604f8b00860cfbb4adfc7996f49092ecce15b1f845e0621701b3ad25cf86",
+      "bytes": 1330
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/broker_security_test.py.log",
+      "sha256": "aba403ff974e893f0b9a19fe5ea5aedc05ff5830991836e27c540292e94c182c",
+      "bytes": 2974
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/dashboard_runtime_test.cjs.log",
+      "sha256": "a204bc24b6d843a1a91eb45c28c3bd94b1105baa12ba9999b647c7704ed20db2",
+      "bytes": 1115
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/dashboard_ui_test.py.log",
+      "sha256": "bec570bab3c55a53288491863d4ef16a646d59682f50f8c73b09a53c83e55b85",
+      "bytes": 949
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/fable_integration_test.py.log",
+      "sha256": "abbc27866d5052861543e5c97747efd01ba6dc719077073b3f338b8ab5b8810f",
+      "bytes": 1515
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/hardware_test.py.log",
+      "sha256": "4584a2b9897c5b7959b95a598f672feeeaa228b05be6d10c40f249b28ed317bf",
+      "bytes": 498
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/integration_test.py.log",
+      "sha256": "7d8c618e51da49cd1fe41ee1fd54d33484445aecd0b5049bc6a94d582533cbae",
+      "bytes": 9654
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_brain_test.py.log",
+      "sha256": "c38de5e15bd24ccf2f25671a8687fb18c8cc921e835aa0d01303e05a46900d89",
+      "bytes": 875
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_council_test.py.log",
+      "sha256": "65d8a92a89d934c342fd5c2d7b62573bbf5430b6fb91f14ccf0b714ad5fe1394",
+      "bytes": 795
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_functional_regression_test.py.log",
+      "sha256": "965e3a5cc74ccecd653e57eb8af5661b2ee0dc9911e55a134a5209b34ef9e403",
+      "bytes": 4211
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_http_functional_test.py.log",
+      "sha256": "8985fc0bc3ea75a4f5750141be8bc1a6dbb8ac58314cdccff4518f7307f64716",
+      "bytes": 1990
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_installer_lifecycle_test.py.log",
+      "sha256": "1dd3fb38dc27a9c5c068849241d59c47297dd2128ee0e62dcb34fd7ae282c9c5",
+      "bytes": 2429
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_knowledge_test.py.log",
+      "sha256": "9c9c82f1e27ef1bb4c3aca52d976460a06a576fc94a6986876d4776ec01b45af",
+      "bytes": 555
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_network_test.py.log",
+      "sha256": "569ef40355d4662a9ec6f88e4aa17738fa5a48404d6952daf093f5da26966959",
+      "bytes": 635
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_network_vision_ui_test.py.log",
+      "sha256": "358be8f5f84ca663e1f2510423456b24fa4c47c533b2e10e981165fd8a8437c2",
+      "bytes": 719
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_operator_test.py.log",
+      "sha256": "4206e2fab70ee14ba9006d571b182ba0b64cac31ac084f319a551b15f703c177",
+      "bytes": 483
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_phase0_test.py.log",
+      "sha256": "a72583c536a795610146b94d2e0e828a75ea398298f63a7242a9b3748a992457",
+      "bytes": 883
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_provider_manager_test.py.log",
+      "sha256": "1e93146086209db366b372cbb8aafef2c029ab24dcbea724641035d4d3e617c5",
+      "bytes": 2655
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_research_test.py.log",
+      "sha256": "a4b0f10dc3b5cc0f6af0713ea147a3134433b185a607033879b9f7053492acd3",
+      "bytes": 937
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_research_ui_test.py.log",
+      "sha256": "d15dc6ccab86b4a8a0504f6958dd0f0c00b3f45c09de7814790490b6f4035c59",
+      "bytes": 439
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/jubi_vision_test.py.log",
+      "sha256": "c3d628c653fd4d65c106396cd0f784ca9bb8c7e6ee6cc07e0ff22bf2339aad76",
+      "bytes": 535
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/production_readiness_test.py.log",
+      "sha256": "b30353145b2460b5f173e2cfdab3d0dd6a29d892d5bf7c4331b9be802892785e",
+      "bytes": 2656
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/provider_policy_test.py.log",
+      "sha256": "17ce7e630d073135c7d1f7d9405dad69ea60f4fc48d5333dd3ec5da0f99ba0bf",
+      "bytes": 1215
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/results.json",
+      "sha256": "33dcb385cc5edd6362b3cb7f002cc66dd4236d35d0aa217b6d5a15c27c00aa87",
+      "bytes": 9938
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/ring0_bridge_test.py.log",
+      "sha256": "525e031b631a171edf36316b9f08da33c94182e29e25545c747ac98898aacecf",
+      "bytes": 800
+    },
+    {
+      "path": "docs/integration-2026-09-13/baseline/trust_foundation_test.py.log",
+      "sha256": "fc337911002b4da729b272d0d603c83b425a6982e811c5a4de78dddb93cb0371",
+      "bytes": 1035
+    },
+    {
+      "path": "docs/integration-2026-09-13/changes-since-checkpoint.json",
+      "sha256": "429567dc4b8324372ffd258f1e33e343ca8ae7fa052f1fcec36a6e0a7f206633",
+      "bytes": 5962
+    },
+    {
+      "path": "docs/integration-2026-09-13/checkpoint-files.json",
+      "sha256": "d268a3021e069da8154aecc96ff3b527b7cd0cc84ffb29c50ab1386efb0ea848",
+      "bytes": 26140
+    },
+    {
+      "path": "docs/integration-2026-09-13/development-acceptance-final.json",
+      "sha256": "40c9ada2bc75b0002dd4be7b025568f146c0b71b829b82c9029770f1659975b3",
+      "bytes": 13663
+    },
+    {
+      "path": "docs/integration-2026-09-13/development-acceptance.json",
+      "sha256": "22c2ca7e9f1f0b77bc0523e987140fefdfb05cdccd47f12e1928c85a29fcf96f",
+      "bytes": 9354
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/acceptance_workspace_test.py.log",
+      "sha256": "8616cc76429dab3f17b95e8a1e4073864a6b12f5c56a3fe08e1877bb58d681c6",
+      "bytes": 841
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/broker_security_test.py.log",
+      "sha256": "62cb0f22561fcf735f3ebd2639af97be86e09127e98f687e6ab351bbc8037a5d",
+      "bytes": 2974
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/dashboard_runtime_test.cjs.log",
+      "sha256": "d2185067ff6e6064c613a60e057fccac767643a4330313d6fe33a40163c6e8dd",
+      "bytes": 1232
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/dashboard_ui_test.py.log",
+      "sha256": "47f0cfe6b457d0f699881e66eea200d334b35e3ccbcbc30d54c8ed26c8278fba",
+      "bytes": 949
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/fable_integration_test.py.log",
+      "sha256": "cf51413246b183fcc320a47b47afd3062281adeb9532dedfa4ec13685afa00fc",
+      "bytes": 1515
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/hardware_test.py.log",
+      "sha256": "e4d14941bef6dce7c4af2a55fa5c9d81a9b0b58cefbaeebc97c582cb1344e9d8",
+      "bytes": 814
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/hermes_policy_test.py.log",
+      "sha256": "af5805ae3b3730760bcc844b1aa6e59a4aad703cd010198cc2882ebc37d7ad05",
+      "bytes": 3426
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/integration_test.py.log",
+      "sha256": "ea049c01e37992f2ed857d71d347bd9814e4b39fb78538052629c8d2b59445c3",
+      "bytes": 9654
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_brain_test.py.log",
+      "sha256": "624a0a6fdebf438cace13d5ded333bb11a68ad67451a8280223b8cfa727d4294",
+      "bytes": 875
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_council_test.py.log",
+      "sha256": "b4577ea35ecee446fb7f671799205f4051c1bda924bd6d1a3320a4200152d98f",
+      "bytes": 795
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_functional_regression_test.py.log",
+      "sha256": "7b39b64ee2815febe3e2d86fecf1ba44393abfa6351f86d766f43f8983a98f6e",
+      "bytes": 3450
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_http_functional_test.py.log",
+      "sha256": "c8b760c44b1dc6dfae7e145ea043f4b001d13e0e546e1ec6710a210a67f12063",
+      "bytes": 1352
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_installer_lifecycle_test.py.log",
+      "sha256": "adb39d549cb745342a829910beaff943ee2dd108f1cc9f4521076d31e84ec795",
+      "bytes": 2429
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_knowledge_test.py.log",
+      "sha256": "dd8958147f9b51d7ce9bb6c3751d49b7c246d1e072058e348d7858182d87da10",
+      "bytes": 555
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_network_test.py.log",
+      "sha256": "71dc9d37e8a435a4adfe8965a9ea4e42bfaaf6a95bc930736b9d5766d0c0cb0c",
+      "bytes": 635
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_network_vision_ui_test.py.log",
+      "sha256": "358be8f5f84ca663e1f2510423456b24fa4c47c533b2e10e981165fd8a8437c2",
+      "bytes": 719
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_operator_test.py.log",
+      "sha256": "adef6d7037f3dc92d5db9fe7a56a5b19e741fb984c4d53da527e0b0f79ff9f3f",
+      "bytes": 483
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_phase0_test.py.log",
+      "sha256": "f14153de4562ac67c0bc164c07236ff16e00eed1e577f60bd08433e6f5c7e01c",
+      "bytes": 883
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_provider_manager_test.py.log",
+      "sha256": "2e435be3a9c522aab32b0316045086778de44fe5cf97cf8b7b51d2b6c0c7ac02",
+      "bytes": 2655
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_research_test.py.log",
+      "sha256": "be6a036dd3fcb2786aeb1d71f6fadad5602736571a2bb5ed33874d82262a3c4d",
+      "bytes": 937
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_research_ui_test.py.log",
+      "sha256": "6d7d580c5cf54e6f5e85a81837c83a2ee5e847fdb42457e20d415073a45994f0",
+      "bytes": 439
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/jubi_vision_test.py.log",
+      "sha256": "c3d628c653fd4d65c106396cd0f784ca9bb8c7e6ee6cc07e0ff22bf2339aad76",
+      "bytes": 535
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/production_readiness_test.py.log",
+      "sha256": "047e934f20192d985d8940fe2af100e23b49d489aeb1753411c1f350463581a4",
+      "bytes": 2102
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/provider_paths_test.py.log",
+      "sha256": "645a2c974723f2a0d2ea8137e3823550b5e28a29abaf1e1df332d525bf4435cb",
+      "bytes": 953
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/provider_policy_test.py.log",
+      "sha256": "082a8d5111307a33c55735cf8174743a6e0a6876cd1cb3bfc86c4ba4494124bf",
+      "bytes": 1215
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/results.json",
+      "sha256": "75a4661e80e2b01181f4badd0ea0c1724bce522c853fe1fee7a522fe5002087c",
+      "bytes": 11158
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/ring0_bridge_test.py.log",
+      "sha256": "41cbd3d012ecf16b8425fdd92f667c188f9ec71e96d3e52229f485e89d35dc7d",
+      "bytes": 800
+    },
+    {
+      "path": "docs/integration-2026-09-13/final/trust_foundation_test.py.log",
+      "sha256": "41e0a271bc5d0974e4bc42a1096c725e94401da506fe44abd7f4921e6f2ebfbe",
+      "bytes": 1035
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/acceptance_workspace_test.py.log",
+      "sha256": "4d1187c024a7f34d7071e0d90751e4d9fa345586816399427c086f0863999476",
+      "bytes": 841
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/broker_security_test.py.log",
+      "sha256": "a406903872f06190be793932ac0aa30205c5bf3060db67879f9db0e6996040fb",
+      "bytes": 2442
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/dashboard_runtime_test.cjs.log",
+      "sha256": "d2185067ff6e6064c613a60e057fccac767643a4330313d6fe33a40163c6e8dd",
+      "bytes": 1232
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/dashboard_ui_test.py.log",
+      "sha256": "ad8d8c77f34532175000db89a266e1ec7b0a6c6767a5dd646ee2db604d788c3e",
+      "bytes": 949
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/fable_integration_test.py.log",
+      "sha256": "0fad4fd9c728e51895eafdc54d1298e48c096f92106701b463012b13e5632688",
+      "bytes": 1515
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/hardware_test.py.log",
+      "sha256": "cc2ae097502966459f0d04646dd66f6ff3210996f0de7c3758ea893753e54186",
+      "bytes": 814
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/hermes_policy_test.py.log",
+      "sha256": "c164d76326591e9c0e83b351a27f5aaf6919ceaa51547132294db841dbd024b0",
+      "bytes": 283
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/integration_test.py.log",
+      "sha256": "6a0a83902b0a8011ae376f5f75270da721dc29c55eeaf6d37fb83067764f2972",
+      "bytes": 3550
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_brain_test.py.log",
+      "sha256": "7138f666fdd98c23447f2f16695baefa53403fdd9696e32ea9e4cd91e8d95699",
+      "bytes": 875
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_council_test.py.log",
+      "sha256": "06ee48bea4d763978cf81605ac2019f1609945b53bcfeb18a4d76a27024e31bf",
+      "bytes": 795
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_functional_regression_test.py.log",
+      "sha256": "19f461c48f66353c9652e0e1ee173cb44072295ab56f302927590cb7c75115ce",
+      "bytes": 3450
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_http_functional_test.py.log",
+      "sha256": "56edc23abf4d985ad8f6cb9be471044bf6694e64f11413f9879d9de56411cf95",
+      "bytes": 1353
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_installer_lifecycle_test.py.log",
+      "sha256": "a9e0b5b5b5b344006452570faa96723cad7fc78f3f8a77bc8537770d6b6955e7",
+      "bytes": 2429
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_knowledge_test.py.log",
+      "sha256": "2eda121e17d7e09b114c6de50978208147c195840bc8a2281ca0cb4c816a5383",
+      "bytes": 555
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_network_test.py.log",
+      "sha256": "54a1696bfcf619870d2e8b6764e7a7186e9720b02c4540fd29c9dcc91b907f94",
+      "bytes": 635
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_network_vision_ui_test.py.log",
+      "sha256": "8576b72375617b0285316c157b5b455ea0efad551b38149790cd1615f13d457b",
+      "bytes": 719
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_operator_test.py.log",
+      "sha256": "880f8378d89966aa0cc2669dd26b69b014c23a732b33cb12839f696b49ce3860",
+      "bytes": 483
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_phase0_test.py.log",
+      "sha256": "e06127c6ae38119a729ebc2dcdb63073d375ff49ac42f3fd189f00017596b22a",
+      "bytes": 883
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_provider_manager_test.py.log",
+      "sha256": "d436109e1aae459924fa19e4edcaad5f299362808326f2640c7c82f3151f2091",
+      "bytes": 1700
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_research_test.py.log",
+      "sha256": "4c53400a871c17372e51f852ce3597bea0fc400a242626ef7cc625ce2baf6166",
+      "bytes": 937
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_research_ui_test.py.log",
+      "sha256": "6d7d580c5cf54e6f5e85a81837c83a2ee5e847fdb42457e20d415073a45994f0",
+      "bytes": 439
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/jubi_vision_test.py.log",
+      "sha256": "2b08670d2fa30ecc634e57b246e4fb9ae44b9abef7e473d8449a9edfdfc46391",
+      "bytes": 535
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/production_readiness_test.py.log",
+      "sha256": "d87323ef6ee1c1521150e629be42f889d37b1fcf4074b8dcbe5d2d36c14c3d11",
+      "bytes": 2102
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/provider_paths_test.py.log",
+      "sha256": "f10fa1e316809d3f78dab83c4a09c73cccd50d23b56be43eff99f2b4a4b1d4d4",
+      "bytes": 1112
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/provider_policy_test.py.log",
+      "sha256": "6b8b046a06d074a27a3e8c3c9888b1b0130445ceddda71daaaab1903fc188fb7",
+      "bytes": 1215
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/results.json",
+      "sha256": "63e3da9b5b7fc9a1e4dba1bb71b29860a8f6c4b0571ac956435ad63d98951ad3",
+      "bytes": 11158
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/ring0_bridge_test.py.log",
+      "sha256": "505e8e2e0d581275644c8538cfdde2c80ca261386b0c6da1e67ee92a35aab510",
+      "bytes": 800
+    },
+    {
+      "path": "docs/integration-2026-09-13/final-host/trust_foundation_test.py.log",
+      "sha256": "10ee529f96ab64e102496c862b47ece5068810ddf42d04c23515ae6ee41f8c30",
+      "bytes": 1035
+    },
+    {
+      "path": "docs/integration-2026-09-13/hardware-final.json",
+      "sha256": "9cc9f9c0e1de4e117baabfeba16bdf3a66933cb270755fe559fb7ac732f44034",
+      "bytes": 15348
+    },
+    {
+      "path": "docs/integration-2026-09-13/hardware-host.json",
+      "sha256": "8ab1a70d10ee06589aa952e227508adac06d7f1816bd3440c5a6de6b7341c12c",
+      "bytes": 6933
+    },
+    {
+      "path": "docs/integration-2026-09-13/hardware.json",
+      "sha256": "488ae9b3e22d4d67de1172cef60f62ae12e1859c3eaeaa40415ba1fe5652ade5",
+      "bytes": 7068
+    },
+    {
+      "path": "docs/integration-2026-09-13/native-tool-probe.json",
+      "sha256": "84c5511d742073b6bc400099a9e4357db6c6791131641d73113ce4ad87251b97",
+      "bytes": 961
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/acceptance_workspace_test.py.log",
+      "sha256": "e46f1c10c6c5cb710a5647035425e044a6772a28e902fa8d7ae04d4d402d6c1d",
+      "bytes": 841
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/broker_security_test.py.log",
+      "sha256": "627bdcae863166197d9a80df02f5c65a62309956c686dd0db76d7eaab4ade697",
+      "bytes": 2442
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/dashboard_runtime_test.cjs.log",
+      "sha256": "d2185067ff6e6064c613a60e057fccac767643a4330313d6fe33a40163c6e8dd",
+      "bytes": 1232
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/dashboard_ui_test.py.log",
+      "sha256": "8954abf4f973b3bfe3a9ca07afe2dfc5e502dd8cf3b5ba46b25c7c447a5b7e1c",
+      "bytes": 949
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/fable_integration_test.py.log",
+      "sha256": "dbe9781861a6ad3504b73090e7d91c82c33b63f87d5edca8bdae3092456025ae",
+      "bytes": 1515
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/hardware_test.py.log",
+      "sha256": "fca36aca861ee5051fc3a11ec55b284cf351fb07b220ad88543fafbfdf26c77c",
+      "bytes": 814
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/hermes_policy_test.py.log",
+      "sha256": "fa5814bb47302050904080855b70225d27e01c804c60a0e1af9b09de35b8e825",
+      "bytes": 283
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/integration_test.py.log",
+      "sha256": "c2380789a97a828a5dace4f0812325f292b8a7470e9c53a9da252e37a95b3923",
+      "bytes": 3550
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_brain_test.py.log",
+      "sha256": "880e8874ef110a735465eb4415132386c7fd906732082ffacb4a2e9bbf4cd872",
+      "bytes": 875
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_council_test.py.log",
+      "sha256": "b4577ea35ecee446fb7f671799205f4051c1bda924bd6d1a3320a4200152d98f",
+      "bytes": 795
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_functional_regression_test.py.log",
+      "sha256": "af7988519ba611d68bb226c015ba777cd0c7153d7fbd6a03b6e55c3fdb3af0ac",
+      "bytes": 3450
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_http_functional_test.py.log",
+      "sha256": "fa2a3eadb2283522b38125ad0baf9a3a92c1b18a7e1ef1a76d15f85ac65761b5",
+      "bytes": 1352
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_installer_lifecycle_test.py.log",
+      "sha256": "0d1d92c469937e262f0049e027a5fe25c2127cf05e4cdaca910d353759cf385f",
+      "bytes": 2429
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_knowledge_test.py.log",
+      "sha256": "ebce8ed4c4fa24d25d07bc2f227512f226169d3886e1ab4bc8f83fbcf354e45a",
+      "bytes": 555
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_network_test.py.log",
+      "sha256": "19548c89532f754a57a42972ba0f3c919bd4cc85a873242a37b2e121c6ef7654",
+      "bytes": 635
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_network_vision_ui_test.py.log",
+      "sha256": "358be8f5f84ca663e1f2510423456b24fa4c47c533b2e10e981165fd8a8437c2",
+      "bytes": 719
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_operator_test.py.log",
+      "sha256": "b0e7bfb05df967db3b519acbc875e64e07ca0a54e65bcfe03f5d088cb3573f53",
+      "bytes": 483
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_phase0_test.py.log",
+      "sha256": "aecccae473fcf7e54ac574e60e00e4afdf6a5c3a0faa4342de176cacbf5eded2",
+      "bytes": 883
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_provider_manager_test.py.log",
+      "sha256": "d9f4c2867d980ec9c2b91c29de16910d550d3787634da57011daa82a3a6e7c3b",
+      "bytes": 1700
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_research_test.py.log",
+      "sha256": "672deaea78db69ac8bb344a722c42c38444cd646a012d5f1b403ea4b789dfbbc",
+      "bytes": 937
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_research_ui_test.py.log",
+      "sha256": "9926fdac517fedbe3088727f9bd43e31aa710ac44e6f4542c07b9853ee5df7e3",
+      "bytes": 439
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/jubi_vision_test.py.log",
+      "sha256": "c3d628c653fd4d65c106396cd0f784ca9bb8c7e6ee6cc07e0ff22bf2339aad76",
+      "bytes": 535
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/production_readiness_test.py.log",
+      "sha256": "08be03ebc6e147acfaf956294b78c32505b7905d77f1405e06a3e2f45ebe3e08",
+      "bytes": 2102
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/provider_paths_test.py.log",
+      "sha256": "7c4f8c5bac38bead3b93c96c808f0230add150005a6fd63d7aedd1bf4f1c0e16",
+      "bytes": 1112
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/provider_policy_test.py.log",
+      "sha256": "eea9469899ea3892e023931263ca6f23b9bf2cbb050bc220ea1722acae1382c2",
+      "bytes": 1215
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/results.json",
+      "sha256": "53d59e8c68d1d0583dccbd244208a76e33e0451416c5680cb8971830f108ff30",
+      "bytes": 11161
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/ring0_bridge_test.py.log",
+      "sha256": "9b3736a0f4613e1414b4c61905322bc386101bf49e68ef010c85721a7bd303b3",
+      "bytes": 800
+    },
+    {
+      "path": "docs/integration-2026-09-13/post-acceptance/trust_foundation_test.py.log",
+      "sha256": "1a4ee10d4d9ac317d7ad37ffa0fa0310b924c2329dcd3426e6e0a75a71002f68",
+      "bytes": 1035
+    },
+    {
+      "path": "docs/integration-2026-09-13/REPORT.md",
+      "sha256": "eeb47f13a6de193293aecfe2ccdb5b124806daeaf3033ebb3dba609abbb248da",
+      "bytes": 14681
+    },
+    {
+      "path": "docs/integration-2026-09-13/syntax-check.json",
+      "sha256": "5478a13bfed29949ea763a62c99baf98442ee1e4dd1554b2691e1a6dee698914",
+      "bytes": 1036
+    },
+    {
+      "path": "docs/integration-2026-09-13/VALIDATION.json",
+      "sha256": "54fe93986caf35773d4033667ff83a6c3313053658fc2bfe4c28e4a9b881f824",
+      "bytes": 1116
+    }
+  ]
+}

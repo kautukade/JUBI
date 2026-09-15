@@ -1,0 +1,9 @@
+test_rejects_invalid_base64_and_unknown_format (__main__.VisionTests.test_rejects_invalid_base64_and_unknown_format) ... ok
+test_rejects_non_vision_model (__main__.VisionTests.test_rejects_non_vision_model) ... ok
+test_status_is_local_only (__main__.VisionTests.test_status_is_local_only) ... ok
+test_valid_png_is_forwarded_to_local_ollama_images (__main__.VisionTests.test_valid_png_is_forwarded_to_local_ollama_images) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK

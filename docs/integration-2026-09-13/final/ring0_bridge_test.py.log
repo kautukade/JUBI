@@ -1,0 +1,10 @@
+test_bridge_has_fixed_ioctl_surface_only (__main__.Ring0BridgeTest.test_bridge_has_fixed_ioctl_surface_only) ... ok
+test_raw_driver_and_kernel_memory_actions_stay_denied (__main__.Ring0BridgeTest.test_raw_driver_and_kernel_memory_actions_stay_denied) ... ok
+test_ring0_action_reaches_executor_instead_of_policy_block (__main__.Ring0BridgeTest.test_ring0_action_reaches_executor_instead_of_policy_block) ... ok
+test_ring0_actions_are_explicitly_allowlisted (__main__.Ring0BridgeTest.test_ring0_actions_are_explicitly_allowlisted) ... ok
+test_windows_missing_or_installed_driver_is_reported_cleanly (__main__.Ring0BridgeTest.test_windows_missing_or_installed_driver_is_reported_cleanly) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.144s
+
+OK

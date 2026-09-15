@@ -1,0 +1,12 @@
+test_approval_survives_restart_and_resumes_exact_step (__main__.ApprovalResumeTests.test_approval_survives_restart_and_resumes_exact_step) ... ok
+test_rejected_approval_never_executes (__main__.ApprovalResumeTests.test_rejected_approval_never_executes) ... ok
+test_automation_survives_reopen (__main__.PersistenceTests.test_automation_survives_reopen) ... ok
+test_events_survive_reopen (__main__.PersistenceTests.test_events_survive_reopen) ... ok
+test_memory_survives_reopen (__main__.PersistenceTests.test_memory_survives_reopen) ... ok
+test_embedding_has_no_general_fallback (__main__.RouterTests.test_embedding_has_no_general_fallback) ... ok
+test_missing_configured_model_is_never_returned (__main__.RouterTests.test_missing_configured_model_is_never_returned) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.395s
+
+OK

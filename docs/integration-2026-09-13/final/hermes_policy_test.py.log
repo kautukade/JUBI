@@ -1,0 +1,44 @@
+test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked (__main__.HermesPolicyTests.test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked) ... FAIL
+
+======================================================================
+FAIL: test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked (__main__.HermesPolicyTests.test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\hp\AppData\Local\Temp\jubi-regression-jsm9slgp\tests\hermes_policy_test.py", line 28, in test_actual_hermes_worker_nested_delegation_and_raw_network_are_blocked
+    self.assertEqual(result.returncode, 0, result.stderr[-5000:])
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "C:\Users\hp\.codex\worktrees\89f1\JUBI\sources\hermes-agent-main(3)\hermes-agent-main\agent\agent_init.py", line 1371, in init_agent
+    agent.client = agent._create_openai_client(client_kwargs, reason="agent_init", shared=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\AppData\Local\Temp\jubi-regression-jsm9slgp\sarus\integrations\hermes_transport.py", line 135, in create_client
+    LOCAL_ONLY.check_model_name(agent.model)
+  File "C:\Users\hp\AppData\Local\Temp\jubi-regression-jsm9slgp\sarus\core\provider_policy.py", line 43, in check_model_name
+    raise ProviderPolicyError('Local Only rejects missing models and cloud aliases')
+sarus.core.provider_policy.ProviderPolicyError: Local Only rejects missing models and cloud aliases
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\hp\AppData\Local\Temp\jubi-regression-jsm9slgp\tests\hermes_policy_probe.py", line 36, in <module>
+    child = json.loads(delegate_task(goal='Attempt cloud', parent_agent=parent, max_iterations=1, background=False))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\.codex\worktrees\89f1\JUBI\sources\hermes-agent-main(3)\hermes-agent-main\tools\delegate_tool.py", line 3151, in delegate_task
+    child = _build_child_preserving_parent_tools(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\.codex\worktrees\89f1\JUBI\sources\hermes-agent-main(3)\hermes-agent-main\tools\delegate_tool.py", line 2822, in _build_child_preserving_parent_tools
+    child = _build_child_agent(**kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\.codex\worktrees\89f1\JUBI\sources\hermes-agent-main(3)\hermes-agent-main\tools\delegate_tool.py", line 1616, in _build_child_agent
+    child = AIAgent(
+            ^^^^^^^^
+  File "C:\Users\hp\.codex\worktrees\89f1\JUBI\sources\hermes-agent-main(3)\hermes-agent-main\run_agent.py", line 520, in __init__
+    init_agent(
+  File "C:\Users\hp\.codex\worktrees\89f1\JUBI\sources\hermes-agent-main(3)\hermes-agent-main\agent\agent_init.py", line 1390, in init_agent
+    raise RuntimeError(f"Failed to initialize OpenAI client: {e}")
+RuntimeError: Failed to initialize OpenAI client: Local Only rejects missing models and cloud aliases
+
+
+----------------------------------------------------------------------
+Ran 1 test in 8.102s
+
+FAILED (failures=1)
