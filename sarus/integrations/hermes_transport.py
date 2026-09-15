@@ -16,6 +16,7 @@ import time
 import uuid
 
 from sarus.core.provider_policy import InferenceTransport, LOCAL_ONLY, ProviderPolicyError
+from sarus.integrations.hermes_tool_compat import promote_text_tool_call
 
 
 _JUBI_TOOL_CONTEXT_FLOOR = 8192
@@ -154,6 +155,14 @@ def install_transport(agent_class, base_url: str, receipts: list[dict], max_toke
                 if raw.get('prompt_eval_count', 0) >= context_tokens - 16:
                     raise ProviderPolicyError('Request filled the local context limit; refusing potentially truncated tool instructions')
                 message = dict(raw.get('message') or {})
+
+                # Some local Ollama models advertise tool support but return an
+                # exact tool request as JSON in assistant content. Promote only
+                # one syntactically valid call whose name is already present in
+                # this turn's allowlisted tool schemas. This adds no capability;
+                # Jubi's registry/dispatch restrictions still own execution.
+                compat_promoted = promote_text_tool_call(message, body.get('tools'))
+
                 for call in message.get('tool_calls') or []:
                     call.setdefault('id', 'call_' + uuid.uuid4().hex)
                     call.setdefault('type', 'function')
@@ -168,7 +177,8 @@ def install_transport(agent_class, base_url: str, receipts: list[dict], max_toke
                                   'completion_tokens': raw.get('eval_count', 0),
                                   'total_tokens': raw.get('prompt_eval_count', 0) + raw.get('eval_count', 0)}}
                 receipt.update(status='SUCCEEDED', usage=data.get('usage'),
-                               native_tool_calls=len(message.get('tool_calls') or []))
+                               native_tool_calls=len(message.get('tool_calls') or []),
+                               compat_text_tool_call_promoted=bool(compat_promoted))
             except Exception as exc:
                 # Hermes may retry an API exception above the SDK. The task's
                 # zero-retry policy is enforced here before any further I/O.
