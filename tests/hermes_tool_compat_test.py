@@ -31,6 +31,25 @@ class HermesTextToolCompatibilityTests(unittest.TestCase):
         self.assertEqual(message['tool_calls'][0]['function']['arguments'],
                          {'operation': 'read', 'path': 'README.md'})
 
+    def test_promotes_observed_reviewer_read_shorthand_only_to_workspace(self):
+        message = {
+            'role': 'assistant',
+            'content': '```json\n{"name":"read","arguments":{"path":"pricing.py"}}\n```',
+        }
+        self.assertTrue(promote_text_tool_call(message, TOOLS))
+        function = message['tool_calls'][0]['function']
+        self.assertEqual(function['name'], 'jubi_workspace')
+        self.assertEqual(function['arguments'], {'operation': 'read', 'path': 'pricing.py'})
+
+    def test_workspace_operation_alias_requires_workspace_to_be_advertised(self):
+        content = '{"name":"read","arguments":{"path":"pricing.py"}}'
+        other = [{'type': 'function', 'function': {'name': 'something_else', 'parameters': {}}}]
+        self.assertIsNone(extract_text_tool_call(content, other))
+
+    def test_workspace_alias_cannot_override_an_explicit_operation(self):
+        content = '{"name":"read","arguments":{"operation":"write","path":"pricing.py"}}'
+        self.assertIsNone(extract_text_tool_call(content, TOOLS))
+
     def test_unknown_tool_is_never_promoted(self):
         content = '{"name":"terminal","arguments":{"command":"whoami"}}'
         self.assertIsNone(extract_text_tool_call(content, TOOLS))
