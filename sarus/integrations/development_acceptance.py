@@ -24,6 +24,7 @@ from sarus.core.hardware import admission, memory_snapshot
 from sarus.core.models import OllamaRouter
 from sarus.core.provider_policy import LOCAL_ONLY, InferenceTransport
 from sarus.integrations.acceptance_workspace import AcceptanceWorkspace
+from sarus.integrations.hermes_compact import compact_excerpt, compact_profile
 from sarus.integrations.hermes_transport import install_transport
 
 
@@ -36,31 +37,38 @@ def run(request):
     models = OllamaRouter(root / 'config/models.json', request['endpoint'])
     brain = BrainRouter(home / 'jubi-evidence.db', models, root / 'config/brain.json')
     decision = brain.route(request['goal'], 'coding')
-    selected, resources, context_capacity = None, None, None
+    selected, resources, context_capacity, runtime_context = None, None, None, None
     compatibility = []
+    installed = {row['name']: row for row in models.list_models().get('items', [])}
     for candidate in decision['candidates']:
-        item = next(x for x in models.list_models()['items'] if x['name'] == candidate['model'])
+        item = installed.get(candidate['model'])
+        if not item:
+            compatibility.append({'model': candidate['model'], 'eligible': False,
+                                  'reason': 'Brain candidate is no longer installed'})
+            continue
         metadata = InferenceTransport(models.base).json('/api/show', {'model': item['name']})
         LOCAL_ONLY.check_model(item['name'], metadata)
-        capacity = max([int(v) for k, v in metadata.get('model_info', {}).items()
-                        if k.endswith('.context_length') and isinstance(v, int)] or [0])
-        if 'tools' not in metadata.get('capabilities', []) or capacity < 64000:
-            compatibility.append({'model': item['name'], 'eligible': False,
-                                  'reason': 'Hermes requires native tools and at least 64K model context capacity'})
+        profile = compact_profile(metadata, require_tools=True)
+        compatibility.append({'model': item['name'], **profile})
+        if not profile['eligible']:
             continue
-        resources = admission(item.get('size'), memory_snapshot(), allow_cpu_paging=True)
-        if resources['admitted']:
+        candidate_resources = admission(item.get('size'), memory_snapshot(), allow_cpu_paging=True)
+        compatibility[-1]['memory_admission'] = candidate_resources
+        if candidate_resources['admitted']:
             selected = item['name']
-            context_capacity = capacity
+            resources = candidate_resources
+            context_capacity = profile['capacity']
+            runtime_context = profile['runtime_context']
             break
     if not selected:
-        return {'status': 'FAILED', 'reason': 'No installed tool-capable local model passed memory admission',
-                'brain_decision': decision, 'admission': resources}
+        return {'status': 'FAILED', 'reason': 'No installed tool-capable local model passed compact-mode and memory admission',
+                'brain_decision': decision, 'admission': resources, 'provider_compatibility': compatibility}
     (home / 'config.yaml').write_text(json.dumps({
-        'model': {'default': selected, 'provider': 'custom', 'base_url': models.base + '/v1', 'context_length': context_capacity},
-        'agent': {'api_max_retries': 1, 'enforce_tool_use': True},
+        'model': {'default': selected, 'provider': 'custom', 'base_url': models.base + '/v1',
+                  'context_length': runtime_context},
+        'agent': {'api_max_retries': 0, 'enforce_tool_use': True},
         'delegation': {'max_concurrent_children': 1, 'max_spawn_depth': 1, 'max_iterations': 8,
-                       'child_timeout_seconds': 420, 'inherit_mcp_toolsets': False, 'subagent_auto_approve': False},
+                       'child_timeout_seconds': 300, 'inherit_mcp_toolsets': False, 'subagent_auto_approve': False},
         'memory': {'memory_enabled': False, 'user_profile_enabled': False},
         'plugins': {'enabled': False}, 'tools': {'tool_search': {'enabled': 'off'}},
         'telemetry': {'shared_metrics': {'enabled': False}},
@@ -70,9 +78,10 @@ def run(request):
     if (source / '.env').exists():
         raise RuntimeError('Refusing a source .env in the managed Hermes runtime')
     sys.path.insert(0, str(source))
-    create_client = install_transport(None, models.base, receipts, max_tokens=768,
-                                      process_commands=workspace.commands, max_calls=12,
-                                      cancel_check=cancelled, context_tokens=4096, request_timeout=240)
+    create_client = install_transport(None, models.base, receipts, max_tokens=512,
+                                      process_commands=workspace.commands, max_calls=10,
+                                      cancel_check=cancelled, context_tokens=runtime_context,
+                                      request_timeout=180)
     import hermes_cli.env_loader as env_loader
     env_loader.load_hermes_dotenv = lambda *args, **kwargs: []
     import run_agent
@@ -116,10 +125,16 @@ def run(request):
     run_agent.handle_function_call = call
 
     sessions = SessionDB(home / 'sessions.db')
+    compact_system = (
+        'You are Jubi\'s bounded local coding orchestrator. Use only jubi_workspace. '
+        'A task is not complete because prose says so: require observed tool results. '
+        'Never use shell, network, plugins, memory, or unapproved files.'
+    )
     common = dict(base_url=models.base + '/v1', api_key='local-no-key', provider='custom',
                   api_mode='chat_completions', model=selected, enabled_toolsets=['jubi_workspace'],
-                  max_iterations=8, max_tokens=768, quiet_mode=True, skip_context_files=True,
-                  skip_memory=True, session_db=sessions, fallback_model=None)
+                  max_iterations=8, max_tokens=512, quiet_mode=True, skip_context_files=True,
+                  skip_memory=True, session_db=sessions, fallback_model=None,
+                  ephemeral_system_prompt=compact_system)
     parent = run_agent.AIAgent(**common)
     if {tool['function']['name'] for tool in parent.tools} != {'jubi_workspace'}:
         raise RuntimeError('Unexpected tool exposure in acceptance worker: ' + str([t['function']['name'] for t in parent.tools]))
@@ -134,33 +149,53 @@ def run(request):
     result = {'status': 'FAILED', 'task_id': task_id, 'parent_session': parent.session_id,
               'model': selected, 'brain_decision': decision, 'admission': resources,
               'provider_compatibility': compatibility, 'model_context_capacity': context_capacity,
-              'runtime_context_limit': 4096,
-              'limits': {'max_children': 2, 'depth': 1, 'concurrency': 1, 'child_timeout_seconds': 420,
-                         'overall_timeout_seconds': 600, 'provider_retries': 0, 'max_inference_calls': 12,
+              'runtime_context_limit': runtime_context,
+              'compact_mode': {'enabled': True, 'minimum_context': 8192,
+                               'progressive_context': True, 'toolsets': ['jubi_workspace']},
+              'limits': {'max_children': 1, 'depth': 1, 'concurrency': 1, 'child_timeout_seconds': 300,
+                         'overall_timeout_seconds': 600, 'provider_retries': 0, 'max_inference_calls': 10,
                          'max_worker_iterations': 8, 'cancellation': 'CANCEL sentinel + controller process termination'},
               'events': events, 'inference_receipts': receipts, 'policy_revision': LOCAL_ONLY.revision}
     (home / 'evidence.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
     try:
-        guidance = 'Canonical development loop: inspect the specification and files; reproduce a failing test; make the smallest fix; run tests; review the diff; require fresh independent verification.'
-        # Progressive loading: one bounded workflow, never the whole catalogue.
+        guidance = ('Development loop: read only the needed files; run the fixed test before editing; '
+                    'make the smallest pricing.py change; run the fixed test again; inspect the diff. '
+                    'Completion requires observed tool results, not a verbal claim.')
+        # Progressive loading: use bounded excerpts from one workflow source per role,
+        # never the whole source catalogue or repository.
         skill = root / 'sources' / source_cfg['superpowers'] / 'skills/verification-before-completion/SKILL.md'
         ecc = root / 'sources' / source_cfg['ecc'] / 'agents/code-reviewer.md'
         result['workflow_sources'] = []
+        source_text = {}
         for path in (skill, ecc):
             text = path.read_text(encoding='utf-8')
-            result['workflow_sources'].append({'path': str(path.relative_to(root)), 'sha256': hashlib.sha256(text.encode()).hexdigest()})
+            source_text[path] = text
+            result['workflow_sources'].append({'path': str(path.relative_to(root)),
+                                               'sha256': hashlib.sha256(text.encode()).hexdigest()})
+        coding_context = guidance + '\n\nWorkflow excerpt:\n' + compact_excerpt(source_text[skill], 3500)
+        review_context_base = guidance + '\n\nReviewer excerpt:\n' + compact_excerpt(source_text[ecc], 3500)
+        result['compact_mode']['coding_guidance_chars'] = len(coding_context)
+        result['compact_mode']['review_guidance_chars'] = len(review_context_base)
         result['coding'] = json.loads(delegate_task(
-            goal=request['goal'] + '\nUse jubi_workspace operations to do the work. Start by reading README.md, pricing.py, test_pricing.py and running test. Do not stop at a plan. Only pricing.py may change. End after test passes and diff is inspected.',
-            context=guidance + '\n' + skill.read_text(encoding='utf-8'), role='leaf', max_iterations=8, background=False, parent_agent=parent))
-        if any(row.get('status') != 'completed' for row in result['coding'].get('results', [])):
-            # A timed-out Hermes thread must not retain write permission or
-            # overlap a reviewer. The controller job contains the entire run.
+            goal=(request['goal'] + '\nUse jubi_workspace in this order: read README.md, read pricing.py, '
+                  'read test_pricing.py, run test and observe failure, write only pricing.py, run test and '
+                  'observe success, then inspect diff. Do not stop at a plan and do not claim an action without a tool result.'),
+            context=coding_context, role='leaf', max_iterations=8, background=False, parent_agent=parent))
+        coding_events = [e for e in events if e['phase'] == 'coding']
+        coding_tests = [e['result']['exit_code'] for e in coding_events
+                        if e['operation'] == 'test' and 'result' in e]
+        coding_wrote = any(e['operation'] == 'write' and 'result' in e for e in coding_events)
+        child_ok = bool(result['coding'].get('results')) and all(
+            row.get('status') == 'completed' for row in result['coding'].get('results', []))
+        if not child_ok or not (coding_tests and coding_tests[0] != 0 and coding_tests[-1] == 0 and coding_wrote):
+            # Hermes has historically been able to return a textual "completed"
+            # summary after an API failure. Only observed workspace events count.
             workspace.phase = 'blocked'
-            raise RuntimeError('Coding child did not finish; further delegation denied')
+            raise RuntimeError('Coding child lacked observed fail-edit-pass evidence; further delegation denied')
         workspace.phase = 'review'
         diff = workspace.execute('diff')['diff']
         result['diff'] = diff
-        review_context = guidance + '\n' + ecc.read_text(encoding='utf-8') + '\nDiff to review:\n' + diff
+        review_context = review_context_base + '\n\nDiff to review:\n' + diff
         if diff:
             result['review'] = json.loads(delegate_task(
                 goal='Review the actual diff and project requirements using read and diff operations only. Check that tests were not weakened. Return only JSON {"approved": true or false, "reason": "..."}. Do not edit files.',
