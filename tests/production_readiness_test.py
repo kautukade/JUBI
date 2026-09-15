@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from sarus.core.doctor import Doctor
+from sarus.integrations.hermes_compact import compact_profile
 
 
 class ProductionReadinessTest(unittest.TestCase):
@@ -54,6 +55,28 @@ class ProductionReadinessTest(unittest.TestCase):
                 app.models.list_models.return_value = {'online': True, 'models': [x['name'] for x in items], 'items': items}
                 check = next(c for c in Doctor(app).run()['checks'] if c['name'] == 'Installed local chat candidate')
                 self.assertEqual(check['ok'], expected)
+
+    def test_hermes_compact_mode_accepts_32k_tool_model_without_allocating_full_context(self):
+        profile = compact_profile({
+            'capabilities': ['completion', 'tools'],
+            'model_info': {'qwen2.context_length': 32768},
+        })
+        self.assertTrue(profile['eligible'])
+        self.assertEqual(profile['capacity'], 32768)
+        self.assertEqual(profile['runtime_context'], 8192)
+        self.assertTrue(profile['native_tools'])
+        self.assertFalse(compact_profile({
+            'capabilities': ['completion'],
+            'model_info': {'qwen2.context_length': 32768},
+        })['eligible'])
+        self.assertFalse(compact_profile({
+            'capabilities': ['completion', 'tools'],
+            'model_info': {'qwen2.context_length': 4096},
+        })['eligible'])
+        source = (ROOT / 'sarus/integrations/development_acceptance.py').read_text(encoding='utf-8')
+        self.assertNotIn('capacity < 64000', source)
+        self.assertIn('compact_profile', source)
+        self.assertIn('observed fail-edit-pass evidence', source)
 
     def test_installer_has_production_certification_model_provisioning_and_jubi_launcher(self):
         exe = (ROOT / 'installer/EXE-INSTALL.ps1').read_text(encoding='utf-8')
