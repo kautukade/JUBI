@@ -261,8 +261,10 @@ $ErrorActionPreference='Stop'
 def admission(model_bytes: int | None, memory: dict, requested_workers=1, *, allow_cpu_paging=False) -> dict:
     """Conservative initial RAM admission, explicitly an estimate not a benchmark.
 
-    Account for resident weights, a bounded context allowance and 2 GiB headroom.
-    GPU offload is not assumed from an unreliable Windows AdapterRAM reading.
+    Account for resident weights, a bounded context allowance and 2 GiB physical
+    headroom. When CPU paging is explicitly allowed, the commit check covers the
+    estimated worker itself; the 2 GiB headroom is already reserved in physical RAM
+    and must not be counted a second time against Windows' available commit limit.
     """
     available = memory.get('available_bytes')
     if not available or not model_bytes or model_bytes <= 0:
@@ -272,13 +274,16 @@ def admission(model_bytes: int | None, memory: dict, requested_workers=1, *, all
     # context allowance; this remains an estimate, not a memory guarantee.
     estimate = int(model_bytes * 1.10) + GIB // 2
     budget = max(0, int(available) - 2 * GIB)
+    available_commit = int(memory.get('available_commit_bytes') or 0)
     workers = min(max(1, int(requested_workers)), 3, budget // estimate)
     paging = (workers == 0 and allow_cpu_paging and available >= 2 * GIB
               and memory.get('total_bytes', 0) >= estimate + 2 * GIB
-              and memory.get('available_commit_bytes', 0) >= estimate + 2 * GIB)
+              and available_commit >= estimate)
     if paging:
         workers = 1
     return {'admitted': workers > 0, 'max_workers': workers,
             'estimated_worker_bytes': estimate, 'budget_bytes': budget,
+            'available_bytes': int(available), 'available_commit_bytes': available_commit,
+            'required_commit_bytes': estimate,
             'mode': 'cpu_paging' if paging else 'physical_ram',
             'reason': 'Conservative RAM estimate; live latency/quality calibration pending'}
