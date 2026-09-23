@@ -9,6 +9,7 @@ START_SERVICE=0
 INSTALL_PACKAGES=1
 WITH_HERMES=0
 WITH_BROWSER=0
+WITH_VOICE=0
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 usage() {
@@ -24,6 +25,7 @@ Options:
   --start              Enable and start jubi.service after installation
   --with-hermes        Install upstream Hermes core Python dependencies
   --with-browser       Install Playwright 1.63.0 + Chromium for read-only JS browsing
+  --with-voice         Install offline STT/TTS runtime dependencies
   --no-packages        Do not install OS prerequisites
   -h, --help           Show this help
 
@@ -42,6 +44,7 @@ while [[ $# -gt 0 ]]; do
     --start) START_SERVICE=1; shift ;;
     --with-hermes) WITH_HERMES=1; shift ;;
     --with-browser) WITH_BROWSER=1; shift ;;
+    --with-voice) WITH_VOICE=1; shift ;;
     --no-packages) INSTALL_PACKAGES=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -106,6 +109,9 @@ if (( INSTALL_PACKAGES )); then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
     apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd
+    if (( WITH_VOICE )); then
+      apt-get install -y --no-install-recommends espeak-ng ffmpeg
+    fi
   else
     echo "Automatic package installation currently supports apt-based Linux." >&2
     echo "Install Python 3.11+, venv, curl, rsync and user-management tools, then re-run with --no-packages." >&2
@@ -143,6 +149,16 @@ install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER"   "$PREFIX/data" "$PREF
 rm -rf "$PREFIX/.venv"
 python3 -m venv "$PREFIX/.venv"
 "$PREFIX/.venv/bin/python" -m compileall -q "$PREFIX/jubi" "$PREFIX/sarus"
+
+if (( WITH_VOICE )); then
+  echo "Installing offline Jubi STT/TTS dependencies..."
+  "$PREFIX/.venv/bin/python" -m pip install --disable-pip-version-check "faster-whisper==1.2.1"
+  "$PREFIX/.venv/bin/python" - <<'PY_VOICE_VERIFY'
+import faster_whisper
+import huggingface_hub
+print("Offline voice Python dependencies ready")
+PY_VOICE_VERIFY
+fi
 
 if (( WITH_BROWSER )); then
   echo "Installing Playwright 1.63.0 and Chromium for Jubi read-only browser..."
@@ -201,6 +217,7 @@ JUBI_HTTP_LOG=1
 JUBI_DEPLOYMENT_PROFILE=linux_vps
 JUBI_REQUIRE_HERMES=$WITH_HERMES
 JUBI_REQUIRE_BROWSER=$WITH_BROWSER
+JUBI_REQUIRE_VOICE=$WITH_VOICE
 PLAYWRIGHT_BROWSERS_PATH=$PREFIX/.playwright
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
@@ -242,6 +259,15 @@ else
   elif ! grep -q '^JUBI_REQUIRE_BROWSER=' /etc/jubi/jubi.env; then
     echo 'JUBI_REQUIRE_BROWSER=0' >>/etc/jubi/jubi.env
   fi
+  if (( WITH_VOICE )); then
+    if grep -q '^JUBI_REQUIRE_VOICE=' /etc/jubi/jubi.env; then
+      sed -i 's/^JUBI_REQUIRE_VOICE=.*/JUBI_REQUIRE_VOICE=1/' /etc/jubi/jubi.env
+    else
+      echo 'JUBI_REQUIRE_VOICE=1' >>/etc/jubi/jubi.env
+    fi
+  elif ! grep -q '^JUBI_REQUIRE_VOICE=' /etc/jubi/jubi.env; then
+    echo 'JUBI_REQUIRE_VOICE=0' >>/etc/jubi/jubi.env
+  fi
 fi
 chmod 0640 /etc/jubi/jubi.env
 chown root:"$SERVICE_USER" /etc/jubi/jubi.env
@@ -266,6 +292,10 @@ BROWSER_STATE="optional/not-installed"
 if (( WITH_BROWSER )); then
   BROWSER_STATE="installed"
 fi
+VOICE_STATE="optional/not-installed"
+if (( WITH_VOICE )); then
+  VOICE_STATE="dependencies-installed; model-provisioning-required"
+fi
 
 cat <<EOF_SUMMARY
 
@@ -284,4 +314,5 @@ Do not open TCP $PORT in the AWS Security Group.
 Ollama/model installation is intentionally separate and requires your explicit action.
 Hermes dependencies: $HERMES_STATE
 Browser runtime: $BROWSER_STATE
+Voice runtime: $VOICE_STATE
 EOF_SUMMARY
