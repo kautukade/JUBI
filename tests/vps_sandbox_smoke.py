@@ -34,14 +34,17 @@ class VPSSandboxSmoke(unittest.TestCase):
                 "    def test_network_is_kernel_denied(self):\n"
                 "        with self.assertRaises(OSError) as ctx:\n"
                 "            socket.socket()\n"
-                "        self.assertEqual(ctx.exception.errno, errno.EPERM)\n\n"
+                "        self.assertEqual(ctx.exception.errno, errno.EPERM)\n"
+                "    def test_write_outside_project_is_kernel_denied(self):\n"
+                "        with self.assertRaises(PermissionError):\n"
+                "            open('/var/tmp/jubi-landlock-denied.txt', 'w').write('blocked')\n\n"
                 "if __name__ == '__main__': unittest.main()\n",
                 encoding="utf-8",
             )
             ws = DevelopmentWorkspace(root, "demo")
             first = ws.test("python_unittest")
             self.assertFalse(first["ok"], first)
-            self.assertEqual(first["sandbox"], "bubblewrap+seccomp-no-network")
+            self.assertEqual(first["sandbox"], "landlock+seccomp-no-network")
 
             ws.write("calc.py", "def add(a, b):\n    return a + b\n")
             second = ws.test("python_unittest")
