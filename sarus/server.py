@@ -185,6 +185,8 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.vision.status())
             if p == '/api/browser':
                 return self._json(APP.browser.status())
+            if p == '/api/agent-manager':
+                return self._json(APP.agent_manager.recent(int(q.get('limit', ['30'])[0])))
             if p == '/api/providers':
                 validate = str(q.get('validate', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
                 return self._json(APP.providers.status(validate=validate))
@@ -360,6 +362,16 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('text', '')),
                         str(data.get('task_type', 'auto')),
                         str(data.get('provider', 'auto')),
+                    )
+                )
+            if p == '/api/agent-manager/run':
+                return self._json(
+                    APP.agent_manager.run(
+                        str(data.get('text', '')),
+                        str(data.get('task_type', 'auto')),
+                        str(data.get('project_path', '')),
+                        str(data.get('provider', 'ollama')),
+                        data.get('model'),
                     )
                 )
             if p == '/api/browser/browse':
