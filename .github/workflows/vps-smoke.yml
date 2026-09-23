@@ -11,7 +11,7 @@ on:
       - 'jubi/**'
       - 'sarus/**'
       - 'config/**'
-      - 'tests/vps_deployment_test.py'
+      - 'tests/**'
       - '.github/workflows/vps-smoke.yml'
   pull_request:
     paths:
