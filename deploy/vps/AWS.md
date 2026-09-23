@@ -36,7 +36,7 @@ sudo apt-get install -y git
 git clone https://github.com/kautukade/JUBI.git
 cd JUBI
 git checkout feature/vps-runtime
-sudo bash deploy/vps/install.sh --with-hermes --start
+sudo bash deploy/vps/install.sh --with-autonomy --start
 ```
 
 Install Ollama separately using the method you approve. If Ollama is installed
@@ -56,6 +56,7 @@ pull any model automatically.
 
 ```bash
 sudo /opt/jubi/deploy/vps/verify.sh
+sudo /opt/jubi/deploy/vps/acceptance.sh
 sudo systemctl status jubi
 sudo journalctl -u jubi --since "10 minutes ago"
 ```
