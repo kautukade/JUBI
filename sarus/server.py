@@ -130,7 +130,7 @@ class H(SimpleHTTPRequestHandler):
         for key in ('enabled', 'success'):
             if key in data and type(data[key]) is not bool:
                 raise ValueError(f'{key} must be a boolean')
-        for key in ('text', 'prompt', 'content', 'name', 'title', 'namespace', 'query', 'question', 'api_key'):
+        for key in ('text', 'prompt', 'content', 'name', 'title', 'namespace', 'query', 'question', 'api_key', 'project', 'model', 'plan'):
             if key in data and not isinstance(data[key], str):
                 raise ValueError(f'{key} must be a string')
         return data
@@ -225,6 +225,13 @@ class H(SimpleHTTPRequestHandler):
                         int(q.get('limit', ['6'])[0]),
                     )
                 )
+            if p == '/api/developer':
+                return self._json({
+                    'mode': 'vps-bounded-developer',
+                    'workspace': str(APP.developer.workspace),
+                    'model': APP.models.choose('coding') or APP.models.choose('general'),
+                    'test_plan_dir': str(APP.developer.test_plan_dir),
+                })
             if p == '/api/broker':
                 return self._json(APP.privileged.status())
             if p == '/api/doctor':
@@ -323,6 +330,15 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('text', '')),
                         str(data.get('source', 'user')),
                         data.get('capability_id'),
+                    )
+                )
+            if p == '/api/developer/run':
+                return self._json(
+                    APP.developer.run(
+                        str(data.get('text', '')),
+                        project_path=str(data.get('project', '.')),
+                        model=data.get('model'),
+                        max_iterations=int(data.get('max_iterations', 10)),
                     )
                 )
             if p == '/api/brain/route':
