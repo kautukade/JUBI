@@ -14,6 +14,7 @@ on:
       - 'tests/vps_deployment_test.py'
       - 'tests/vps_developer_test.py'
       - 'tests/vps_browser_test.py'
+      - 'tests/vps_swarm_test.py'
       - '.github/workflows/vps-smoke.yml'
   pull_request:
     paths:
@@ -47,6 +48,8 @@ jobs:
           python tests/production_readiness_test.py
       - name: Bounded autonomous developer
         run: python tests/vps_developer_test.py
+      - name: Executable VPS swarm
+        run: python tests/vps_swarm_test.py
       - name: Local-only provider boundary
         run: python tests/provider_policy_test.py
       - name: Real local HTTP regression
