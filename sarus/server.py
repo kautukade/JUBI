@@ -183,6 +183,8 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.network.recent_observations(int(q.get('limit', ['100'])[0])))
             if p == '/api/vision':
                 return self._json(APP.vision.status())
+            if p == '/api/browser':
+                return self._json(APP.browser.status())
             if p == '/api/providers':
                 validate = str(q.get('validate', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
                 return self._json(APP.providers.status(validate=validate))
@@ -358,6 +360,14 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('text', '')),
                         str(data.get('task_type', 'auto')),
                         str(data.get('provider', 'auto')),
+                    )
+                )
+            if p == '/api/browser/browse':
+                return self._json(
+                    APP.browser.browse(
+                        str(data.get('url', '')),
+                        bool(data.get('screenshot', False)),
+                        int(data.get('timeout', 30)),
                     )
                 )
             if p == '/api/development/run':
