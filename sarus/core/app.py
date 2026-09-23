@@ -15,6 +15,7 @@ from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry, CapabilitySpec
 from .hardware import profile_hardware
 from .hermes import HermesRuntime
+from .development import VPSDevelopmentAgent
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -54,6 +55,7 @@ class Jubi:
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.hermes = HermesRuntime(root, self.models)
+        self.development = VPSDevelopmentAgent(self)
         self.registry.register_executor(CapabilitySpec(
             id='core.hardware.profile', name='Inspect local hardware', source='jubi', version='1',
             category='system', description='Read hardware and installed software without starting services.',
@@ -63,6 +65,21 @@ class Jubi:
             timeout_seconds=25, resource_requirements={'network': False}, isolation='read-only host probes',
             availability='AVAILABLE', verification='Per-field probe status; failed probes are explicit'),
             lambda: profile_hardware(self.root, self.models))
+        self.registry.register_executor(CapabilitySpec(
+            id='development.vps.project', name='VPS autonomous development', source='hermes', version='1',
+            category='coding', description='Inspect, edit, test, diff and verify a project inside Jubi workspace.',
+            platforms=('Linux',), dependencies=('bubblewrap', 'local Ollama tool-capable coding model'),
+            permissions=('workspace.read', 'workspace.write', 'sandbox.test'), privacy='local_only', risk=2,
+            input_schema={'type': 'object', 'required': ['goal'], 'properties': {
+                'goal': {'type': 'string', 'maxLength': 12000},
+                'project': {'type': 'string', 'maxLength': 4096}}},
+            output_schema={'type': 'object'}, health_check='bubblewrap + local coding model admission',
+            executor='VPSDevelopmentAgent.run', timeout_seconds=900,
+            resource_requirements={'network': False, 'sandbox': 'bubblewrap'},
+            isolation='workspace scoped files; fixed test recipes; bubblewrap no-network verifier',
+            availability='EXPERIMENTAL',
+            verification='Passing sandboxed test plus diff; optional Hermes review evidence'),
+            lambda goal, project='': self.development.run(goal, project or None))
         self.registry.register_executor(CapabilitySpec(
             id='hermes.analysis', name='Hermes delegated analysis', source='hermes', version='0.20.0-jubi-pilot1',
             category='reasoning', description='One real Hermes child analyzes supplied evidence using a local model.',
@@ -168,6 +185,7 @@ class Jubi:
             'privileged_broker': self.privileged.status(),
             'fable': self.fable.status(),
             'native_runtimes': self.native.status(),
+            'development': self.development.status(),
         }
 
 
