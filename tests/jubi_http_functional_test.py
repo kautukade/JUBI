@@ -34,7 +34,7 @@ class HttpFunctionalTests(unittest.TestCase):
     def test_all_read_only_feature_endpoints(self):
         endpoints=['health','status','brain','brain/decisions','brain/performance','council','supervisor','research','network',
                    'network/devices','network/observations','vision','providers','providers/performance','providers/requests',
-                   'knowledge/status','knowledge/documents','experience','experience/stats','broker','doctor','events',
+                   'knowledge/status','knowledge/documents','experience','experience/stats','broker','doctor','vps/readiness','events',
                    'models','capabilities','tasks','approvals','receipts','memory','automations','fable','fable/traces',
                    'fable/capabilities','fable/agenda','fable/lab/tail','conversations']
         for p in endpoints:
@@ -57,6 +57,16 @@ class HttpFunctionalTests(unittest.TestCase):
         for raw in ('[]','null','42','"hello"','{bad','{"enabled":"false"}','{"text":null}','{"timeout":NaN}','{"timeout":1e309}'):
             self.assertEqual(self.request('/api/automation',raw=raw.encode())[0],400,raw)
         self.assertEqual(self.request('/api/unknown')[0],404)
+
+
+    def test_vps_readiness_endpoint_is_machine_readable(self):
+        status, body, _ = self.request('/api/vps/readiness?full=1')
+        self.assertEqual(status, 200)
+        self.assertEqual(body['profile'], 'linux_vps')
+        self.assertIn('ready', body)
+        self.assertIn('checks', body)
+        self.assertTrue(any(x['name'] == 'local_only_provider' for x in body['checks']))
+
 
     def test_chat_round_trip_persists_and_passes_context_to_ollama(self):
         status,first,_=self.request('/api/chat',{'text':'Project name is Lotus','provider':'ollama'})
