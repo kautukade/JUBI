@@ -108,6 +108,33 @@ class VPSDeveloperTests(unittest.TestCase):
             self.assertIn("calc.py", result["attempted_changed_files"])
             self.assertEqual(target.read_text(encoding="utf-8"), original)
 
+    def test_verifier_exception_also_rolls_back(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            project = root / "workspace" / "demo"
+            project.mkdir(parents=True)
+            (root / "config" / "vps-test-plans").mkdir(parents=True)
+            target = project / "calc.py"
+            original = "def add(a, b):\n    return a - b\n"
+            target.write_text(original, encoding="utf-8")
+
+            responses = [
+                json.dumps({"operation": "read", "path": "calc.py"}),
+                json.dumps({"operation": "write", "path": "calc.py",
+                            "content": "def add(a, b):\n    return a + b\n"}),
+                json.dumps({"operation": "finish", "summary": "Changed implementation."}),
+            ]
+            dev = VPSDeveloper(FakeApp(root, responses))
+            def broken_verify(_project):
+                raise RuntimeError("simulated verifier failure")
+            dev.verify = broken_verify
+            result = dev.run("Fix add()", project_path="demo")
+
+            self.assertFalse(result["ok"], result)
+            self.assertTrue(result["rolled_back"], result)
+            self.assertIn("simulated verifier failure", result["post_error"])
+            self.assertEqual(target.read_text(encoding="utf-8"), original)
+
     def test_workspace_escape_and_hidden_write_are_blocked(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
