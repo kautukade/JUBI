@@ -140,7 +140,13 @@ def main() -> int:
             timeout=420,
         )
         delegated = result.get("result") or {}
-        result["ok"] = bool(delegated and delegated.get("tools_executed") is False)
+        result["ok"] = bool(
+            delegated.get("status") == "EXPERIMENTAL"
+            and delegated.get("tools_executed") is False
+            and delegated.get("parent_session")
+            and delegated.get("delegation")
+            and delegated.get("session_archive")
+        )
         return result
     record("Hermes delegated analysis", hermes_check)
 
