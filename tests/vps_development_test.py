@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from sarus.core.development import DevelopmentWorkspace, VPSDevelopmentAgent
+from sarus.core.orchestrator import Orchestrator, Step
+from sarus.adapters.hermes import Adapter as HermesAdapter
 
 
 class _Models:
@@ -182,6 +184,44 @@ class DevelopmentWorkspaceTests(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertGreaterEqual(result["iterations"], 2)
+
+
+    def test_vps_orchestrator_routes_coding_to_real_developer(self):
+        class Bus:
+            def emit(self, *_args, **_kwargs):
+                pass
+        class Policy:
+            def evaluate(self, *_args, **_kwargs):
+                return {"decision": "allow", "reason": "test"}
+
+        with patch.dict("os.environ", {"JUBI_DEPLOYMENT_PROFILE": "linux_vps"}, clear=False):
+            plan = Orchestrator(Bus(), _Models(), Policy()).plan("Fix the website code bug")
+
+        agents = [step.agent for step in plan]
+        self.assertIn("vps-developer", agents)
+        self.assertNotIn("local-developer", agents)
+        developer = next(step for step in plan if step.agent == "vps-developer")
+        self.assertEqual(developer.source, "hermes")
+
+        fake_result = {
+            "ok": True,
+            "status": "completed",
+            "mode": "vps_local_coding",
+            "output": "done",
+            "verification": {"ok": True},
+        }
+        development = SimpleNamespace(run=lambda goal: fake_result)
+        app = SimpleNamespace(development=development)
+        adapter = HermesAdapter(self.root)
+        out = adapter.execute(
+            "execute approved coding\n\nOriginal user request: Fix the website code bug",
+            app,
+            Step("x", "vps-developer", "hermes", "execute", 2),
+        )
+        self.assertTrue(out["ok"])
+        self.assertTrue(out["tools_executed"])
+        self.assertEqual(out["evidence"]["verification"]["ok"], True)
+
 
 
 if __name__ == "__main__":
