@@ -97,3 +97,20 @@ the rest of `data/` plus `workspace/`. It intentionally excludes
 
 Restore should be performed into a stopped service and reviewed manually during
 this testing phase; automated destructive restore is intentionally not shipped.
+
+
+## Full live certification
+
+After installing at least one local Ollama chat/coding model and the browser
+profile, run:
+
+```bash
+sudo -u jubi /opt/jubi/.venv/bin/python /opt/jubi/deploy/vps/certify.py --full
+```
+
+Full certification exercises the live localhost service, local-model chat,
+Brain routing, a disposable code edit -> parser verification -> independent
+review loop, and the Playwright browser. The disposable project is created
+under `workspace/vps-certification` and removed after the check.
+
+A normal `verify.sh` remains the lighter deployment-health gate.
