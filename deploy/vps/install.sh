@@ -199,6 +199,7 @@ JUBI_DEBUG=0
 JUBI_HTTP_LOG=1
 JUBI_DEPLOYMENT_PROFILE=linux_vps
 JUBI_REQUIRE_HERMES=$WITH_HERMES
+JUBI_REQUIRE_BROWSER=$WITH_BROWSER
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
 PYTHONNOUSERSITE=1
@@ -218,6 +219,15 @@ else
   fi
   grep -q '^PYTHONNOUSERSITE=' /etc/jubi/jubi.env || echo 'PYTHONNOUSERSITE=1' >>/etc/jubi/jubi.env
   grep -q '^PLAYWRIGHT_BROWSERS_PATH=' /etc/jubi/jubi.env || echo "PLAYWRIGHT_BROWSERS_PATH=$PREFIX/.playwright" >>/etc/jubi/jubi.env
+  if (( WITH_BROWSER )); then
+    if grep -q '^JUBI_REQUIRE_BROWSER=' /etc/jubi/jubi.env; then
+      sed -i 's/^JUBI_REQUIRE_BROWSER=.*/JUBI_REQUIRE_BROWSER=1/' /etc/jubi/jubi.env
+    else
+      echo 'JUBI_REQUIRE_BROWSER=1' >>/etc/jubi/jubi.env
+    fi
+  elif ! grep -q '^JUBI_REQUIRE_BROWSER=' /etc/jubi/jubi.env; then
+    echo 'JUBI_REQUIRE_BROWSER=0' >>/etc/jubi/jubi.env
+  fi
   if (( WITH_HERMES )); then
     if grep -q '^JUBI_REQUIRE_HERMES=' /etc/jubi/jubi.env; then
       sed -i 's/^JUBI_REQUIRE_HERMES=.*/JUBI_REQUIRE_HERMES=1/' /etc/jubi/jubi.env
