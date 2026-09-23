@@ -28,6 +28,7 @@ from .native import NativeRuntimeManager
 from .fable import FableIntegration
 from .development import DevelopmentAgent
 from .browser import BrowserRuntime
+from .agent_manager import AgentManager
 
 
 class Jubi:
@@ -88,6 +89,7 @@ class Jubi:
         self.execution = ExecutionEngine(self)
         self.development = DevelopmentAgent(self)
         self.browser = BrowserRuntime(self)
+        self.agent_manager = AgentManager(self)
         self.fable = FableIntegration(self)
         self.native = NativeRuntimeManager(self)
         self.doctor = Doctor(self)
@@ -157,7 +159,7 @@ class Jubi:
                 'embedded': experience_stats['embedded'],
             },
             'council': {'recent_runs': len(self.council.recent(20))},
-            'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
+            'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': True, 'executor': 'agent-manager-v1'},
             'research': {
                 'recent_runs': len(self.research.recent(20)),
                 'network_scope': 'public-http-https-only',
@@ -167,6 +169,7 @@ class Jubi:
             'vision': self.vision.status(),
             'development': {'recent_runs': len(self.development.recent(20)), 'mode': 'bounded-edit-review-verify-v1'},
             'browser': self.browser.status(),
+            'agent_manager': {'recent_runs': len(self.agent_manager.recent(20)), 'mode': 'plan-route-execute-v1'},
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
