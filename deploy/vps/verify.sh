@@ -41,6 +41,10 @@ case "$OLLAMA_URL" in
   *) echo "Remote Ollama endpoint is forbidden in the VPS local-only profile." >&2; exit 5 ;;
 esac
 curl --fail --silent --show-error --max-time 5 "$OLLAMA_URL/api/tags"   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  models:", len(d.get("models",[])))'
+if [[ "${JUBI_REQUIRE_FULL_MODELS:-0}" == "1" ]]; then
+  curl --fail --silent --show-error --max-time 5 "$OLLAMA_URL/api/tags" \
+    | python3 -c 'import json,sys; d=json.load(sys.stdin); have={x.get("name") for x in d.get("models",[])}; need={"qwen3:8b","qwen2.5vl:3b","qwen3-embedding:0.6b"}; missing=sorted(need-have); print("  full-profile models:", ", ".join(sorted(need))); sys.exit("missing: "+", ".join(missing)) if missing else None'
+fi
 
 echo "[5/7] Python source compilation"
 "$PREFIX/.venv/bin/python" -m compileall -q "$PREFIX/jubi" "$PREFIX/sarus"
