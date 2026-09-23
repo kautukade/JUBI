@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from .events import EventBus
@@ -173,7 +174,8 @@ class Jubi:
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
-            'windows_broker': self.windows.available(),
+            'host_broker': self.windows.available(),
+            'windows_broker': bool(os.name == 'nt' and self.windows.available()),
             'privileged_broker': self.privileged.status(),
             'fable': self.fable.status(),
             'native_runtimes': self.native.status(),
