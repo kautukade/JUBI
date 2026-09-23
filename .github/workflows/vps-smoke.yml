@@ -17,6 +17,9 @@ on:
       - 'tests/vps_swarm_test.py'
       - 'tests/vps_readiness_test.py'
       - 'tests/vps_operator_test.py'
+      - 'tests/vps_voice_test.py'
+      - 'sarus/core/voice.py'
+      - 'deploy/vps/provision-voice.sh'
       - 'tests/vps_live_acceptance_contract_test.py'
       - 'scripts/vps_live_acceptance.py'
       - '.github/workflows/vps-smoke.yml'
@@ -62,6 +65,8 @@ jobs:
         run: python tests/vps_operator_test.py
       - name: Consolidated VPS readiness
         run: python tests/vps_readiness_test.py
+      - name: Offline VPS voice
+        run: python tests/vps_voice_test.py
       - name: Live acceptance contract
         run: python tests/vps_live_acceptance_contract_test.py
       - name: Local-only provider boundary
@@ -76,6 +81,7 @@ jobs:
           bash -n deploy/vps/backup.sh
           bash -n deploy/vps/provision-models.sh
           bash -n deploy/vps/full-profile.sh
+          bash -n deploy/vps/provision-voice.sh
 
   browser-smoke:
     runs-on: ubuntu-24.04
