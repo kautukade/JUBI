@@ -93,7 +93,9 @@ class VPSReadiness:
 
         network = self.app.network.status()
         add("authorized_network_manager",
-            network.get("active_scan") is False and network.get("credential_bruteforce") is False,
+            network.get("active_scan") is False
+            and network.get("credential_bruteforce") is False
+            and network.get("passive_neighbor_available") is True,
             network)
 
         source_states = self.app.adapters.connect()
