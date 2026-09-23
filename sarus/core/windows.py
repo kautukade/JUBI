@@ -228,7 +228,7 @@ class WindowsBroker:
                 verb = action_id.split('.', 1)[1]
                 return self._run(['sc.exe', verb, service], 30)
             unit = str(resolved.get('linux_unit', '')).strip()
-            if not unit or not re.fullmatch(r'[A-Za-z0-9_.@-]+\\.service', unit):
+            if not unit or not re.fullmatch(r'[A-Za-z0-9_.@-]+\.service', unit):
                 raise ValueError('invalid allowlisted Linux service mapping')
             systemctl = shutil.which('systemctl')
             if not systemctl:
