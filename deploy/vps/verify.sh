@@ -64,12 +64,13 @@ if [[ "${JUBI_REQUIRE_AUTONOMY:-0}" == "1" ]]; then
   command -v bwrap >/dev/null 2>&1 || { echo "  bubblewrap missing" >&2; exit 6; }
   "$PREFIX/.venv/bin/python" -c 'import pytest; print("  pytest:", pytest.__version__)'
   bwrap --die-with-parent --new-session --unshare-net --ro-bind / / --tmpfs /tmp --proc /proc --dev /dev /bin/true
-  "$PREFIX/.venv/bin/python" - <<'PY'
+  "$PREFIX/.venv/bin/python" - "$PREFIX" <<'PY'
 import os
-os.environ["JUBI_DEPLOYMENT_PROFILE"]="linux_vps"
+import sys
 from pathlib import Path
+os.environ["JUBI_DEPLOYMENT_PROFILE"]="linux_vps"
 from sarus.core.development import DevelopmentWorkspace
-root=Path("/opt/jubi")
+root=Path(sys.argv[1]).resolve()
 ws=DevelopmentWorkspace(root)
 print("  development workspace:", ws.project)
 PY
