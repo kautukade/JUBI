@@ -45,6 +45,8 @@ jobs:
           python tests/production_readiness_test.py
       - name: Local-only provider boundary
         run: python tests/provider_policy_test.py
+      - name: Autonomous development loop
+        run: python tests/vps_development_test.py
       - name: Real local HTTP regression
         run: python tests/jubi_http_functional_test.py
       - name: Shell syntax
