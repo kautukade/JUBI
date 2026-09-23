@@ -288,11 +288,14 @@ class NetworkManager:
         return out
 
     def status(self) -> dict:
+        passive = self._passive_command()
         return {
             'mode': 'authorized-lan',
             'registered_devices': len(self.list_devices()),
             'active_scan': False,
             'credential_bruteforce': False,
             'exploit_or_lateral_movement': False,
+            'passive_neighbor_command': passive,
+            'passive_neighbor_available': bool(passive),
             'capabilities': ['passive-neighbor-cache', 'explicit-device-registry', 'registered-service-health'],
         }
