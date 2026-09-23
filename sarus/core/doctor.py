@@ -101,6 +101,15 @@ class Doctor:
                 json.dumps(hermes, sort_keys=True),
                 'required' if require_hermes else 'recommended',
             )
+            browser_runtime = getattr(self.app, 'browser', None)
+            browser = browser_runtime.status() if browser_runtime is not None else {'ready': False}
+            require_browser = os.environ.get('JUBI_REQUIRE_BROWSER', '0').lower() in {'1', 'true', 'yes', 'on'}
+            add(
+                'Headless browser runtime',
+                browser.get('ready', False),
+                json.dumps(browser, sort_keys=True),
+                'required' if require_browser else 'optional',
+            )
         else:
             add('Development platform', True, platform.platform(), 'optional')
 
