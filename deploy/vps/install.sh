@@ -135,7 +135,7 @@ install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER" "$PREFIX"
 rsync -a --delete   --exclude '.git/'   --exclude '.venv/'   --exclude '.sarus-venv/'   --exclude 'data/'   --exclude 'workspace/'   --exclude 'logs/'   --exclude 'node_modules/'   --exclude 'dist-installer/'   "$SOURCE_DIR/" "$PREFIX/"
 
 chmod 0755 "$PREFIX/deploy/vps/"*.sh
-install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER"   "$PREFIX/data" "$PREFIX/workspace" "$PREFIX/logs"
+install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER"   "$PREFIX/data" "$PREFIX/workspace" "$PREFIX/outputs" "$PREFIX/projects" "$PREFIX/logs"
 
 rm -rf "$PREFIX/.venv"
 python3 -m venv "$PREFIX/.venv"
