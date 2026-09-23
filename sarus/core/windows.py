@@ -42,6 +42,9 @@ class WindowsBroker:
         return True
 
     def platform_capabilities(self):
+        linux_mutation = os.name != 'nt' and os.environ.get(
+            'JUBI_ALLOW_HOST_MUTATION', '0'
+        ).lower() in {'1', 'true', 'yes', 'on'}
         return {
             'available': True,
             'platform': 'windows' if os.name == 'nt' else 'linux',
@@ -49,12 +52,17 @@ class WindowsBroker:
             'git_readonly': True,
             'process_inventory': True,
             'service_inventory': True,
-            'allowlisted_service_control': True,
-            'allowlisted_process_stop': True,
+            'allowlisted_service_query': True,
+            'allowlisted_service_control': os.name == 'nt' or linux_mutation,
+            'allowlisted_process_stop': os.name == 'nt' or linux_mutation,
             'desktop_app_launch': os.name == 'nt',
             'ring0': os.name == 'nt',
+            'host_mutation_opt_in': linux_mutation if os.name != 'nt' else None,
             'arbitrary_shell': False,
         }
+
+    def _linux_mutation_allowed(self):
+        return os.environ.get('JUBI_ALLOW_HOST_MUTATION', '0').lower() in {'1', 'true', 'yes', 'on'}
 
     def _ensure_workspace(self, p):
         path = Path(p).expanduser()
@@ -236,9 +244,11 @@ class WindowsBroker:
             verb = action_id.split('.', 1)[1]
             if verb == 'query':
                 return self._run([systemctl, 'status', unit, '--no-pager'], 20)
-            # No sudo/root bridge is provided. If host policy explicitly grants
-            # this service identity permission, systemd/polkit may allow it;
-            # otherwise the result is a truthful permission failure.
+            if not self._linux_mutation_allowed():
+                return {
+                    'ok': False, 'error': 'Linux host mutation is disabled in the hardened VPS profile',
+                    'action': action_id, 'requires_explicit_opt_in': True,
+                }
             return self._run([systemctl, verb, unit, '--no-ask-password'], 30)
 
         if action_id == 'process.stop':
@@ -253,6 +263,11 @@ class WindowsBroker:
             name = str(resolved.get('linux_name', '')).strip()
             if not name or not re.fullmatch(r'[A-Za-z0-9_.-]{1,128}', name):
                 raise ValueError('invalid allowlisted Linux process mapping')
+            if not self._linux_mutation_allowed():
+                return {
+                    'ok': False, 'error': 'Linux host mutation is disabled in the hardened VPS profile',
+                    'action': action_id, 'requires_explicit_opt_in': True,
+                }
             pkill = shutil.which('pkill')
             if not pkill:
                 return {'ok': False, 'error': 'pkill is not available', 'action': action_id}

@@ -108,7 +108,7 @@ if (( INSTALL_PACKAGES )); then
   if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd
+    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd iproute2 util-linux
     if (( WITH_VOICE )); then
       apt-get install -y --no-install-recommends espeak-ng ffmpeg
     fi

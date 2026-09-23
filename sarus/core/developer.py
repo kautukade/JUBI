@@ -194,6 +194,21 @@ class VPSDeveloper:
             return {"ok": True, "finished": True, "summary": str(action.get("summary", ""))[:4000]}
         raise ValueError("unsupported developer operation")
 
+    def _restore(self, project: Path, backups: dict) -> list[str]:
+        restored = []
+        for rel, state in reversed(list(backups.items())):
+            path = self._file(project, rel)
+            try:
+                if state["existed"]:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(state["content"], encoding="utf-8")
+                elif path.exists():
+                    path.unlink()
+                restored.append(rel)
+            except OSError:
+                continue
+        return restored
+
     def run(self, request: str, project_path=".", model=None, max_iterations=10) -> dict:
         project = self._project(project_path)
         model = model or self.app.models.choose("coding") or self.app.models.choose("general")
@@ -213,6 +228,7 @@ class VPSDeveloper:
                        "files": self.inventory(project)}
         writes = 0
         changed_paths = []
+        backups = {}
         final_summary = ""
         for index in range(max(1, min(int(max_iterations), 20))):
             prompt = (
@@ -224,6 +240,14 @@ class VPSDeveloper:
             try:
                 response = self.app.models.generate_text(prompt, "coding", system=system, model=model, timeout=180)
                 action = self._json_object(response)
+                if str(action.get("operation", "")).strip().lower() == "write":
+                    rel = self._clean_rel(str(action.get("path", "")))
+                    target = self._file(project, rel)
+                    if rel not in backups:
+                        backups[rel] = {
+                            "existed": target.is_file(),
+                            "content": target.read_text(encoding="utf-8", errors="replace") if target.is_file() else "",
+                        }
                 result = self._tool(project, action)
             except Exception as exc:
                 transcript.append({"iteration": index + 1, "error": str(exc)[:1000]})
@@ -243,22 +267,37 @@ class VPSDeveloper:
                 final_summary = result.get("summary", "")
                 break
 
-        verification = self.verify(project)
-        diff = self.diff(project)
-        review_evidence = diff.get("diff", "")
-        if writes and not review_evidence:
-            snapshots = []
-            for rel in changed_paths[:20]:
-                try:
-                    current = self.read(project, rel)
-                    snapshots.append("FILE " + rel + "\n" + current["content"][:12000])
-                except Exception as exc:
-                    snapshots.append("FILE " + rel + " unreadable: " + str(exc))
-            review_evidence = "\n\n".join(snapshots)
-        reviewer = self.review(request, review_evidence, verification, model=model) if writes else {
-            "approved": verification["ok"], "reason": "No file writes were performed"
-        }
+        verification = {"ok": False, "checks": [], "error": "verification did not run"}
+        diff = {"ok": False, "diff": "", "error": "diff did not run"}
+        reviewer = {"approved": False, "reason": "review did not run"}
+        post_error = ""
+        try:
+            verification = self.verify(project)
+            diff = self.diff(project)
+            review_evidence = diff.get("diff", "")
+            if writes and not review_evidence:
+                snapshots = []
+                for rel in changed_paths[:20]:
+                    try:
+                        current = self.read(project, rel)
+                        snapshots.append("FILE " + rel + "\n" + current["content"][:12000])
+                    except Exception as exc:
+                        snapshots.append("FILE " + rel + " unreadable: " + str(exc))
+                review_evidence = "\n\n".join(snapshots)
+            reviewer = self.review(request, review_evidence, verification, model=model) if writes else {
+                "approved": verification["ok"], "reason": "No file writes were performed"
+            }
+        except Exception as exc:
+            post_error = str(exc)[:1000]
+            verification = {"ok": False, "checks": [], "error": post_error}
+            reviewer = {"approved": False, "reason": "Post-edit verification failed: " + post_error}
         ok = bool(verification.get("ok") and reviewer.get("approved") is True and (writes > 0 or final_summary))
+        attempted_changes = list(changed_paths)
+        attempted_diff = diff.get("diff", "")
+        restored = []
+        if not ok and backups:
+            restored = self._restore(project, backups)
+            changed_paths = []
         return {
             "ok": ok,
             "status": "completed" if ok else "failed",
@@ -267,10 +306,14 @@ class VPSDeveloper:
             "project": str(project.relative_to(self.workspace)),
             "writes": writes,
             "changed_files": changed_paths,
+            "attempted_changed_files": attempted_changes,
+            "rolled_back": bool(restored),
+            "restored_files": restored,
             "verification": verification,
             "review": reviewer,
-            "diff": diff.get("diff", ""),
+            "diff": attempted_diff,
             "summary": final_summary,
+            "post_error": post_error,
             "transcript": transcript,
             "tools_executed": True,
         }

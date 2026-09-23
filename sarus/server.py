@@ -587,6 +587,8 @@ class H(SimpleHTTPRequestHandler):
                         data.get('metadata') or {},
                     )
                 )
+            if p == '/api/memory/delete':
+                return self._json(APP.memory.delete(str(data.get('id', ''))))
             if p == '/api/approval':
                 return self._json(
                     APP.execution.set_approval(
@@ -626,6 +628,8 @@ class H(SimpleHTTPRequestHandler):
             if p == '/api/automation/toggle':
                 APP.scheduler.set_enabled(str(data.get('id', '')), bool(data.get('enabled')))
                 return self._json({'ok': True})
+            if p == '/api/automation/delete':
+                return self._json(APP.scheduler.delete(str(data.get('id', ''))))
             if p == '/api/fable/lab':
                 action = str(data.get('action', 'status'))
                 if action == 'status':

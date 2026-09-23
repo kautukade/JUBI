@@ -20,6 +20,7 @@ on:
       - 'tests/vps_voice_test.py'
       - 'sarus/core/voice.py'
       - 'deploy/vps/provision-voice.sh'
+      - 'deploy/vps/certify.py'
       - 'tests/vps_live_acceptance_contract_test.py'
       - 'scripts/vps_live_acceptance.py'
       - '.github/workflows/vps-smoke.yml'
@@ -29,7 +30,8 @@ on:
       - 'jubi/**'
       - 'sarus/**'
       - 'config/**'
-      - 'tests/vps_deployment_test.py'
+      - 'tests/**'
+      - 'scripts/**'
       - '.github/workflows/vps-smoke.yml'
   workflow_dispatch:
 
@@ -50,7 +52,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Python compile
-        run: python -m compileall -q jubi sarus tests/vps_deployment_test.py
+        run: python -m compileall -q jubi sarus tests scripts deploy/vps/certify.py
       - name: VPS deployment contracts
         run: python tests/vps_deployment_test.py
       - name: Linux hardware and production readiness
@@ -65,6 +67,10 @@ jobs:
         run: python tests/vps_operator_test.py
       - name: Consolidated VPS readiness
         run: python tests/vps_readiness_test.py
+      - name: Automation lifecycle
+        run: python tests/vps_automation_test.py
+      - name: Memory lifecycle
+        run: python tests/vps_memory_test.py
       - name: Offline VPS voice
         run: python tests/vps_voice_test.py
       - name: Live acceptance contract

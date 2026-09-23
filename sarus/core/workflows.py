@@ -76,6 +76,14 @@ class WorkflowScheduler:
             raise KeyError('automation not found')
         self._emit('AUTOMATION_TOGGLED', {'automation_id': aid, 'enabled': bool(enabled)})
 
+    def delete(self, aid):
+        with transaction(self.db) as c:
+            cur = c.execute("DELETE FROM automations WHERE id=?", (str(aid),))
+        if not cur.rowcount:
+            raise KeyError('automation not found')
+        self._emit('AUTOMATION_DELETED', {'automation_id': str(aid)})
+        return {'ok': True, 'id': str(aid)}
+
     def tick(self):
         if not self._tick_lock.acquire(blocking=False):
             return

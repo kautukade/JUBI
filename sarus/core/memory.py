@@ -99,3 +99,17 @@ class MemoryStore:
             }
             for r in rows
         ]
+
+
+    def delete(self, mid):
+        mid = str(mid or '').strip()
+        if not mid:
+            raise ValueError('memory id is required')
+        with transaction(self.db) as c:
+            row = c.execute("SELECT id FROM memories WHERE id=?", (mid,)).fetchone()
+            if not row:
+                raise KeyError('memory not found')
+            c.execute("DELETE FROM memories WHERE id=?", (mid,))
+            if self.fts:
+                c.execute("DELETE FROM memories_fts WHERE id=?", (mid,))
+        return {'ok': True, 'id': mid}
