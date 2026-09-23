@@ -20,6 +20,16 @@ class VPSLiveAcceptanceContractTests(unittest.TestCase):
             'app.browser.read("https://example.com/"',
             'project_path=rel',
             "app.swarm.run",
+            "app.conversations.send",
+            "app.knowledge.ingest",
+            "app.council.run",
+            "app.supervisor.run",
+            "app.hermes.analyze",
+            "app.execution.run",
+            "app.scheduler.add",
+            "app.windows.execute_typed",
+            "app.privileged.handle",
+            "app.fable.status",
             "app.receipts.verify_chain",
         ):
             self.assertIn(required, text)
