@@ -98,6 +98,7 @@ class DevelopmentWorkspaceTests(unittest.TestCase):
         def fake_json(self, path, body=None, timeout=10):
             if path == "/api/show":
                 return {
+                    "details": {"format": "gguf"},
                     "capabilities": ["completion", "tools"],
                     "model_info": {"test.context_length": 32768},
                 }
