@@ -130,7 +130,7 @@ class H(SimpleHTTPRequestHandler):
         for key in ('enabled', 'success'):
             if key in data and type(data[key]) is not bool:
                 raise ValueError(f'{key} must be a boolean')
-        for key in ('text', 'prompt', 'content', 'name', 'title', 'namespace', 'query', 'question', 'api_key', 'project', 'model', 'plan'):
+        for key in ('text', 'prompt', 'content', 'name', 'title', 'namespace', 'query', 'question', 'api_key', 'project', 'model', 'plan', 'url'):
             if key in data and not isinstance(data[key], str):
                 raise ValueError(f'{key} must be a string')
         return data
@@ -225,6 +225,8 @@ class H(SimpleHTTPRequestHandler):
                         int(q.get('limit', ['6'])[0]),
                     )
                 )
+            if p == '/api/browser':
+                return self._json(APP.browser.status())
             if p == '/api/developer':
                 return self._json({
                     'mode': 'vps-bounded-developer',
@@ -330,6 +332,14 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('text', '')),
                         str(data.get('source', 'user')),
                         data.get('capability_id'),
+                    )
+                )
+            if p == '/api/browser/read':
+                return self._json(
+                    APP.browser.read(
+                        str(data.get('url', '')),
+                        timeout=int(data.get('timeout', 25)),
+                        wait_ms=int(data.get('wait_ms', 800)),
                     )
                 )
             if p == '/api/developer/run':
