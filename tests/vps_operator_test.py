@@ -66,6 +66,21 @@ class VPSOperatorTests(unittest.TestCase):
                     )
 
     @unittest.skipIf(os.name == "nt", "Linux VPS contract")
+    def test_linux_host_mutation_is_default_denied(self):
+        with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {"JUBI_ALLOW_HOST_MUTATION": "0"}):
+            broker = WindowsBroker(self.make_root(td))
+            with patch("sarus.core.windows.shutil.which", return_value="/bin/systemctl"):
+                out = broker.execute_typed(
+                    "service.stop", {"resource_id": "ollama"},
+                    {"resource_id": "ollama", "linux_unit": "ollama.service"},
+                )
+            self.assertFalse(out["ok"])
+            self.assertTrue(out["requires_explicit_opt_in"])
+            caps = broker.platform_capabilities()
+            self.assertFalse(caps["allowlisted_service_control"])
+            self.assertFalse(caps["allowlisted_process_stop"])
+
+    @unittest.skipIf(os.name == "nt", "Linux VPS contract")
     def test_headless_app_launch_is_explicitly_unavailable(self):
         with tempfile.TemporaryDirectory() as td:
             broker = WindowsBroker(self.make_root(td))
