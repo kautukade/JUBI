@@ -8,6 +8,7 @@ OLLAMA_URL="http://127.0.0.1:11434"
 START_SERVICE=0
 INSTALL_PACKAGES=1
 WITH_HERMES=0
+WITH_BROWSER=0
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 usage() {
@@ -22,6 +23,7 @@ Options:
   --ollama-url URL     Local Ollama URL (default: http://127.0.0.1:11434)
   --start              Enable and start jubi.service after installation
   --with-hermes        Install upstream Hermes core Python dependencies
+  --with-browser       Install Playwright 1.63.0 + Chromium for read-only JS browsing
   --no-packages        Do not install OS prerequisites
   -h, --help           Show this help
 
@@ -39,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --ollama-url) OLLAMA_URL="$2"; shift 2 ;;
     --start) START_SERVICE=1; shift ;;
     --with-hermes) WITH_HERMES=1; shift ;;
+    --with-browser) WITH_BROWSER=1; shift ;;
     --no-packages) INSTALL_PACKAGES=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -141,6 +144,13 @@ rm -rf "$PREFIX/.venv"
 python3 -m venv "$PREFIX/.venv"
 "$PREFIX/.venv/bin/python" -m compileall -q "$PREFIX/jubi" "$PREFIX/sarus"
 
+if (( WITH_BROWSER )); then
+  echo "Installing Playwright 1.63.0 and Chromium for Jubi read-only browser..."
+  export PLAYWRIGHT_BROWSERS_PATH="$PREFIX/.playwright"
+  "$PREFIX/.venv/bin/python" -m pip install --disable-pip-version-check "playwright==1.63.0"
+  "$PREFIX/.venv/bin/python" -m playwright install --with-deps chromium
+fi
+
 if (( WITH_HERMES )); then
   "$PREFIX/.venv/bin/python" - <<'PY_HERMES_VERSION'
 import sys
@@ -190,6 +200,7 @@ JUBI_DEBUG=0
 JUBI_HTTP_LOG=1
 JUBI_DEPLOYMENT_PROFILE=linux_vps
 JUBI_REQUIRE_HERMES=$WITH_HERMES
+PLAYWRIGHT_BROWSERS_PATH=$PREFIX/.playwright
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
 PYTHONNOUSERSITE=1
@@ -207,6 +218,7 @@ else
     echo 'JUBI_DEPLOYMENT_PROFILE=linux_vps' >>/etc/jubi/jubi.env
   fi
   grep -q '^PYTHONNOUSERSITE=' /etc/jubi/jubi.env || echo 'PYTHONNOUSERSITE=1' >>/etc/jubi/jubi.env
+  grep -q '^PLAYWRIGHT_BROWSERS_PATH=' /etc/jubi/jubi.env || echo 'PLAYWRIGHT_BROWSERS_PATH=$PREFIX/.playwright' >>/etc/jubi/jubi.env
   if (( WITH_HERMES )); then
     if grep -q '^JUBI_REQUIRE_HERMES=' /etc/jubi/jubi.env; then
       sed -i 's/^JUBI_REQUIRE_HERMES=.*/JUBI_REQUIRE_HERMES=1/' /etc/jubi/jubi.env
@@ -236,6 +248,10 @@ HERMES_STATE="optional/not-installed"
 if (( WITH_HERMES )); then
   HERMES_STATE="installed"
 fi
+BROWSER_STATE="optional/not-installed"
+if (( WITH_BROWSER )); then
+  BROWSER_STATE="installed"
+fi
 
 cat <<EOF_SUMMARY
 
@@ -253,4 +269,5 @@ Then open:
 Do not open TCP $PORT in the AWS Security Group.
 Ollama/model installation is intentionally separate and requires your explicit action.
 Hermes dependencies: $HERMES_STATE
+Browser runtime: $BROWSER_STATE
 EOF_SUMMARY
