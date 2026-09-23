@@ -36,7 +36,7 @@ several Ollama models are retained. Monitor both EBS usage and model storage.
 Clone the branch/release you intend to test, then:
 
 ```bash
-sudo bash deploy/vps/install.sh --with-hermes --with-browser --start
+sudo bash deploy/vps/install.sh --with-hermes --with-browser --with-voice --start
 ```
 
 For a lighter core-only deployment, omit the optional flags. The full agent profile installs Hermes and the read-only Playwright/Chromium browser, but model acquisition remains a separate explicit action.
@@ -45,7 +45,14 @@ Recommended compact model profile:
 
 ```bash
 sudo /opt/jubi/deploy/vps/provision-models.sh --recommended
+sudo /opt/jubi/deploy/vps/provision-voice.sh --small
 ```
+
+The VPS voice runtime is fully local/offline after provisioning: uploaded audio
+clips are transcribed with faster-whisper and TTS uses local espeak-ng. A
+headless VPS does not physically capture your laptop microphone; an authenticated
+client sends the clip through the Jubi loopback API/SSH tunnel. Wake-phrase
+detection can be performed after transcription.
 
 Or, after Ollama is already installed and reachable on loopback, use the full profile wrapper:
 
@@ -92,7 +99,8 @@ service.
 The Linux profile is intended for the Jubi core: dashboard, persistent chat,
 Brain routing, local Ollama, memory/RAG, vision, public research, AI Council,
 executable VPS swarm, bounded autonomous coding with verification/review, Hermes
-pilot processes, read-only JavaScript browser rendering, automations, receipts,
+pilot processes, read-only JavaScript browser rendering, offline clip STT/local TTS,
+automations, receipts,
 passive Linux neighbour-cache support, and workspace file/Git operations.
 
 Windows-specific desktop features remain unavailable on a Linux VPS: Ring0,
@@ -121,7 +129,8 @@ its upstream Makefile expects QEMU plus an x86_64-elf cross-toolchain. It is not
 a full-profile readiness requirement and Jubi does not pretend it is available
 when that toolchain is absent.
 
-Browser voice controls run in the operator's browser over the localhost SSH
-tunnel. They are not a microphone service on the VPS. Native always-listening
-wake-word/desktop voice remains a workstation feature, not a headless-server
-feature.
+The VPS additionally supports offline clip transcription and local TTS. Direct
+always-listening microphone capture still belongs on the operator workstation,
+because a headless VPS has no access to the laptop microphone. A later trusted
+workstation companion can stream approved audio clips to the same local-only
+voice API.
