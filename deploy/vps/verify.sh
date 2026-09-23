@@ -63,7 +63,7 @@ echo "[7/8] VPS autonomy runtime"
 if [[ "${JUBI_REQUIRE_AUTONOMY:-0}" == "1" ]]; then
   command -v bwrap >/dev/null 2>&1 || { echo "  bubblewrap missing" >&2; exit 6; }
   "$PREFIX/.venv/bin/python" -c 'import pytest; print("  pytest:", pytest.__version__)'
-  bwrap --die-with-parent --new-session --unshare-net --ro-bind / / --tmpfs /tmp --proc /proc --dev /dev /bin/true
+  bwrap --die-with-parent --new-session --ro-bind / / --tmpfs /tmp --proc /proc --dev /dev     "$PREFIX/.venv/bin/python" "$PREFIX/sarus/core/sandbox_exec.py" -- /bin/true
   "$PREFIX/.venv/bin/python" - "$PREFIX" <<'PY'
 import os
 import sys
