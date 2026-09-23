@@ -17,5 +17,20 @@
     "application_authenticode": "required",
     "kernel_driver_microsoft_signing": "required-when-bundled",
     "sha256_artifact": "required"
+  },
+  "deployment_profiles": {
+    "windows_desktop": {
+      "supported": true,
+      "ui": "local Windows user session",
+      "backend_bind": "loopback-only"
+    },
+    "linux_vps": {
+      "supported": true,
+      "scope": "core server, local Ollama, research, memory, council, supervisor, bounded workspace tools",
+      "backend_bind": "loopback-only",
+      "remote_access": "SSH tunnel by default; authenticated TLS reverse proxy only when explicitly configured",
+      "service": "systemd",
+      "windows_desktop_features": false
+    }
   }
 }
