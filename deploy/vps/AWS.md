@@ -36,7 +36,7 @@ sudo apt-get install -y git
 git clone https://github.com/kautukade/JUBI.git
 cd JUBI
 git checkout feature/vps-runtime
-sudo bash deploy/vps/install.sh --start
+sudo bash deploy/vps/install.sh --with-hermes --start
 ```
 
 Install Ollama separately using the method you approve. If Ollama is installed
