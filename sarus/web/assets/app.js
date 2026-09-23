@@ -3,7 +3,7 @@
 const JUBI_NAV = [
   {section:'Workspace',items:[['overview','/','Overview','⌂'],['chat','/chat.html','AI Chat','✦'],['tasks','/tasks.html','Tasks & Planner','✓']]},
   {section:'Intelligence',items:[['brain','/brain.html','Brain & Router','◉'],['providers','/providers.html','Providers','☁'],['models','/models.html','Models','◈'],['agents','/agents.html','Agents & Capabilities','◎'],['development','/development.html','Development','⌘'],['knowledge','/knowledge.html','Knowledge','◇'],['fable','/fable.html','Fable Lab','⬡']]},
-  {section:'Advanced',items:[['research','/research.html','Web Research','⌕'],['network','/network.html','Authorized LAN','⌁'],['vision','/vision.html','Vision & Voice','◐']]},
+  {section:'Advanced',items:[['research','/research.html','Web Research','⌕'],['browser','/browser.html','Headless Browser','◫'],['network','/network.html','Authorized LAN','⌁'],['vision','/vision.html','Vision & Voice','◐']]},
   {section:'Operations',items:[['automation','/automation.html','Automation','↻'],['computer','/computer.html','Computer','▣']]},
   {section:'Trust & System',items:[['security','/security.html','Security & Receipts','◆'],['health','/health.html','System Health','♡'],['activity','/activity.html','Activity','≡']]}
 ];
@@ -16,7 +16,8 @@ const PAGE_META = {
   providers:['Provider Manager','Secure OpenRouter, NVIDIA NIM and Hugging Face routing'],
   models:['Models','Inspect and test models discovered from Ollama'],
   agents:['Agents & Capabilities','Search connected source capabilities and execute supported units'],
-  development:['Development','Run the existing development-oriented agent pipeline'],
+  development:['Development','Run the VPS-capable bounded edit, review and verify pipeline'],
+  browser:['Headless Browser','Read public web pages with SSRF-guarded Playwright on the VPS'],
   knowledge:['Knowledge','Search and save local persistent memory'],
   fable:['Fable Lab','Learned capabilities, bounded agenda and isolated research tools'],
   automation:['Automation','Create and control persisted recurring workflows'],
@@ -230,6 +231,10 @@ window.toggleAutomation=toggleAutomation;
 async function initComputer(){byId('proc-btn').onclick=()=>computerAction('system.processes.list',{},'computer-output');byId('svc-btn').onclick=()=>computerAction('system.services.list',{},'computer-output');byId('ring-ping').onclick=()=>computerAction('ring0.ping',{},'ring-output');byId('ring-status').onclick=()=>computerAction('ring0.status',{},'ring-output');byId('service-query').onclick=()=>computerAction('service.query',{resource_id:'ollama'},'service-output');byId('file-read').onclick=()=>computerAction('workspace.file.read',{path:byId('file-path').value},'file-output');byId('file-write').onclick=()=>computerAction('workspace.file.write',{path:byId('file-path').value,content:byId('file-content').value},'file-output');byId('url-open').onclick=()=>computerAction('url.open',{url:byId('url-value').value},'url-output');const b=await API.get('/api/broker');byId('broker-actions').innerHTML=(b.configured_actions||[]).map(x=>badge(x,'info')).join(' ');byId('broker-secret').textContent=b.approval_secret_configured?'Configured':'Not configured';}
 async function computerAction(action_id,parameters,target){return typedOperator(action_id,parameters,target);}
 
+async function initBrowser(){byId('browser-run').onclick=runBrowser;byId('browser-status-refresh').onclick=loadBrowserStatus;await loadBrowserStatus();}
+async function loadBrowserStatus(){try{jsonBox('browser-status',await API.get('/api/browser'));}catch(e){jsonBox('browser-status','Error: '+e.message);}}
+async function runBrowser(){const url=byId('browser-url').value.trim();if(!url)return toast('Enter a public URL','bad');const btn=byId('browser-run');setBusy(btn,true,'Browsing');try{const r=await API.post('/api/browser/browse',{url,screenshot:!!byId('browser-shot').checked,timeout:30});jsonBox('browser-output',r);toast(r.ok?'Page loaded':'Browser task failed',r.ok?'ok':'bad');}catch(e){jsonBox('browser-output','Error: '+e.message);toast(e.message,'bad');}finally{setBusy(btn,false);}}
+
 async function initSecurity(){byId('security-refresh').onclick=loadSecurity;await loadSecurity();}
 async function loadSecurity(){const [a,r,b]=await Promise.all([API.get('/api/approvals?status=pending'),API.get('/api/receipts?limit=80'),API.get('/api/broker')]);byId('security-approvals-count').textContent=(a||[]).length;byId('security-chain').textContent=r.chain?.ok?'VERIFIED':'FAILED';byId('security-secret').textContent=b.approval_secret_configured?'READY':'MISSING';byId('security-approvals').innerHTML=(a||[]).map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(x.action||x.step_id||'Pipeline approval')}</div><div class="data-meta mono">${esc(x.id)}<br>${esc(short(JSON.stringify(x),180))}</div></div><div class="data-actions"><button class="btn small success" onclick="resolveApproval('${esc(x.id)}','approved')">Approve</button><button class="btn small danger" onclick="resolveApproval('${esc(x.id)}','rejected')">Reject</button></div></div>`).join('')||renderEmpty('No pending pipeline approvals.');byId('receipts-table').innerHTML=(r.items||[]).map(x=>`<tr><td>${fmtDate(x.created_at||x.ts)}</td><td>${esc(x.source||'')}</td><td>${badge(x.status,statusTone(x.status))}</td><td class="mono">${esc(short(x.id,24))}</td><td class="mono">${esc(short(x.hash,18))}</td></tr>`).join('')||'<tr><td colspan="5">No receipts.</td></tr>';byId('broker-posture').textContent=JSON.stringify(b,null,2);}
 async function resolveApproval(id,status){try{const r=await API.post('/api/approval',{id,status});toast(`Approval ${status}`,'ok');jsonBox('approval-result',r);await loadSecurity();}catch(e){toast(e.message,'bad');}}
@@ -255,5 +260,5 @@ async function addFableAgenda(){const cid=byId('fable-cap-select').value;if(!cid
 async function toggleFableAgenda(id,enabled){try{await API.post('/api/fable/agenda/toggle',{id,enabled});await loadFable();}catch(e){toast(e.message,'bad');}}
 window.runFableCap=runFableCap;window.toggleFableCap=toggleFableCap;window.toggleFableAgenda=toggleFableAgenda;
 
-const PAGE_INIT={overview:initOverview,chat:initChat,tasks:initTasks,brain:initBrain,providers:initProviders,models:initModels,agents:initAgents,development:initDevelopment,knowledge:initKnowledge,fable:initFable,automation:initAutomation,computer:initComputer,security:initSecurity,health:initHealth,activity:initActivity};
+const PAGE_INIT={overview:initOverview,chat:initChat,tasks:initTasks,brain:initBrain,providers:initProviders,models:initModels,agents:initAgents,development:initDevelopment,browser:initBrowser,knowledge:initKnowledge,fable:initFable,automation:initAutomation,computer:initComputer,security:initSecurity,health:initHealth,activity:initActivity};
 document.addEventListener('DOMContentLoaded',async()=>{mountShell();const page=document.body.dataset.page||'overview';try{if(PAGE_INIT[page])await PAGE_INIT[page]();}catch(e){console.error(e);toast('Page initialization failed: '+e.message,'bad');}});
