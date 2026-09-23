@@ -212,6 +212,7 @@ class VPSDeveloper:
         observation = {"task": str(request), "project": str(project.relative_to(self.workspace)),
                        "files": self.inventory(project)}
         writes = 0
+        changed_paths = []
         final_summary = ""
         for index in range(max(1, min(int(max_iterations), 20))):
             prompt = (
@@ -235,13 +236,26 @@ class VPSDeveloper:
             observation = result
             if action.get("operation") == "write" and result.get("ok"):
                 writes += 1
+                written = str(result.get("path", ""))
+                if written and written not in changed_paths:
+                    changed_paths.append(written)
             if result.get("finished"):
                 final_summary = result.get("summary", "")
                 break
 
         verification = self.verify(project)
         diff = self.diff(project)
-        reviewer = self.review(request, diff.get("diff", ""), verification, model=model) if writes else {
+        review_evidence = diff.get("diff", "")
+        if writes and not review_evidence:
+            snapshots = []
+            for rel in changed_paths[:20]:
+                try:
+                    current = self.read(project, rel)
+                    snapshots.append("FILE " + rel + "\n" + current["content"][:12000])
+                except Exception as exc:
+                    snapshots.append("FILE " + rel + " unreadable: " + str(exc))
+            review_evidence = "\n\n".join(snapshots)
+        reviewer = self.review(request, review_evidence, verification, model=model) if writes else {
             "approved": verification["ok"], "reason": "No file writes were performed"
         }
         ok = bool(verification.get("ok") and reviewer.get("approved") is True and (writes > 0 or final_summary))
@@ -252,6 +266,7 @@ class VPSDeveloper:
             "model": model,
             "project": str(project.relative_to(self.workspace)),
             "writes": writes,
+            "changed_files": changed_paths,
             "verification": verification,
             "review": reviewer,
             "diff": diff.get("diff", ""),
@@ -262,7 +277,7 @@ class VPSDeveloper:
 
     def review(self, request: str, diff: str, verification: dict, model=None) -> dict:
         if not diff:
-            return {"approved": bool(verification.get("ok")), "reason": "No git diff available; verifier result used"}
+            return {"approved": False, "reason": "No changed-file evidence was available for independent review"}
         prompt = (
             "Review this bounded workspace change. Return ONLY JSON with boolean approved and string reason."
             "\nTASK:\n" + str(request)[:4000] +
