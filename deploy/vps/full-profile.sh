@@ -62,4 +62,14 @@ systemctl restart jubi.service
 sleep 2
 bash "$PREFIX/deploy/vps/verify.sh"
 
+echo "Running real local-model VPS acceptance..."
+sudo -u "$SERVICE_USER" env \
+  JUBI_DEPLOYMENT_PROFILE=linux_vps \
+  JUBI_REQUIRE_FULL_MODELS=1 \
+  JUBI_REQUIRE_HERMES=1 \
+  JUBI_REQUIRE_BROWSER=1 \
+  JUBI_OLLAMA_URL=http://127.0.0.1:11434 \
+  PLAYWRIGHT_BROWSERS_PATH="$PREFIX/.playwright" \
+  "$PREFIX/.venv/bin/python" "$PREFIX/scripts/vps_live_acceptance.py"
+
 echo "Jubi full VPS profile: PASS"
