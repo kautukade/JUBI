@@ -101,6 +101,16 @@ class Doctor:
                 json.dumps(hermes, sort_keys=True),
                 'required' if require_hermes else 'recommended',
             )
+            require_autonomy = os.environ.get('JUBI_REQUIRE_AUTONOMY', '0').lower() in {'1', 'true', 'yes', 'on'}
+            development = self.app.development.status() if hasattr(self.app, 'development') else {
+                'available': False, 'reason': 'Development runtime not attached'
+            }
+            add(
+                'VPS autonomous development',
+                development.get('available', False),
+                json.dumps(development, sort_keys=True),
+                'required' if require_autonomy else 'recommended',
+            )
         else:
             add('Development platform', True, platform.platform(), 'optional')
 
