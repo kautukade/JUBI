@@ -19,6 +19,7 @@ from pathlib import Path
 
 from .hardware import admission, memory_snapshot
 from .provider_policy import InferenceTransport, LOCAL_ONLY
+from .sandbox_exec import landlock_abi
 from sarus.integrations.hermes_compact import compact_profile
 from sarus.integrations.hermes_tool_compat import promote_text_tool_call
 
@@ -180,23 +181,17 @@ class DevelopmentWorkspace:
     def _sandbox_argv(self, argv: list[str]) -> list[str]:
         if os.name == "nt":
             return argv
-        bwrap = shutil.which("bwrap")
-        if not bwrap:
-            raise RuntimeError("bubblewrap is required for autonomous VPS test execution")
         helper = Path(__file__).with_name("sandbox_exec.py").resolve()
         if not helper.is_file():
-            raise RuntimeError("Jubi seccomp sandbox helper is missing")
+            raise RuntimeError("Jubi Linux sandbox helper is missing")
+        if landlock_abi() < 1:
+            raise RuntimeError("Linux Landlock is required for autonomous VPS test execution")
         return [
-            bwrap,
-            "--die-with-parent",
-            "--new-session",
-            "--ro-bind", "/", "/",
-            "--bind", str(self.project), str(self.project),
-            "--tmpfs", "/tmp",
-            "--proc", "/proc",
-            "--dev", "/dev",
-            "--chdir", str(self.project),
-            sys.executable, str(helper), "--", *argv,
+            sys.executable,
+            str(helper),
+            "--project", str(self.project),
+            "--",
+            *argv,
         ]
 
     def test(self, recipe: str | None = None) -> dict:
@@ -231,7 +226,7 @@ class DevelopmentWorkspace:
             "stdout": cp.stdout[-30_000:],
             "stderr": cp.stderr[-30_000:],
             "latency_ms": round((time.monotonic() - started) * 1000, 2),
-            "sandbox": "bubblewrap+seccomp-no-network" if os.name != "nt" else "windows-user-process",
+            "sandbox": "landlock+seccomp-no-network" if os.name != "nt" else "windows-user-process",
         }
         self.test_runs.append(result)
         self.events.append({k: v for k, v in result.items() if k not in {"stdout", "stderr"}})
@@ -349,12 +344,12 @@ class VPSDevelopmentAgent:
         self.models = app.models
 
     def status(self) -> dict:
-        bwrap = shutil.which("bwrap")
         seccomp = ctypes.util.find_library("seccomp") if os.name != "nt" else None
+        landlock = landlock_abi() if os.name != "nt" else 0
         return {
-            "available": os.name == "nt" or bool(bwrap and seccomp),
-            "sandbox": "bubblewrap+seccomp-no-network" if os.name != "nt" else "windows-user-process",
-            "bubblewrap": bwrap,
+            "available": os.name == "nt" or bool(seccomp and landlock >= 1),
+            "sandbox": "landlock+seccomp-no-network" if os.name != "nt" else "windows-user-process",
+            "landlock_abi": landlock,
             "libseccomp": seccomp,
             "coding_model": self.models.choose("coding"),
         }
