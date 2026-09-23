@@ -10,6 +10,9 @@ User=@JUBI_USER@
 Group=@JUBI_USER@
 WorkingDirectory=@JUBI_PREFIX@
 EnvironmentFile=-/etc/jubi/jubi.env
+Environment=JUBI_DEPLOYMENT_PROFILE=linux_vps
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONNOUSERSITE=1
 ExecStart=@JUBI_PREFIX@/.venv/bin/python -m jubi.server
 Restart=on-failure
 RestartSec=5
