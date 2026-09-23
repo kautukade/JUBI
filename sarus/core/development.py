@@ -182,18 +182,20 @@ class DevelopmentWorkspace:
         bwrap = shutil.which("bwrap")
         if not bwrap:
             raise RuntimeError("bubblewrap is required for autonomous VPS test execution")
+        helper = Path(__file__).with_name("sandbox_exec.py").resolve()
+        if not helper.is_file():
+            raise RuntimeError("Jubi seccomp sandbox helper is missing")
         return [
             bwrap,
             "--die-with-parent",
             "--new-session",
-            "--unshare-net",
             "--ro-bind", "/", "/",
             "--bind", str(self.project), str(self.project),
             "--tmpfs", "/tmp",
             "--proc", "/proc",
             "--dev", "/dev",
             "--chdir", str(self.project),
-            *argv,
+            sys.executable, str(helper), "--", *argv,
         ]
 
     def test(self, recipe: str | None = None) -> dict:
@@ -228,7 +230,7 @@ class DevelopmentWorkspace:
             "stdout": cp.stdout[-30_000:],
             "stderr": cp.stderr[-30_000:],
             "latency_ms": round((time.monotonic() - started) * 1000, 2),
-            "sandbox": "bubblewrap-no-network" if os.name != "nt" else "windows-user-process",
+            "sandbox": "bubblewrap+seccomp-no-network" if os.name != "nt" else "windows-user-process",
         }
         self.test_runs.append(result)
         self.events.append({k: v for k, v in result.items() if k not in {"stdout", "stderr"}})
@@ -348,7 +350,7 @@ class VPSDevelopmentAgent:
     def status(self) -> dict:
         return {
             "available": os.name == "nt" or bool(shutil.which("bwrap")),
-            "sandbox": "bubblewrap-no-network" if os.name != "nt" else "windows-user-process",
+            "sandbox": "bubblewrap+seccomp-no-network" if os.name != "nt" else "windows-user-process",
             "bubblewrap": shutil.which("bwrap"),
             "coding_model": self.models.choose("coding"),
         }
