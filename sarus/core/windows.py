@@ -36,7 +36,25 @@ class WindowsBroker:
         return tuple((self.root / str(p)).resolve() for p in roots if str(p).strip())
 
     def available(self):
-        return os.name == 'nt'
+        # Core typed workspace/Git/process/service operations are now
+        # cross-platform. Individual actions still enforce their own platform
+        # boundary (for example Ring0 and desktop app launch).
+        return True
+
+    def platform_capabilities(self):
+        return {
+            'available': True,
+            'platform': 'windows' if os.name == 'nt' else 'linux',
+            'workspace': True,
+            'git_readonly': True,
+            'process_inventory': True,
+            'service_inventory': True,
+            'allowlisted_service_control': True,
+            'allowlisted_process_stop': True,
+            'desktop_app_launch': os.name == 'nt',
+            'ring0': os.name == 'nt',
+            'arbitrary_shell': False,
+        }
 
     def _ensure_workspace(self, p):
         path = Path(p).expanduser()
