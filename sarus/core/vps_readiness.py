@@ -51,7 +51,12 @@ class VPSReadiness:
         add("Memory/RAG", self.app.knowledge is not None and self.app.memory is not None, "SQLite + local embeddings")
         add("Persistent tasks", self.app.execution is not None, "SQLite execution state")
         add("Automations", self.app.scheduler is not None, "persistent scheduler")
-        add("Approval/receipts", self.app.privileged is not None and self.app.receipts is not None, "typed broker + receipts")
+        broker = self.app.privileged.status()
+        add(
+            "Approval/receipts",
+            self.app.privileged is not None and self.app.receipts is not None and broker.get("approval_secret_configured", False),
+            "typed broker + request-bound approval proofs + receipts",
+        )
 
         required = [row for row in checks if row["required"]]
         return {
