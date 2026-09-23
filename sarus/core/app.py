@@ -27,6 +27,7 @@ from .workflows import WorkflowScheduler
 from .native import NativeRuntimeManager
 from .fable import FableIntegration
 from .development import DevelopmentAgent
+from .browser import BrowserRuntime
 
 
 class Jubi:
@@ -86,6 +87,7 @@ class Jubi:
         self.privileged = PrivilegedBroker(root, root / 'config/broker_allowlist.json', self.policy, self.windows, self.receipts)
         self.execution = ExecutionEngine(self)
         self.development = DevelopmentAgent(self)
+        self.browser = BrowserRuntime(self)
         self.fable = FableIntegration(self)
         self.native = NativeRuntimeManager(self)
         self.doctor = Doctor(self)
@@ -164,6 +166,7 @@ class Jubi:
             'network': self.network.status(),
             'vision': self.vision.status(),
             'development': {'recent_runs': len(self.development.recent(20)), 'mode': 'bounded-edit-review-verify-v1'},
+            'browser': self.browser.status(),
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
