@@ -125,16 +125,17 @@ The public research reader blocks:
 Fetched page text cannot directly trigger Windows/LAN privileged execution.
 
 ### Computer Operator
-The Windows broker exposes typed, allowlisted operations instead of arbitrary shell strings. Current dashboard-accessible examples include:
+The typed host broker exposes allowlisted operations instead of arbitrary shell strings. Workspace/Git operations are cross-platform; process/service inventory is implemented on both Windows and Linux. Current dashboard-accessible examples include:
 - process/service inventory
 - workspace file read/write/stat
 - directory list/create
 - scoped file copy/move
 - approval-protected scoped file delete
 - read-only Git status/log
-- fixed allowlisted app launch (VS Code, Notepad, Explorer)
-- HTTP/HTTPS URL opening
-- narrow Ring0 status/ping compatibility checks
+- fixed allowlisted app launch (Windows desktop only)
+- HTTP/HTTPS URL opening where a host browser is available
+- allowlisted Linux systemd service query/control subject to approval and host permissions
+- narrow Ring0 status/ping compatibility checks (Windows only)
 
 Workspace actions are confined to configured workspace roots. Jubi intentionally does not expose a model-facing unrestricted PowerShell/CMD/shell primitive.
 
