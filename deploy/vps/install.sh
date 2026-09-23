@@ -207,6 +207,17 @@ fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$PREFIX"
 
 install -d -m 0750 /etc/jubi
+BROKER_SECRET_FILE=/etc/jubi/broker-approval.secret
+if [[ ! -f "$BROKER_SECRET_FILE" ]]; then
+  python3 - "$BROKER_SECRET_FILE" <<'PY_BROKER_SECRET'
+import secrets, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+path.write_text(secrets.token_urlsafe(48) + "\n", encoding="utf-8")
+PY_BROKER_SECRET
+fi
+chmod 0640 "$BROKER_SECRET_FILE"
+chown root:"$SERVICE_USER" "$BROKER_SECRET_FILE"
 if [[ ! -f /etc/jubi/jubi.env ]]; then
   cat >/etc/jubi/jubi.env <<EOF_ENV
 JUBI_HOST=127.0.0.1
@@ -218,6 +229,7 @@ JUBI_DEPLOYMENT_PROFILE=linux_vps
 JUBI_REQUIRE_HERMES=$WITH_HERMES
 JUBI_REQUIRE_BROWSER=$WITH_BROWSER
 JUBI_REQUIRE_VOICE=$WITH_VOICE
+SARUS_BROKER_SECRET_FILE=/etc/jubi/broker-approval.secret
 PLAYWRIGHT_BROWSERS_PATH=$PREFIX/.playwright
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
@@ -236,6 +248,11 @@ else
     echo 'JUBI_DEPLOYMENT_PROFILE=linux_vps' >>/etc/jubi/jubi.env
   fi
   grep -q '^PYTHONNOUSERSITE=' /etc/jubi/jubi.env || echo 'PYTHONNOUSERSITE=1' >>/etc/jubi/jubi.env
+  if grep -q '^SARUS_BROKER_SECRET_FILE=' /etc/jubi/jubi.env; then
+    sed -i 's|^SARUS_BROKER_SECRET_FILE=.*|SARUS_BROKER_SECRET_FILE=/etc/jubi/broker-approval.secret|' /etc/jubi/jubi.env
+  else
+    echo 'SARUS_BROKER_SECRET_FILE=/etc/jubi/broker-approval.secret' >>/etc/jubi/jubi.env
+  fi
   if grep -q '^PLAYWRIGHT_BROWSERS_PATH=' /etc/jubi/jubi.env; then
     sed -i "s|^PLAYWRIGHT_BROWSERS_PATH=.*|PLAYWRIGHT_BROWSERS_PATH=$PREFIX/.playwright|" /etc/jubi/jubi.env
   else
