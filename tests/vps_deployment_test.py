@@ -30,7 +30,7 @@ class VPSDeploymentTest(unittest.TestCase):
             "CapabilityBoundingSet=",
             "Environment=JUBI_DEPLOYMENT_PROFILE=linux_vps",
             "Environment=PYTHONNOUSERSITE=1",
-            "ReadWritePaths=@JUBI_PREFIX@/data @JUBI_PREFIX@/workspace @JUBI_PREFIX@/logs",
+            "ReadWritePaths=@JUBI_PREFIX@/data @JUBI_PREFIX@/workspace @JUBI_PREFIX@/outputs @JUBI_PREFIX@/projects @JUBI_PREFIX@/logs",
         ):
             self.assertIn(required, text)
         self.assertNotIn("User=root", text)
@@ -41,6 +41,7 @@ class VPSDeploymentTest(unittest.TestCase):
         self.assertNotIn("JUBI_HOST=0.0.0.0", text)
         self.assertIn("JUBI_HOST=127.0.0.1", text)
         self.assertIn("--with-hermes", text)
+        self.assertIn("--with-browser", text)
 
     def test_server_still_rejects_wildcard_binding(self):
         text = (ROOT / "sarus" / "server.py").read_text(encoding="utf-8")
