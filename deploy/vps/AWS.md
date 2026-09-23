@@ -36,7 +36,7 @@ sudo apt-get install -y git
 git clone https://github.com/kautukade/JUBI.git
 cd JUBI
 git checkout feature/vps-runtime
-sudo bash deploy/vps/install.sh --with-hermes --start
+sudo bash deploy/vps/install.sh --with-hermes --with-browser --start
 ```
 
 Install Ollama separately using the method you approve. If Ollama is installed
@@ -49,8 +49,16 @@ sudo systemctl daemon-reload
 sudo systemctl restart ollama
 ```
 
-Pull only the models you explicitly want to test. Jubi's VPS installer does not
-pull any model automatically.
+Pull models only through an explicit provisioning action. For the compact full-feature test profile:
+
+```bash
+sudo /opt/jubi/deploy/vps/provision-models.sh --recommended
+sudo systemctl restart jubi
+sudo /opt/jubi/deploy/vps/verify.sh
+```
+
+This profile uses `qwen3:8b` for general/coding/tool work, `qwen2.5vl:3b`
+for vision, and `qwen3-embedding:0.6b` for semantic memory.
 
 ## Verify
 
