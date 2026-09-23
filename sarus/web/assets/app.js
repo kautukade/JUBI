@@ -16,13 +16,13 @@ const PAGE_META = {
   providers:['Provider Manager','Secure OpenRouter, NVIDIA NIM and Hugging Face routing'],
   models:['Models','Inspect and test models discovered from Ollama'],
   agents:['Agents & Capabilities','Search connected source capabilities and execute supported units'],
-  development:['Development','Run the existing development-oriented agent pipeline'],
+  development:['Development','Bounded autonomous coding and executable VPS swarm'],
   knowledge:['Knowledge','Search and save local persistent memory'],
   fable:['Fable Lab','Learned capabilities, bounded agenda and isolated research tools'],
   automation:['Automation','Create and control persisted recurring workflows'],
-  computer:['Computer','Typed allowlisted Windows and workspace operations'],
+  computer:['Computer','Typed allowlisted host and workspace operations'],
   security:['Security & Receipts','Approvals, broker posture and signed receipt evidence'],
-  health:['System Health','Run Jubi Doctor and inspect runtime readiness'],
+  health:['System Health','Run Jubi Doctor and full VPS readiness checks'],
   activity:['Activity','Inspect the persistent local event bus']
 };
 
@@ -95,7 +95,7 @@ async function initOverview(){
   byId('metric-sources').textContent=`${adapters.filter(x=>x.connected).length}/${adapters.length}`;
   byId('metric-models').textContent=(s.models?.models||[]).length;
   byId('metric-units').textContent=units.toLocaleString();byId('metric-approvals').textContent=(a||[]).length;byId('metric-files').textContent=files.toLocaleString();byId('metric-chain').textContent=s.receipt_chain?.ok?'VERIFIED':'CHECK';
-  byId('runtime-summary').innerHTML=`${badge(s.name+' '+s.version,'info')} ${badge(s.models?.online?'Ollama online':'Ollama offline',s.models?.online?'ok':'bad')} ${badge((s.providers?.mode||'local_only').replaceAll('_',' '),'info')} ${badge(s.windows_broker?'Windows broker ready':'Windows broker unavailable',s.windows_broker?'ok':'warn')} ${badge(s.receipt_chain?.ok?'Receipt chain verified':'Receipt chain issue',s.receipt_chain?.ok?'ok':'bad')}`;
+  byId('runtime-summary').innerHTML=`${badge(s.name+' '+s.version,'info')} ${badge(s.models?.online?'Ollama online':'Ollama offline',s.models?.online?'ok':'bad')} ${badge((s.providers?.mode||'local_only').replaceAll('_',' '),'info')} ${badge(s.host_operator?.available?'Host operator ready':'Host operator unavailable',s.host_operator?.available?'ok':'warn')} ${badge(s.receipt_chain?.ok?'Receipt chain verified':'Receipt chain issue',s.receipt_chain?.ok?'ok':'bad')}`;
   byId('sources-list').innerHTML=adapters.map(x=>`<div class="source-card"><div class="split between"><strong>${esc(x.details?.label||x.name)}</strong>${badge(x.connected?'Connected':'Missing',x.connected?'ok':'bad')}</div><div class="data-meta">${esc(x.details?.role||'Source adapter')}</div></div>`).join('')||renderEmpty('No source adapters found.');
   byId('recent-tasks').innerHTML=(t||[]).map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(short(x.request,100))}</div><div class="data-meta">${fmtDate(x.created_at||x.ts)} · ${esc(x.id||x.task_id||'')}</div></div>${badge(x.status,statusTone(x.status))}</div>`).join('')||renderEmpty('No tasks yet.');
   byId('recent-events').innerHTML=(e||[]).slice().reverse().map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(x.kind)}</div><div class="data-meta">${esc(short(JSON.stringify(x.payload||{}),150))}</div></div><span class="small muted nowrap">${fmtDate(x.created_at||x.ts)}</span></div>`).join('')||renderEmpty('No events yet.');
@@ -213,8 +213,30 @@ async function selectCapability(id){selectedCapability=id;const r=await API.get(
 async function runCapability(){if(!selectedCapability)return;const btn=byId('cap-run-btn');setBusy(btn,true,'Running');try{const r=await API.post('/api/capability/run',{id:selectedCapability,text:byId('cap-run-text').value||'Use this capability for its intended purpose.'});jsonBox('cap-run-output',r);}catch(e){jsonBox('cap-run-output','Error: '+e.message);}finally{setBusy(btn,false);}}
 window.selectCapability=selectCapability;
 
-async function initDevelopment(){byId('dev-plan').onclick=()=>devAction(false);byId('dev-run').onclick=()=>devAction(true);await loadDevTasks();}
+async function initDevelopment(){
+  byId('dev-plan').onclick=()=>devAction(false);
+  byId('dev-run').onclick=()=>devAction(true);
+  byId('dev-direct').onclick=()=>runBoundedDeveloper();
+  byId('dev-swarm').onclick=()=>runDevSwarm();
+  const [developer,swarm]=await Promise.all([API.get('/api/developer'),API.get('/api/swarm')]);
+  jsonBox('dev-runtime',{developer,swarm});
+  await loadDevTasks();
+}
 async function devAction(run){const text=byId('dev-input').value.trim();if(!text)return toast('Describe the development task','bad');const prompt='Development task: '+text;const btn=byId(run?'dev-run':'dev-plan');setBusy(btn,true,run?'Running':'Planning');try{const r=await API.post(run?'/api/task':'/api/plan',{text:prompt});jsonBox('dev-output',r);await loadDevTasks();}catch(e){jsonBox('dev-output','Error: '+e.message);}finally{setBusy(btn,false);}}
+async function runBoundedDeveloper(){
+  const text=byId('dev-input').value.trim(),project=byId('dev-project').value.trim()||'.';
+  if(!text)return toast('Describe the development task','bad');
+  const btn=byId('dev-direct');setBusy(btn,true,'Executing');
+  try{const r=await API.post('/api/developer/run',{text,project,max_iterations:10});jsonBox('dev-output',r);toast(r.ok?'Developer verification passed':'Developer did not pass verification',r.ok?'ok':'bad');}
+  catch(e){jsonBox('dev-output','Error: '+e.message);}finally{setBusy(btn,false);}
+}
+async function runDevSwarm(){
+  const text=byId('dev-input').value.trim(),project=byId('dev-project').value.trim()||'.';
+  if(!text)return toast('Describe the development task','bad');
+  const btn=byId('dev-swarm');setBusy(btn,true,'Coordinating');
+  try{const r=await API.post('/api/swarm/run',{text,project,max_sources:4});jsonBox('dev-output',r);toast('Swarm: '+r.status,statusTone(r.status)==='ok'?'ok':'warn');}
+  catch(e){jsonBox('dev-output','Error: '+e.message);}finally{setBusy(btn,false);}
+}
 async function loadDevTasks(){const t=await API.get('/api/tasks?limit=30');const rows=(t||[]).filter(x=>String(x.request||'').toLowerCase().startsWith('development task:')).slice(0,12);byId('dev-history').innerHTML=rows.map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(short(x.request,130))}</div><div class="data-meta">${fmtDate(x.created_at||x.ts)}</div></div>${badge(x.status,statusTone(x.status))}</div>`).join('')||renderEmpty('No development tasks yet.');}
 
 async function initKnowledge(){byId('memory-search-btn').onclick=searchMemory;byId('memory-save').onclick=saveMemory;await searchMemory();}
@@ -235,11 +257,19 @@ async function loadSecurity(){const [a,r,b]=await Promise.all([API.get('/api/app
 async function resolveApproval(id,status){try{const r=await API.post('/api/approval',{id,status});toast(`Approval ${status}`,'ok');jsonBox('approval-result',r);await loadSecurity();}catch(e){toast(e.message,'bad');}}
 window.resolveApproval=resolveApproval;
 
-async function initHealth(){byId('doctor-run').onclick=loadDoctor;await loadDoctor();}
+async function initHealth(){byId('doctor-run').onclick=loadDoctor;byId('vps-readiness-run').onclick=loadVPSReadiness;await Promise.all([loadDoctor(),loadVPSReadiness()]);}
 async function loadDoctor(){
  const btn=byId('doctor-run');setBusy(btn,true,'Checking');
  try{const r=await API.get('/api/doctor');byId('doctor-grid').innerHTML=(r.checks||[]).map(c=>`<div class="card metric-card span-3"><div class="metric-label">${esc(c.name)}</div><div style="margin-top:9px">${badge(c.ok?'Ready':'Needs setup',c.ok?'ok':c.level==='required'?'bad':'warn')}</div><div class="metric-note">${esc(c.detail)} · ${esc(c.level)}</div></div>`).join('');jsonBox('doctor-raw',r);}
  catch(e){jsonBox('doctor-raw','Error: '+e.message);}finally{setBusy(btn,false);}
+}
+async function loadVPSReadiness(){
+ const btn=byId('vps-readiness-run');setBusy(btn,true,'Checking');
+ try{
+   const r=await API.get('/api/vps/readiness');
+   byId('vps-ready-summary').innerHTML=`${badge(r.ready?'FULL PROFILE READY':'VPS SETUP INCOMPLETE',r.ready?'ok':'bad')} ${r.failed_required?.length?'Missing required: '+esc(r.failed_required.join(', ')):'All required gates passed.'}`;
+   byId('vps-ready-grid').innerHTML=(r.checks||[]).map(x=>`<div class="card metric-card span-3"><div class="metric-label">${esc(x.name)}</div><div style="margin-top:9px">${badge(x.ok?'Ready':'Missing',x.ok?'ok':x.required?'bad':'warn')}</div><div class="metric-note">${esc(short(x.detail,180))} · ${x.required?'required':'optional'}</div></div>`).join('');
+ }catch(e){byId('vps-ready-summary').textContent='Error: '+e.message;}finally{setBusy(btn,false);}
 }
 
 async function initActivity(){byId('activity-refresh').onclick=loadActivity;byId('activity-filter').addEventListener('input',loadActivity);await loadActivity();}

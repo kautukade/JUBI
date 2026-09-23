@@ -125,16 +125,17 @@ The public research reader blocks:
 Fetched page text cannot directly trigger Windows/LAN privileged execution.
 
 ### Computer Operator
-The Windows broker exposes typed, allowlisted operations instead of arbitrary shell strings. Current dashboard-accessible examples include:
+The typed host broker exposes allowlisted operations instead of arbitrary shell strings. Workspace/Git operations are cross-platform; process/service inventory is implemented on both Windows and Linux. Current dashboard-accessible examples include:
 - process/service inventory
 - workspace file read/write/stat
 - directory list/create
 - scoped file copy/move
 - approval-protected scoped file delete
 - read-only Git status/log
-- fixed allowlisted app launch (VS Code, Notepad, Explorer)
-- HTTP/HTTPS URL opening
-- narrow Ring0 status/ping compatibility checks
+- fixed allowlisted app launch (Windows desktop only)
+- HTTP/HTTPS URL opening where a host browser is available
+- allowlisted Linux systemd service query/control subject to approval and host permissions
+- narrow Ring0 status/ping compatibility checks (Windows only)
 
 Workspace actions are confined to configured workspace roots. Jubi intentionally does not expose a model-facing unrestricted PowerShell/CMD/shell primitive.
 
@@ -235,6 +236,21 @@ Jubi-owned state includes memory, semantic knowledge, experiences, tasks, approv
 Chat conversations and complete successful turns are also persisted. The dashboard restores recent conversations after reload. Each follow-up supplies bounded context from that conversation through the same provider privacy rules.
 
 SQLite uses WAL, busy timeout, foreign keys and explicit commit/rollback transactions.
+
+### VPS offline voice
+On the Linux VPS profile, Jubi can run offline audio-clip transcription with a locally provisioned faster-whisper model and local WAV TTS via espeak-ng. Audio is supplied by an authenticated client over the existing loopback/SSH-tunnel boundary; a headless VPS does not claim direct access to the operator laptop microphone or an always-listening wake-word service.
+
+## Linux VPS deployment
+
+Jubi now has a hardened Linux VPS **core runtime** profile under
+[`deploy/vps/`](deploy/vps/README.md). It keeps both the dashboard and Ollama
+on loopback, runs Jubi as a non-root systemd service, and uses an SSH tunnel as
+the default remote-access method. The VPS installer never downloads models.
+
+For the AWS testing profile, see [`deploy/vps/AWS.md`](deploy/vps/AWS.md).
+Windows desktop automation, Ring0, native SARA desktop control and the Windows
+installer remain Windows-only; the VPS profile is for the Jubi server/agent
+core.
 
 ## Run from source
 

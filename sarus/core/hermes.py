@@ -7,6 +7,8 @@ Kanban. A subprocess result is evidence, not a task completion transition.
 from __future__ import annotations
 
 import json
+import importlib.util
+import importlib.metadata
 import os
 import subprocess
 import sys
@@ -32,6 +34,22 @@ class HermesRuntime:
         sources = json.loads((root / 'config/sources.json').read_text(encoding='utf-8'))
         self.source = self.root / 'sources' / sources['hermes']
         self.python = str(python_exe or sys.executable)
+
+    def status(self) -> dict:
+        source_ready = (self.source / 'run_agent.py').is_file()
+        modules = ('openai', 'httpx', 'pydantic', 'yaml', 'rich')
+        missing = [name for name in modules if importlib.util.find_spec(name) is None]
+        try:
+            distribution = importlib.metadata.version('hermes-agent')
+        except importlib.metadata.PackageNotFoundError:
+            distribution = None
+        return {
+            'ready': bool(source_ready and distribution and not missing),
+            'source_ready': source_ready,
+            'distribution': distribution,
+            'missing_modules': missing,
+            'mode': 'isolated local-only Jubi Hermes pilot',
+        }
 
     def analyze(self, prompt: str, model: str, context='', timeout=180) -> dict:
         LOCAL_ONLY.check_model_name(model)

@@ -15,6 +15,11 @@ from .policy import PolicyEngine
 from .capabilities import CapabilityRegistry, CapabilitySpec
 from .hardware import profile_hardware
 from .hermes import HermesRuntime
+from .developer import VPSDeveloper
+from .browser import VPSBrowser
+from .voice import VPSVoice
+from .swarm import VPSSwarm
+from .vps_readiness import VPSReadiness
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -54,10 +59,15 @@ class Jubi:
         self.policy = PolicyEngine(root / 'config/policy.json')
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.hermes = HermesRuntime(root, self.models)
+        self.developer = VPSDeveloper(self)
+        self.browser = VPSBrowser(self)
+        self.voice = VPSVoice(self)
+        self.swarm = VPSSwarm(self)
+        self.vps_readiness = VPSReadiness(self)
         self.registry.register_executor(CapabilitySpec(
             id='core.hardware.profile', name='Inspect local hardware', source='jubi', version='1',
             category='system', description='Read hardware and installed software without starting services.',
-            platforms=('Windows',), dependencies=(), permissions=('hardware.read',),
+            platforms=('Windows', 'Linux'), dependencies=(), permissions=('hardware.read',),
             privacy='local_only', risk=0, input_schema={'type': 'object', 'properties': {}},
             output_schema={'type': 'object'}, health_check='bounded device probes', executor='profile_hardware',
             timeout_seconds=25, resource_requirements={'network': False}, isolation='read-only host probes',
@@ -66,7 +76,7 @@ class Jubi:
         self.registry.register_executor(CapabilitySpec(
             id='hermes.analysis', name='Hermes delegated analysis', source='hermes', version='0.20.0-jubi-pilot1',
             category='reasoning', description='One real Hermes child analyzes supplied evidence using a local model.',
-            platforms=('Windows',), dependencies=('Hermes Python dependencies', 'local Ollama model'),
+            platforms=('Windows', 'Linux'), dependencies=('Hermes Python dependencies', 'local Ollama model'),
             permissions=('model.inference',), privacy='local_only', risk=1,
             input_schema={'type': 'object', 'required': ['prompt', 'model'], 'properties': {
                 'prompt': {'type': 'string', 'maxLength': 16000},
@@ -154,6 +164,10 @@ class Jubi:
             },
             'council': {'recent_runs': len(self.council.recent(20))},
             'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
+            'developer': {'mode': 'vps-bounded-developer', 'workspace': str(self.developer.workspace), 'local_model_only': True},
+            'browser': self.browser.status(),
+            'voice': self.voice.status(),
+            'swarm': self.swarm.status(),
             'research': {
                 'recent_runs': len(self.research.recent(20)),
                 'network_scope': 'public-http-https-only',
@@ -164,7 +178,8 @@ class Jubi:
             'capabilities': self.registry.summary(),
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
-            'windows_broker': self.windows.available(),
+            'windows_broker': self.windows.platform_capabilities().get('platform') == 'windows',
+            'host_operator': self.windows.platform_capabilities(),
             'privileged_broker': self.privileged.status(),
             'fable': self.fable.status(),
             'native_runtimes': self.native.status(),

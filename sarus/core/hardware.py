@@ -16,10 +16,28 @@ GIB = 1024 ** 3
 
 def _physical_cores() -> int | None:
     if os.name != 'nt':
+        # Linux VPS installations should not require psutil just to admit a
+        # local model. Prefer kernel-provided topology and use psutil only as a
+        # secondary optional source.
+        try:
+            blocks = Path('/proc/cpuinfo').read_text(encoding='utf-8', errors='replace').split('\n\n')
+            pairs = set()
+            for block in blocks:
+                fields = {}
+                for line in block.splitlines():
+                    if ':' in line:
+                        key, value = line.split(':', 1)
+                        fields[key.strip()] = value.strip()
+                if 'physical id' in fields and 'core id' in fields:
+                    pairs.add((fields['physical id'], fields['core id']))
+            if pairs:
+                return len(pairs)
+        except OSError:
+            pass
         try:
             import psutil
             return psutil.cpu_count(logical=False)
-        except ImportError:
+        except (ImportError, OSError):
             return None
     try:
         api = ctypes.WinDLL('kernel32', use_last_error=True).GetLogicalProcessorInformationEx
@@ -133,6 +151,28 @@ def memory_snapshot() -> dict:
             return {'status': 'AVAILABLE', 'total_bytes': info.total,
                     'available_bytes': info.available, 'available_commit_bytes': info.page_available,
                     'source': 'GlobalMemoryStatusEx'}
+    if os.name != 'nt':
+        try:
+            values = {}
+            for line in Path('/proc/meminfo').read_text(encoding='utf-8', errors='replace').splitlines():
+                if ':' not in line:
+                    continue
+                key, raw = line.split(':', 1)
+                parts = raw.strip().split()
+                if parts and parts[0].isdigit():
+                    values[key] = int(parts[0]) * 1024
+            total = values.get('MemTotal')
+            available = values.get('MemAvailable', values.get('MemFree'))
+            if total and available is not None:
+                # Available RAM plus currently free swap is an upper bound for
+                # admission that explicitly allows CPU paging. It is not a
+                # performance guarantee.
+                commit = int(available) + int(values.get('SwapFree', 0))
+                return {'status': 'AVAILABLE', 'total_bytes': int(total),
+                        'available_bytes': int(available), 'available_commit_bytes': commit,
+                        'source': '/proc/meminfo'}
+        except OSError:
+            pass
     try:
         import psutil
         info = psutil.virtual_memory()
@@ -252,9 +292,14 @@ $ErrorActionPreference='Stop'
                 if status.get('online'):
                     result['ollama'] = {'endpoint': base, **status}
                     break
-    result['wsl'] = _command([programs['wsl'], '--status'], timeout=4) if programs['wsl'] else {'status': 'DEPENDENCY_MISSING'}
-    result['docker'] = _command([programs['docker'], '-H', 'npipe:////./pipe/docker_engine', 'version',
-                                 '--format', '{{json .}}'], timeout=4) if programs['docker'] else {'status': 'DEPENDENCY_MISSING'}
+    if os.name == 'nt':
+        result['wsl'] = _command([programs['wsl'], '--status'], timeout=4) if programs['wsl'] else {'status': 'DEPENDENCY_MISSING'}
+        result['docker'] = _command([programs['docker'], '-H', 'npipe:////./pipe/docker_engine', 'version',
+                                     '--format', '{{json .}}'], timeout=4) if programs['docker'] else {'status': 'DEPENDENCY_MISSING'}
+    else:
+        result['wsl'] = {'status': 'DEPENDENCY_MISSING', 'detail': 'Windows-only subsystem'}
+        result['docker'] = _command([programs['docker'], 'version', '--format', '{{json .Server}}'],
+                                    timeout=4) if programs['docker'] else {'status': 'DEPENDENCY_MISSING'}
     return result
 
 
