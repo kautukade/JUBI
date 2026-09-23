@@ -16,6 +16,7 @@ from .capabilities import CapabilityRegistry, CapabilitySpec
 from .hardware import profile_hardware
 from .hermes import HermesRuntime
 from .developer import VPSDeveloper
+from .browser import VPSBrowser
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -56,6 +57,7 @@ class Jubi:
         self.registry = CapabilityRegistry(root, root / 'config/sources.json', root / 'data/capabilities.json')
         self.hermes = HermesRuntime(root, self.models)
         self.developer = VPSDeveloper(self)
+        self.browser = VPSBrowser(self)
         self.registry.register_executor(CapabilitySpec(
             id='core.hardware.profile', name='Inspect local hardware', source='jubi', version='1',
             category='system', description='Read hardware and installed software without starting services.',
@@ -157,6 +159,7 @@ class Jubi:
             'council': {'recent_runs': len(self.council.recent(20))},
             'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
             'developer': {'mode': 'vps-bounded-developer', 'workspace': str(self.developer.workspace), 'local_model_only': True},
+            'browser': self.browser.status(),
             'research': {
                 'recent_runs': len(self.research.recent(20)),
                 'network_scope': 'public-http-https-only',
