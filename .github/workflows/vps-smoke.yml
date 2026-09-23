@@ -48,7 +48,7 @@ jobs:
       - name: Install VPS sandbox dependency
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends bubblewrap
+          sudo apt-get install -y --no-install-recommends libseccomp2
       - name: VPS deployment contracts
         run: python tests/vps_deployment_test.py
       - name: Linux hardware and production readiness
@@ -59,7 +59,7 @@ jobs:
         run: python tests/provider_policy_test.py
       - name: Autonomous development loop
         run: python tests/vps_development_test.py
-      - name: Real bubblewrap sandbox
+      - name: Real Landlock seccomp sandbox
         run: python tests/vps_sandbox_smoke.py
       - name: VPS typed operator
         run: python tests/jubi_operator_test.py
