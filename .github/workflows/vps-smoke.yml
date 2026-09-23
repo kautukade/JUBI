@@ -12,6 +12,10 @@ on:
       - 'sarus/**'
       - 'config/**'
       - 'tests/vps_deployment_test.py'
+      - 'tests/vps_development_test.py'
+      - 'tests/vps_sandbox_smoke.py'
+      - 'tests/jubi_operator_test.py'
+      - 'tests/jubi_http_functional_test.py'
       - '.github/workflows/vps-smoke.yml'
   pull_request:
     paths:
@@ -20,6 +24,10 @@ on:
       - 'sarus/**'
       - 'config/**'
       - 'tests/vps_deployment_test.py'
+      - 'tests/vps_development_test.py'
+      - 'tests/vps_sandbox_smoke.py'
+      - 'tests/jubi_operator_test.py'
+      - 'tests/jubi_http_functional_test.py'
       - '.github/workflows/vps-smoke.yml'
   workflow_dispatch:
 
