@@ -47,6 +47,15 @@ class Doctor:
         local_chat = [item['name'] for item in models.get('items', [])
                       if item.get('kind') in {'general', 'coding'}]
         add('Installed local chat candidate', bool(local_chat), ', '.join(local_chat) or 'User-approved model setup required')
+        if os.environ.get('JUBI_REQUIRE_FULL_MODELS', '0').lower() in {'1', 'true', 'yes', 'on'}:
+            for role in ('general', 'coding', 'vision', 'embedding'):
+                selected = self.app.models.choose(role)
+                add(
+                    'Full VPS model role ' + role,
+                    bool(selected),
+                    selected or 'missing compatible installed model',
+                    'required',
+                )
         for model in required:
             add('Ollama model ' + model, model in installed, 'installed' if model in installed else 'missing')
 
