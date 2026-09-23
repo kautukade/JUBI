@@ -1,0 +1,40 @@
+[Unit]
+Description=Jubi local-first AI agent
+Documentation=https://github.com/kautukade/JUBI
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=@JUBI_USER@
+Group=@JUBI_USER@
+WorkingDirectory=@JUBI_PREFIX@
+EnvironmentFile=-/etc/jubi/jubi.env
+ExecStart=@JUBI_PREFIX@/.venv/bin/python -m jubi.server
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGINT
+UMask=0077
+
+# Jubi itself needs no root privileges. Ollama is a separate local service.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=@JUBI_PREFIX@/data @JUBI_PREFIX@/workspace @JUBI_PREFIX@/logs
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
