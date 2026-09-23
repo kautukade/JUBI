@@ -88,4 +88,14 @@ sudo -u "$SERVICE_USER" env \
   PLAYWRIGHT_BROWSERS_PATH="$PREFIX/.playwright" \
   "$PREFIX/.venv/bin/python" "$PREFIX/scripts/vps_live_acceptance.py"
 
+command -v runuser >/dev/null 2>&1 || {
+  echo "runuser is required for non-root HTTP live certification." >&2
+  exit 3
+}
+echo "Running HTTP end-to-end VPS certification as $SERVICE_USER..."
+runuser -u "$SERVICE_USER" -- \
+  "$PREFIX/.venv/bin/python" "$PREFIX/deploy/vps/certify.py" \
+  --base "http://127.0.0.1:$PORT" \
+  --json-output "$PREFIX/logs/vps-live-certification.json"
+
 echo "Jubi full VPS profile: PASS"
