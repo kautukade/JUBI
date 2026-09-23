@@ -236,6 +236,18 @@ Chat conversations and complete successful turns are also persisted. The dashboa
 
 SQLite uses WAL, busy timeout, foreign keys and explicit commit/rollback transactions.
 
+## Linux VPS deployment
+
+Jubi now has a hardened Linux VPS **core runtime** profile under
+[`deploy/vps/`](deploy/vps/README.md). It keeps both the dashboard and Ollama
+on loopback, runs Jubi as a non-root systemd service, and uses an SSH tunnel as
+the default remote-access method. The VPS installer never downloads models.
+
+For the AWS testing profile, see [`deploy/vps/AWS.md`](deploy/vps/AWS.md).
+Windows desktop automation, Ring0, native SARA desktop control and the Windows
+installer remain Windows-only; the VPS profile is for the Jubi server/agent
+core.
+
 ## Run from source
 
 Source installation is intended for development. Normal Windows users should prefer `Jubi-Setup.exe`.
