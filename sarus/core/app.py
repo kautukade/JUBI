@@ -176,6 +176,7 @@ class Jubi:
             'receipt_chain': self.receipts.verify_chain(),
             'pending_approvals': len(self.execution.approvals()),
             'windows_broker': self.windows.available(),
+            'host_operator': self.windows.platform_capabilities(),
             'privileged_broker': self.privileged.status(),
             'fable': self.fable.status(),
             'native_runtimes': self.native.status(),
