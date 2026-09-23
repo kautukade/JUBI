@@ -101,6 +101,16 @@ class Doctor:
                 json.dumps(hermes, sort_keys=True),
                 'required' if require_hermes else 'recommended',
             )
+            browser = self.app.browser.status() if getattr(self.app, 'browser', None) else {
+                'ready': False, 'reason': 'Browser runtime not attached'
+            }
+            require_browser = os.environ.get('JUBI_REQUIRE_BROWSER', '0').lower() in {'1', 'true', 'yes', 'on'}
+            add(
+                'VPS browser runtime',
+                browser.get('ready', False),
+                json.dumps(browser, sort_keys=True),
+                'required' if require_browser else 'recommended',
+            )
         else:
             add('Development platform', True, platform.platform(), 'optional')
 
