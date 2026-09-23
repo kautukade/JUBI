@@ -267,21 +267,30 @@ class VPSDeveloper:
                 final_summary = result.get("summary", "")
                 break
 
-        verification = self.verify(project)
-        diff = self.diff(project)
-        review_evidence = diff.get("diff", "")
-        if writes and not review_evidence:
-            snapshots = []
-            for rel in changed_paths[:20]:
-                try:
-                    current = self.read(project, rel)
-                    snapshots.append("FILE " + rel + "\n" + current["content"][:12000])
-                except Exception as exc:
-                    snapshots.append("FILE " + rel + " unreadable: " + str(exc))
-            review_evidence = "\n\n".join(snapshots)
-        reviewer = self.review(request, review_evidence, verification, model=model) if writes else {
-            "approved": verification["ok"], "reason": "No file writes were performed"
-        }
+        verification = {"ok": False, "checks": [], "error": "verification did not run"}
+        diff = {"ok": False, "diff": "", "error": "diff did not run"}
+        reviewer = {"approved": False, "reason": "review did not run"}
+        post_error = ""
+        try:
+            verification = self.verify(project)
+            diff = self.diff(project)
+            review_evidence = diff.get("diff", "")
+            if writes and not review_evidence:
+                snapshots = []
+                for rel in changed_paths[:20]:
+                    try:
+                        current = self.read(project, rel)
+                        snapshots.append("FILE " + rel + "\n" + current["content"][:12000])
+                    except Exception as exc:
+                        snapshots.append("FILE " + rel + " unreadable: " + str(exc))
+                review_evidence = "\n\n".join(snapshots)
+            reviewer = self.review(request, review_evidence, verification, model=model) if writes else {
+                "approved": verification["ok"], "reason": "No file writes were performed"
+            }
+        except Exception as exc:
+            post_error = str(exc)[:1000]
+            verification = {"ok": False, "checks": [], "error": post_error}
+            reviewer = {"approved": False, "reason": "Post-edit verification failed: " + post_error}
         ok = bool(verification.get("ok") and reviewer.get("approved") is True and (writes > 0 or final_summary))
         attempted_changes = list(changed_paths)
         attempted_diff = diff.get("diff", "")
@@ -304,6 +313,7 @@ class VPSDeveloper:
             "review": reviewer,
             "diff": attempted_diff,
             "summary": final_summary,
+            "post_error": post_error,
             "transcript": transcript,
             "tools_executed": True,
         }
