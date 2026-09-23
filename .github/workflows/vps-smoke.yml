@@ -31,6 +31,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: jubi-vps-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   vps-smoke:
     runs-on: ubuntu-24.04
