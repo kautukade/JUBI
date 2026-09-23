@@ -57,6 +57,7 @@ def main():
         rows.append(check("coding local inference", lambda: _infer(app, "coding")))
         rows.append(check("local embedding", lambda: _embed(app)))
         rows.append(check("local vision", lambda: _vision(app)))
+        rows.append(check("offline voice STT/TTS", lambda: _voice(app)))
         rows.append(check("public research fetch", lambda: _research(app)))
         rows.append(check("headless Chromium", lambda: _browser(app)))
         rows.append(check("bounded developer edit-review", lambda: _developer(app)))
@@ -121,6 +122,25 @@ def _vision(app):
     if not text.strip():
         raise RuntimeError("vision model returned no response")
     return {"model": model, "response": text[:240]}
+
+
+def _voice(app):
+    status = app.voice.status()
+    if not status.get("ready"):
+        raise RuntimeError("offline voice runtime is not ready: " + str(status))
+    tts = app.voice.synthesize("This is a Jubi speech test.", "en", 160)
+    if not tts.get("ok") or not str(tts.get("audio", "")).startswith("data:audio/wav;base64,"):
+        raise RuntimeError("local TTS failed")
+    stt = app.voice.transcribe(tts["audio"], language="en")
+    if not stt.get("ok") or not str(stt.get("text", "")).strip():
+        raise RuntimeError("local STT returned no text")
+    return {
+        "tts_mode": tts.get("mode"),
+        "stt_mode": stt.get("mode"),
+        "transcript": str(stt.get("text", ""))[:240],
+        "cloud_speech": status.get("cloud_speech"),
+        "microphone_capture": status.get("microphone_capture"),
+    }
 
 
 def _research(app):
