@@ -225,6 +225,8 @@ class H(SimpleHTTPRequestHandler):
                         int(q.get('limit', ['6'])[0]),
                     )
                 )
+            if p == '/api/swarm':
+                return self._json(APP.swarm.status())
             if p == '/api/browser':
                 return self._json(APP.browser.status())
             if p == '/api/developer':
@@ -332,6 +334,15 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('text', '')),
                         str(data.get('source', 'user')),
                         data.get('capability_id'),
+                    )
+                )
+            if p == '/api/swarm/run':
+                return self._json(
+                    APP.swarm.run(
+                        str(data.get('text', '')),
+                        project=str(data.get('project', '.')),
+                        provider=str(data.get('provider', 'auto')),
+                        max_sources=int(data.get('max_sources', 4)),
                     )
                 )
             if p == '/api/browser/read':
