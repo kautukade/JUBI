@@ -59,6 +59,41 @@ class HttpFunctionalTests(unittest.TestCase):
         self.assertEqual(self.request('/api/unknown')[0],404)
 
 
+
+    def test_vps_task_pipeline_uses_autonomous_developer(self):
+        observed = []
+        def fake_development(goal, project=None, max_iterations=16):
+            observed.append(goal)
+            return {
+                'ok': True,
+                'status': 'completed',
+                'mode': 'vps_local_coding',
+                'output': 'Verified coding change',
+                'changed_files': ['demo.py'],
+                'verification': {'ok': True, 'test': {'exit_code': 0}},
+                'diff': {'diff': '+ verified', 'changed_files': ['demo.py']},
+            }
+
+        original = self.fixture.app.development.run
+        self.fixture.app.development.run = fake_development
+        try:
+            with patch.dict(os.environ, {'JUBI_DEPLOYMENT_PROFILE': 'linux_vps'}, clear=False):
+                status, body, _ = self.request('/api/task', {'text': 'Fix the website code bug'})
+        finally:
+            self.fixture.app.development.run = original
+
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body['status'], 'completed', body)
+        self.assertTrue(observed)
+        developer_steps = [
+            step for step in body['steps']
+            if step.get('agent') == 'vps-developer'
+        ]
+        self.assertEqual(len(developer_steps), 1, body)
+        self.assertTrue(developer_steps[0]['result']['tools_executed'])
+        self.assertTrue(developer_steps[0]['result']['evidence']['verification']['ok'])
+
+
     def test_vps_readiness_endpoint_is_machine_readable(self):
         status, body, _ = self.request('/api/vps/readiness?full=1')
         self.assertEqual(status, 200)
