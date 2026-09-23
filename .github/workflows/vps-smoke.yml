@@ -47,6 +47,14 @@ jobs:
         run: python tests/provider_policy_test.py
       - name: VPS development agent
         run: python tests/development_agent_test.py
+      - name: Install Playwright browser smoke dependency
+        run: |
+          python -m pip install --disable-pip-version-check "playwright==1.63.0"
+          python -m playwright install --with-deps chromium
+      - name: Headless Chromium runtime
+        env:
+          JUBI_TEST_PLAYWRIGHT: "1"
+        run: python tests/browser_runtime_test.py
       - name: Linux typed operator
         run: python tests/linux_operator_test.py
       - name: Real local HTTP regression
