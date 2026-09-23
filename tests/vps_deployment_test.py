@@ -41,6 +41,7 @@ class VPSDeploymentTest(unittest.TestCase):
         self.assertNotIn("JUBI_HOST=0.0.0.0", text)
         self.assertIn("JUBI_HOST=127.0.0.1", text)
         self.assertIn("--with-hermes", text)
+        self.assertIn("--with-voice", text)
         self.assertIn("--with-browser", text)
 
     def test_full_profile_is_explicit_and_role_complete(self):
@@ -51,6 +52,16 @@ class VPSDeploymentTest(unittest.TestCase):
         provision = (ROOT / "deploy" / "vps" / "provision-models.sh").read_text(encoding="utf-8")
         for model in ("qwen3:8b", "qwen2.5vl:3b", "qwen3-embedding:0.6b"):
             self.assertIn(model, provision)
+
+    def test_voice_provisioning_is_explicit_and_local(self):
+        installer = (ROOT / "deploy" / "vps" / "install.sh").read_text(encoding="utf-8")
+        provision = (ROOT / "deploy" / "vps" / "provision-voice.sh").read_text(encoding="utf-8")
+        full = (ROOT / "deploy" / "vps" / "full-profile.sh").read_text(encoding="utf-8")
+        self.assertIn("--with-voice", installer)
+        self.assertIn("faster-whisper==1.2.1", installer)
+        self.assertIn("provision-voice.sh", full)
+        self.assertIn("JUBI_WHISPER_MODEL=", provision)
+        self.assertNotIn("OPENAI_API_KEY", provision)
 
     def test_server_still_rejects_wildcard_binding(self):
         text = (ROOT / "sarus" / "server.py").read_text(encoding="utf-8")
