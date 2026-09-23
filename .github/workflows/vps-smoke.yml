@@ -12,6 +12,8 @@ on:
       - 'sarus/**'
       - 'config/**'
       - 'tests/vps_deployment_test.py'
+      - 'tests/vps_developer_test.py'
+      - 'tests/vps_browser_test.py'
       - '.github/workflows/vps-smoke.yml'
   pull_request:
     paths:
@@ -55,3 +57,22 @@ jobs:
           bash -n deploy/vps/healthcheck.sh
           bash -n deploy/vps/verify.sh
           bash -n deploy/vps/backup.sh
+
+  browser-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Browser policy tests
+        run: python tests/vps_browser_test.py
+      - name: Install Playwright Chromium
+        run: |
+          python -m pip install --disable-pip-version-check "playwright==1.63.0"
+          python -m playwright install --with-deps chromium
+      - name: Live public Chromium read
+        env:
+          JUBI_BROWSER_LIVE: '1'
+        run: python tests/vps_browser_test.py
