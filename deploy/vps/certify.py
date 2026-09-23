@@ -73,6 +73,21 @@ def main() -> int:
     if models and (not models.get("online") or not models.get("models")):
         checks[-1]["ok"] = False
 
+    providers = record("Provider policy", lambda: _json_request(base + "/api/providers"))
+    if providers and providers.get("mode") != "local_only":
+        checks[-1]["ok"] = False
+        checks[-1]["detail"]["certification_error"] = "Full VPS certification requires Local Only provider mode"
+
+    def brain_route():
+        result = _json_request(
+            base + "/api/brain/route", token=token,
+            body={"text": "Write a small Python addition function", "task_type": "coding"},
+            timeout=60,
+        )
+        result["ok"] = bool(result.get("selected_model"))
+        return result
+    record("Brain model routing", brain_route)
+
     def live_chat():
         result = _json_request(
             base + "/api/chat", token=token,
@@ -84,6 +99,50 @@ def main() -> int:
         result["ok"] = bool(result["certification_match"])
         return result
     record("Local model inference", live_chat)
+
+    def council_check():
+        result = _json_request(
+            base + "/api/council/run", token=token,
+            body={"text": "What is 2 + 2? Answer concisely.", "task_type": "general", "max_members": 2, "judge_provider": "ollama"},
+            timeout=600,
+        )
+        result["ok"] = bool(result.get("final") and result.get("members"))
+        return result
+    record("AI Council live deliberation", council_check)
+
+    def supervisor_check():
+        result = _json_request(
+            base + "/api/supervisor/run", token=token,
+            body={"text": "Create a two-step plan to verify a small Python function.", "task_type": "planning", "provider": "ollama"},
+            timeout=600,
+        )
+        result["ok"] = bool(result.get("plan") and result.get("review"))
+        return result
+    record("Supervisor planner/reviewer", supervisor_check)
+
+    def hermes_check():
+        coding_model = None
+        for item in (models or {}).get("items", []):
+            if item.get("kind") == "coding":
+                coding_model = item.get("name")
+                break
+        coding_model = coding_model or "qwen3:8b"
+        result = _json_request(
+            base + "/api/capability/run", token=token,
+            body={
+                "id": "hermes.analysis",
+                "parameters": {
+                    "prompt": "Analyze the statement: 2 + 2 = 4. Reply with a concise confirmation.",
+                    "model": coding_model,
+                    "context": "VPS live certification; analysis only.",
+                },
+            },
+            timeout=420,
+        )
+        delegated = result.get("result") or {}
+        result["ok"] = bool(delegated and delegated.get("tools_executed") is False)
+        return result
+    record("Hermes delegated analysis", hermes_check)
 
     namespace = "vps-cert-" + uuid.uuid4().hex[:12]
     doc_id = ""
@@ -128,6 +187,41 @@ def main() -> int:
         result["ok"] = bool(result.get("ok") and result.get("text"))
         return result
     record("Headless public browser", browser_check)
+
+    def research_fetch():
+        result = _json_request(
+            base + "/api/research/fetch", token=token,
+            body={"url": args.browser_url, "timeout": 20},
+            timeout=40,
+        )
+        serialized = json.dumps(result, ensure_ascii=False)
+        return {"ok": bool(result and "Example Domain" in serialized), "result": result}
+    record("Public web research fetch", research_fetch)
+
+    def operator_check():
+        result = _json_request(
+            base + "/api/system/action", token=token,
+            body={"action_id": "system.processes.list", "parameters": {}},
+            timeout=40,
+        )
+        payload = result.get("result") or {}
+        result["ok"] = bool(result.get("ok") and payload.get("ok"))
+        return result
+    record("Typed Linux Computer Operator", operator_check)
+
+    tiny_png = (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII="
+    )
+    def vision_check():
+        result = _json_request(
+            base + "/api/vision/analyze", token=token,
+            body={"image": tiny_png, "prompt": "Describe what is visible in this tiny image in one short sentence.", "timeout": 300},
+            timeout=360,
+        )
+        result["ok"] = bool(str(result.get("response") or "").strip() and result.get("provider") == "ollama-local")
+        return result
+    record("Local vision inference", vision_check)
 
     project_name = "vps-certification-" + uuid.uuid4().hex[:8]
     project = root / "workspace" / project_name
