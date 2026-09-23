@@ -7,6 +7,7 @@ PORT="8877"
 OLLAMA_URL="http://127.0.0.1:11434"
 START_SERVICE=0
 INSTALL_PACKAGES=1
+WITH_HERMES=0
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 usage() {
@@ -20,6 +21,7 @@ Options:
   --port PORT          Loopback dashboard port (default: 8877)
   --ollama-url URL     Local Ollama URL (default: http://127.0.0.1:11434)
   --start              Enable and start jubi.service after installation
+  --with-hermes        Install upstream Hermes core Python dependencies into Jubi's venv
   --no-packages        Do not install OS prerequisites
   -h, --help           Show this help
 
@@ -36,6 +38,7 @@ while [[ $# -gt 0 ]]; do
     --port) PORT="$2"; shift 2 ;;
     --ollama-url) OLLAMA_URL="$2"; shift 2 ;;
     --start) START_SERVICE=1; shift ;;
+    --with-hermes) WITH_HERMES=1; shift ;;
     --no-packages) INSTALL_PACKAGES=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -109,6 +112,28 @@ install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER"   "$PREFIX/data" "$PREF
 rm -rf "$PREFIX/.venv"
 python3 -m venv "$PREFIX/.venv"
 "$PREFIX/.venv/bin/python" -m compileall -q "$PREFIX/jubi" "$PREFIX/sarus"
+
+if (( WITH_HERMES )); then
+  HERMES_REL="$("$PREFIX/.venv/bin/python" - "$PREFIX/config/sources.json" <<'PY'
+import json,sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    print(json.load(f)['hermes'])
+PY
+)"
+  HERMES_SOURCE="$PREFIX/sources/$HERMES_REL"
+  [[ -f "$HERMES_SOURCE/pyproject.toml" ]] || {
+    echo "Hermes source is missing: $HERMES_SOURCE" >&2
+    exit 4
+  }
+  echo "Installing reviewed Hermes core dependencies (no model or cloud credential is installed)..."
+  "$PREFIX/.venv/bin/python" -m pip install --disable-pip-version-check "setuptools==83.0.0"
+  "$PREFIX/.venv/bin/python" -m pip install --disable-pip-version-check --no-build-isolation -e "$HERMES_SOURCE"
+  "$PREFIX/.venv/bin/python" - <<'PY'
+import importlib.metadata
+import openai, httpx, pydantic, yaml, rich, run_agent
+print("Hermes:", importlib.metadata.version("hermes-agent"))
+PY
+fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$PREFIX"
 
 install -d -m 0750 /etc/jubi
@@ -119,13 +144,23 @@ JUBI_PORT=$PORT
 JUBI_OLLAMA_URL=$OLLAMA_URL
 JUBI_DEBUG=0
 JUBI_HTTP_LOG=1
+JUBI_DEPLOYMENT_PROFILE=linux_vps
+JUBI_REQUIRE_HERMES=$WITH_HERMES
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
+PYTHONNOUSERSITE=1
 EOF
   chmod 0640 /etc/jubi/jubi.env
   chown root:"$SERVICE_USER" /etc/jubi/jubi.env
 else
   echo "Keeping existing /etc/jubi/jubi.env"
+  if (( WITH_HERMES )); then
+    if grep -q '^JUBI_REQUIRE_HERMES=' /etc/jubi/jubi.env; then
+      sed -i 's/^JUBI_REQUIRE_HERMES=.*/JUBI_REQUIRE_HERMES=1/' /etc/jubi/jubi.env
+    else
+      echo 'JUBI_REQUIRE_HERMES=1' >>/etc/jubi/jubi.env
+    fi
+  fi
 fi
 
 sed   -e "s|@JUBI_PREFIX@|$PREFIX|g"   -e "s|@JUBI_USER@|$SERVICE_USER|g"   "$SOURCE_DIR/deploy/vps/jubi.service" >/etc/systemd/system/jubi.service
