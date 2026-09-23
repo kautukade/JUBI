@@ -35,7 +35,9 @@ class WindowsBroker:
         return tuple((self.root / str(p)).resolve() for p in roots if str(p).strip())
 
     def available(self):
-        return os.name == 'nt'
+        # The historical class name is retained for compatibility. Workspace
+        # and bounded host-observation operations are cross-platform.
+        return True
 
     def _ensure_workspace(self, p):
         path = Path(p).expanduser()
@@ -188,30 +190,50 @@ class WindowsBroker:
         if action_id == 'ring0.status':
             return self.ring0.status()
 
-        if os.name != 'nt':
-            return {'ok': False, 'error': 'Windows-only action', 'action': action_id}
-
         if action_id == 'system.processes.list':
-            return self._run(['tasklist', '/FO', 'CSV', '/NH'], 15)
+            if os.name == 'nt':
+                return self._run(['tasklist', '/FO', 'CSV', '/NH'], 15)
+            return self._run(['ps', '-eo', 'pid,ppid,user,comm,args', '--sort=pid'], 15)
 
         if action_id == 'system.services.list':
-            return self._run(['sc.exe', 'query', 'state=', 'all'], 20)
+            if os.name == 'nt':
+                return self._run(['sc.exe', 'query', 'state=', 'all'], 20)
+            systemctl = shutil.which('systemctl')
+            if not systemctl:
+                return {'ok': False, 'error': 'systemctl is not available'}
+            return self._run([systemctl, 'list-units', '--type=service', '--all', '--no-pager', '--no-legend'], 20)
 
         if action_id in {'service.query', 'service.start', 'service.stop'}:
-            service = str(resolved.get('service_name', '')).strip()
-            if not service or any(ch in service for ch in '"&|<>\r\n'):
-                raise ValueError('invalid allowlisted service mapping')
+            if os.name == 'nt':
+                service = str(resolved.get('service_name', '')).strip()
+                if not service or any(ch in service for ch in '"&|<>\r\n'):
+                    raise ValueError('invalid allowlisted service mapping')
+                verb = action_id.split('.', 1)[1]
+                return self._run(['sc.exe', verb, service], 30)
+            unit = str(resolved.get('linux_unit', '')).strip()
+            if not unit or not unit.endswith('.service') or any(ch in unit for ch in '"&|<>/\\\r\n'):
+                raise ValueError('invalid allowlisted Linux service mapping')
+            systemctl = shutil.which('systemctl')
+            if not systemctl:
+                return {'ok': False, 'error': 'systemctl is not available'}
             verb = action_id.split('.', 1)[1]
-            return self._run(['sc.exe', verb, service], 30)
+            argv = [systemctl, 'status' if verb == 'query' else verb, unit, '--no-pager']
+            return self._run(argv, 30)
 
         if action_id == 'process.stop':
-            image = str(resolved.get('image_name', '')).strip()
-            if not image or any(ch in image for ch in '"&|<>/\\\r\n'):
-                raise ValueError('invalid allowlisted process mapping')
-            argv = ['taskkill.exe', '/IM', image, '/T']
-            if parameters.get('force'):
-                argv.append('/F')
-            return self._run(argv, 15)
+            if os.name == 'nt':
+                image = str(resolved.get('image_name', '')).strip()
+                if not image or any(ch in image for ch in '"&|<>/\\\r\n'):
+                    raise ValueError('invalid allowlisted process mapping')
+                argv = ['taskkill.exe', '/IM', image, '/T']
+                if parameters.get('force'):
+                    argv.append('/F')
+                return self._run(argv, 15)
+            name = str(resolved.get('linux_name', '')).strip()
+            if not name or any(ch in name for ch in '"&|<>/\\\r\n'):
+                raise ValueError('invalid allowlisted Linux process mapping')
+            signal = '-KILL' if parameters.get('force') else '-TERM'
+            return self._run(['pkill', signal, '-x', name], 15)
 
         if action_id == 'app.launch':
             argv = resolved.get('argv')
@@ -224,4 +246,4 @@ class WindowsBroker:
             proc = subprocess.Popen(command, shell=False, cwd=str(self.root))
             return {'ok': True, 'pid': proc.pid, 'resource_id': resolved.get('resource_id')}
 
-        raise PermissionError('Typed Windows action is not implemented: ' + action_id)
+        raise PermissionError('Typed host action is not implemented: ' + action_id)
