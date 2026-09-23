@@ -14,6 +14,8 @@ class VPSLiveAcceptanceContractTests(unittest.TestCase):
             "app.models.generate_text",
             "app.models.embed",
             "app.vision.analyze",
+            "app.voice.synthesize",
+            "app.voice.transcribe",
             'app.research.fetch("https://example.com/"',
             'app.browser.read("https://example.com/"',
             'project_path=rel',
