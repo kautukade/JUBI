@@ -68,6 +68,11 @@ systemctl restart jubi.service
 sleep 2
 bash "$PREFIX/deploy/vps/verify.sh"
 
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
+
 echo "Running real local-model VPS acceptance..."
 sudo -u "$SERVICE_USER" env \
   JUBI_DEPLOYMENT_PROFILE=linux_vps \
@@ -76,6 +81,10 @@ sudo -u "$SERVICE_USER" env \
   JUBI_REQUIRE_BROWSER=1 \
   JUBI_REQUIRE_VOICE=1 \
   JUBI_OLLAMA_URL=http://127.0.0.1:11434 \
+  JUBI_WHISPER_MODEL="${JUBI_WHISPER_MODEL:-$PREFIX/.voice/whisper-small}" \
+  JUBI_WHISPER_DEVICE="${JUBI_WHISPER_DEVICE:-cpu}" \
+  JUBI_WHISPER_COMPUTE_TYPE="${JUBI_WHISPER_COMPUTE_TYPE:-int8}" \
+  SARUS_BROKER_SECRET_FILE="${SARUS_BROKER_SECRET_FILE:-/etc/jubi/broker-approval.secret}" \
   PLAYWRIGHT_BROWSERS_PATH="$PREFIX/.playwright" \
   "$PREFIX/.venv/bin/python" "$PREFIX/scripts/vps_live_acceptance.py"
 
