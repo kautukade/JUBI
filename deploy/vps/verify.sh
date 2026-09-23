@@ -12,14 +12,14 @@ fi
 PORT="${JUBI_PORT:-8877}"
 OLLAMA_URL="${JUBI_OLLAMA_URL:-http://127.0.0.1:11434}"
 
-echo "[1/7] systemd service"
+echo "[1/8] systemd service"
 systemctl is-active --quiet jubi.service
 echo "  active"
 
-echo "[2/7] Jubi HTTP health"
+echo "[2/8] Jubi HTTP health"
 "$PREFIX/deploy/vps/healthcheck.sh"
 
-echo "[3/7] listener exposure"
+echo "[3/8] listener exposure"
 if ! command -v ss >/dev/null 2>&1; then
   echo "  ss not installed; listener inspection skipped"
 else
@@ -35,17 +35,17 @@ else
   }
 fi
 
-echo "[4/7] Ollama local endpoint"
+echo "[4/8] Ollama local endpoint"
 case "$OLLAMA_URL" in
   http://127.0.0.1:*|http://localhost:*) ;;
   *) echo "Remote Ollama endpoint is forbidden in the VPS local-only profile." >&2; exit 5 ;;
 esac
 curl --fail --silent --show-error --max-time 5 "$OLLAMA_URL/api/tags"   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  models:", len(d.get("models",[])))'
 
-echo "[5/7] Python source compilation"
+echo "[5/8] Python source compilation"
 "$PREFIX/.venv/bin/python" -m compileall -q "$PREFIX/jubi" "$PREFIX/sarus"
 
-echo "[6/7] Hermes pilot dependencies"
+echo "[6/8] Hermes pilot dependencies"
 if [[ "${JUBI_REQUIRE_HERMES:-0}" == "1" ]]; then
   "$PREFIX/.venv/bin/python" - <<'PY'
 import importlib.metadata
@@ -59,7 +59,7 @@ else
     echo "  not installed (core VPS remains valid; re-run installer with --with-hermes to test Hermes)"
   fi
 fi
-echo "[7/7] VPS autonomy runtime"
+echo "[7/8] VPS autonomy runtime"
 if [[ "${JUBI_REQUIRE_AUTONOMY:-0}" == "1" ]]; then
   command -v bwrap >/dev/null 2>&1 || { echo "  bubblewrap missing" >&2; exit 6; }
   "$PREFIX/.venv/bin/python" -c 'import pytest; print("  pytest:", pytest.__version__)'
@@ -76,6 +76,24 @@ print("  development workspace:", ws.project)
 PY
 else
   echo "  optional/not required by this deployment"
+fi
+
+echo "[8/8] Full Jubi readiness"
+if [[ "${JUBI_REQUIRE_AUTONOMY:-0}" == "1" ]]; then
+  READINESS="$(curl --fail --silent --show-error --max-time 20 "http://127.0.0.1:$PORT/api/vps/readiness?full=1")"
+  printf '%s' "$READINESS" | python3 -c '
+import json,sys
+data=json.load(sys.stdin)
+failed=[x for x in data.get("checks",[]) if x.get("required") and not x.get("ok")]
+if not data.get("ready"):
+    print("Full VPS readiness: FAIL", file=sys.stderr)
+    for item in failed:
+        print(" -", item.get("name"), ":", item.get("detail"), file=sys.stderr)
+    raise SystemExit(7)
+print("  full readiness: PASS (%s/%s)" % (data.get("passed"), data.get("required")))
+'
+else
+  echo "  full readiness not required by this deployment"
 fi
 
 echo "VPS verification: PASS"
