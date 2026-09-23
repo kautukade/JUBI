@@ -39,6 +39,10 @@ class VPSReadiness:
         require_browser = os.environ.get("JUBI_REQUIRE_BROWSER", "0").lower() in {"1", "true", "yes", "on"}
         add("Read-only JS browser", browser.get("ready", False), str(browser), required=require_browser)
 
+        voice = self.app.voice.status()
+        require_voice = os.environ.get("JUBI_REQUIRE_VOICE", "0").lower() in {"1", "true", "yes", "on"}
+        add("Offline clip STT/TTS", voice.get("ready", False), str(voice), required=require_voice)
+
         add("Bounded VPS developer", self.app.developer.workspace.is_dir(), str(self.app.developer.workspace))
         swarm = self.app.swarm.status()
         add("Executable VPS swarm", swarm.get("ready", False), str(swarm))
@@ -56,6 +60,7 @@ class VPSReadiness:
             "full_profile_required": {
                 "hermes": require_hermes,
                 "browser": require_browser,
+                "voice": require_voice,
                 "all_model_roles": full_models,
             },
             "checks": checks,
@@ -64,7 +69,7 @@ class VPSReadiness:
                 "Ring0 kernel bridge",
                 "Windows desktop application launch",
                 "native SARA desktop mouse/keyboard control",
-                "local camera/microphone hardware interaction",
+                "direct VPS microphone capture (audio must come from an authenticated client)",
                 "Windows EXE installer runtime",
             ],
         }
