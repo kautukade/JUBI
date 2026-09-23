@@ -16,7 +16,7 @@
 <div class="field"><label>Notes</label><textarea id="network-notes" class="textarea" placeholder="Ownership / purpose / location"></textarea></div>
 <button id="network-register" class="btn primary">Register device</button><pre id="network-register-output" class="codebox">No device registered yet.</pre>
 </div></div>
-<div class="card span-7"><div class="card-head"><div><div class="card-title">Passive neighbor discovery</div><div class="card-sub">Reads Windows ARP / OS neighbor cache; it does not probe the subnet</div></div><button id="network-discover" class="btn">Read neighbor cache</button></div><div class="card-body"><div id="network-neighbors" class="row-list"></div></div></div>
+<div class="card span-7"><div class="card-head"><div><div class="card-title">Passive neighbor discovery</div><div class="card-sub">Reads the host ARP / neighbor cache (Windows or Linux); it does not probe the subnet</div></div><button id="network-discover" class="btn">Read neighbor cache</button></div><div class="card-body"><div id="network-neighbors" class="row-list"></div></div></div>
 </div>
 <div class="grid" style="margin-top:16px">
 <div class="card span-12"><div class="card-head"><div><div class="card-title">Authorized device registry</div><div class="card-sub">Health checks resolve the host and connect only to registered service ports</div></div></div><div class="table-wrap"><table><thead><tr><th>Device</th><th>Host</th><th>Services</th><th>Updated</th><th>Actions</th></tr></thead><tbody id="network-devices"></tbody></table></div></div>
