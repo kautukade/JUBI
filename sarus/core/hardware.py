@@ -292,9 +292,14 @@ $ErrorActionPreference='Stop'
                 if status.get('online'):
                     result['ollama'] = {'endpoint': base, **status}
                     break
-    result['wsl'] = _command([programs['wsl'], '--status'], timeout=4) if programs['wsl'] else {'status': 'DEPENDENCY_MISSING'}
-    result['docker'] = _command([programs['docker'], '-H', 'npipe:////./pipe/docker_engine', 'version',
-                                 '--format', '{{json .}}'], timeout=4) if programs['docker'] else {'status': 'DEPENDENCY_MISSING'}
+    if os.name == 'nt':
+        result['wsl'] = _command([programs['wsl'], '--status'], timeout=4) if programs['wsl'] else {'status': 'DEPENDENCY_MISSING'}
+        result['docker'] = _command([programs['docker'], '-H', 'npipe:////./pipe/docker_engine', 'version',
+                                     '--format', '{{json .}}'], timeout=4) if programs['docker'] else {'status': 'DEPENDENCY_MISSING'}
+    else:
+        result['wsl'] = {'status': 'DEPENDENCY_MISSING', 'detail': 'Windows-only subsystem'}
+        result['docker'] = _command([programs['docker'], 'version', '--format', '{{json .Server}}'],
+                                    timeout=4) if programs['docker'] else {'status': 'DEPENDENCY_MISSING'}
     return result
 
 
