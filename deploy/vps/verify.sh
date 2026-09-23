@@ -12,14 +12,14 @@ fi
 PORT="${JUBI_PORT:-8877}"
 OLLAMA_URL="${JUBI_OLLAMA_URL:-http://127.0.0.1:11434}"
 
-echo "[1/7] systemd service"
+echo "[1/8] systemd service"
 systemctl is-active --quiet jubi.service
 echo "  active"
 
-echo "[2/7] Jubi HTTP health"
+echo "[2/8] Jubi HTTP health"
 "$PREFIX/deploy/vps/healthcheck.sh"
 
-echo "[3/7] listener exposure"
+echo "[3/8] listener exposure"
 if ! command -v ss >/dev/null 2>&1; then
   echo "  ss not installed; listener inspection skipped"
 else
@@ -35,7 +35,7 @@ else
   }
 fi
 
-echo "[4/7] Ollama local endpoint"
+echo "[4/8] Ollama local endpoint"
 case "$OLLAMA_URL" in
   http://127.0.0.1:*|http://localhost:*) ;;
   *) echo "Remote Ollama endpoint is forbidden in the VPS local-only profile." >&2; exit 5 ;;
@@ -46,10 +46,10 @@ if [[ "${JUBI_REQUIRE_FULL_MODELS:-0}" == "1" ]]; then
     | python3 -c 'import json,sys; d=json.load(sys.stdin); have={x.get("name") for x in d.get("models",[])}; need={"qwen3:8b","qwen2.5vl:3b","qwen3-embedding:0.6b"}; missing=sorted(need-have); print("  full-profile models:", ", ".join(sorted(need))); sys.exit("missing: "+", ".join(missing)) if missing else None'
 fi
 
-echo "[5/7] Python source compilation"
+echo "[5/8] Python source compilation"
 "$PREFIX/.venv/bin/python" -m compileall -q "$PREFIX/jubi" "$PREFIX/sarus"
 
-echo "[6/7] Hermes pilot dependencies"
+echo "[6/8] Hermes pilot dependencies"
 if [[ "${JUBI_REQUIRE_HERMES:-0}" == "1" ]]; then
   "$PREFIX/.venv/bin/python" - <<'PY'
 import importlib.metadata
@@ -63,7 +63,7 @@ else
     echo "  not installed (core VPS remains valid; re-run installer with --with-hermes to test Hermes)"
   fi
 fi
-echo "[7/7] VPS browser runtime"
+echo "[7/8] VPS browser runtime"
 if [[ "${JUBI_REQUIRE_BROWSER:-0}" == "1" ]]; then
   "$PREFIX/.venv/bin/python" - <<'PY'
 from sarus.core.browser import VPSBrowser
@@ -77,5 +77,9 @@ PY
 else
   echo "  optional/not-required"
 fi
+
+echo "[8/8] Jubi consolidated VPS readiness"
+READINESS="$(curl --fail --silent --show-error --max-time 10 "http://127.0.0.1:$PORT/api/vps/readiness")"
+printf '%s' "$READINESS" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  ready:", d.get("ready"), "failed:", ", ".join(d.get("failed_required",[]))); sys.exit(0 if d.get("ready") else 1)'
 
 echo "VPS verification: PASS"
