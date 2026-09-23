@@ -8,6 +8,7 @@ OLLAMA_URL="http://127.0.0.1:11434"
 START_SERVICE=0
 INSTALL_PACKAGES=1
 WITH_HERMES=0
+WITH_AUTONOMY=0
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 usage() {
@@ -22,6 +23,7 @@ Options:
   --ollama-url URL     Local Ollama URL (default: http://127.0.0.1:11434)
   --start              Enable and start jubi.service after installation
   --with-hermes        Install upstream Hermes core Python dependencies
+  --with-autonomy      Install full VPS coding runtime (Hermes + bubblewrap + pytest)
   --no-packages        Do not install OS prerequisites
   -h, --help           Show this help
 
@@ -39,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --ollama-url) OLLAMA_URL="$2"; shift 2 ;;
     --start) START_SERVICE=1; shift ;;
     --with-hermes) WITH_HERMES=1; shift ;;
+    --with-autonomy) WITH_AUTONOMY=1; WITH_HERMES=1; shift ;;
     --no-packages) INSTALL_PACKAGES=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -102,7 +105,7 @@ if (( INSTALL_PACKAGES )); then
   if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd
+    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd git bubblewrap
   else
     echo "Automatic package installation currently supports apt-based Linux." >&2
     echo "Install Python 3.11+, venv, curl, rsync and user-management tools, then re-run with --no-packages." >&2
@@ -178,6 +181,15 @@ print("Hermes:", importlib.metadata.version("hermes-agent"))
 PY_HERMES_VERIFY
 fi
 
+if (( WITH_AUTONOMY )); then
+  command -v bwrap >/dev/null 2>&1 || {
+    echo "bubblewrap is required for VPS autonomy" >&2
+    exit 5
+  }
+  "$PREFIX/.venv/bin/python" -m pip install --disable-pip-version-check "pytest>=8,<10"
+  bwrap --die-with-parent --new-session --unshare-net --ro-bind / / --tmpfs /tmp --proc /proc --dev /dev /bin/true
+fi
+
 chown -R "$SERVICE_USER:$SERVICE_USER" "$PREFIX"
 
 install -d -m 0750 /etc/jubi
@@ -190,6 +202,7 @@ JUBI_DEBUG=0
 JUBI_HTTP_LOG=1
 JUBI_DEPLOYMENT_PROFILE=linux_vps
 JUBI_REQUIRE_HERMES=$WITH_HERMES
+JUBI_REQUIRE_AUTONOMY=$WITH_AUTONOMY
 PYTHONUNBUFFERED=1
 PYTHONDONTWRITEBYTECODE=1
 PYTHONNOUSERSITE=1
@@ -216,6 +229,15 @@ else
   elif ! grep -q '^JUBI_REQUIRE_HERMES=' /etc/jubi/jubi.env; then
     echo 'JUBI_REQUIRE_HERMES=0' >>/etc/jubi/jubi.env
   fi
+  if (( WITH_AUTONOMY )); then
+    if grep -q '^JUBI_REQUIRE_AUTONOMY=' /etc/jubi/jubi.env; then
+      sed -i 's/^JUBI_REQUIRE_AUTONOMY=.*/JUBI_REQUIRE_AUTONOMY=1/' /etc/jubi/jubi.env
+    else
+      echo 'JUBI_REQUIRE_AUTONOMY=1' >>/etc/jubi/jubi.env
+    fi
+  elif ! grep -q '^JUBI_REQUIRE_AUTONOMY=' /etc/jubi/jubi.env; then
+    echo 'JUBI_REQUIRE_AUTONOMY=0' >>/etc/jubi/jubi.env
+  fi
 fi
 chmod 0640 /etc/jubi/jubi.env
 chown root:"$SERVICE_USER" /etc/jubi/jubi.env
@@ -236,6 +258,10 @@ HERMES_STATE="optional/not-installed"
 if (( WITH_HERMES )); then
   HERMES_STATE="installed"
 fi
+AUTONOMY_STATE="optional/not-installed"
+if (( WITH_AUTONOMY )); then
+  AUTONOMY_STATE="installed"
+fi
 
 cat <<EOF_SUMMARY
 
@@ -253,4 +279,5 @@ Then open:
 Do not open TCP $PORT in the AWS Security Group.
 Ollama/model installation is intentionally separate and requires your explicit action.
 Hermes dependencies: $HERMES_STATE
+VPS autonomous coding runtime: $AUTONOMY_STATE
 EOF_SUMMARY
