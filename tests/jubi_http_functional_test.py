@@ -34,7 +34,7 @@ class HttpFunctionalTests(unittest.TestCase):
     def test_all_read_only_feature_endpoints(self):
         endpoints=['health','status','brain','brain/decisions','brain/performance','council','supervisor','research','network',
                    'network/devices','network/observations','vision','providers','providers/performance','providers/requests',
-                   'knowledge/status','knowledge/documents','experience','experience/stats','developer','browser','swarm','broker','doctor','events',
+                   'knowledge/status','knowledge/documents','experience','experience/stats','developer','browser','swarm','vps/readiness','broker','doctor','events',
                    'models','capabilities','tasks','approvals','receipts','memory','automations','fable','fable/traces',
                    'fable/capabilities','fable/agenda','fable/lab/tail','conversations']
         for p in endpoints:
