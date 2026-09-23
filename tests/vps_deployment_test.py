@@ -18,6 +18,7 @@ class VPSDeploymentTest(unittest.TestCase):
     def test_env_example_is_not_publicly_bound(self):
         text = (ROOT / "deploy" / "vps" / "jubi.env.example").read_text(encoding="utf-8")
         self.assertIn("JUBI_HOST=127.0.0.1", text)
+        self.assertIn("--with-hermes", text)
         self.assertNotIn("JUBI_HOST=0.0.0.0", text)
 
     def test_systemd_is_non_root_and_hardened(self):
@@ -28,6 +29,8 @@ class VPSDeploymentTest(unittest.TestCase):
             "ProtectSystem=strict",
             "ProtectKernelModules=true",
             "CapabilityBoundingSet=",
+            "Environment=JUBI_DEPLOYMENT_PROFILE=linux_vps",
+            "Environment=PYTHONNOUSERSITE=1",
             "ReadWritePaths=@JUBI_PREFIX@/data @JUBI_PREFIX@/workspace @JUBI_PREFIX@/logs",
         ):
             self.assertIn(required, text)
