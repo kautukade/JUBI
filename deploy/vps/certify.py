@@ -192,9 +192,12 @@ def main() -> int:
             base + "/api/automation", token=token,
             body={"name": name, "prompt": "Certification no-op task", "interval_seconds": 86400, "enabled": False},
         )
+        automation_id = str(created.get("id") or "")
+        if automation_id:
+            cleanup.append(("automation", automation_id))
         rows = _json_request(base + "/api/automations")
         found = any(str(x.get("name")) == name for x in rows) if isinstance(rows, list) else False
-        return {"ok": bool(created and found), "created": created, "found": found}
+        return {"ok": bool(automation_id and found), "created": created, "found": found}
     record("Persistent automation scheduler", automation_check)
 
     def host_header_boundary():
@@ -210,6 +213,8 @@ def main() -> int:
         try:
             if kind == "knowledge" and value:
                 _json_request(base + "/api/knowledge/delete", token=token, body={"id": value})
+            elif kind == "automation" and value:
+                _json_request(base + "/api/automation/delete", token=token, body={"id": value})
             elif kind == "project" and not args.keep_workspace:
                 shutil.rmtree(value, ignore_errors=True)
         except Exception:
