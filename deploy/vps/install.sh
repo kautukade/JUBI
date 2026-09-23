@@ -154,6 +154,8 @@ EOF
   chown root:"$SERVICE_USER" /etc/jubi/jubi.env
 else
   echo "Keeping existing /etc/jubi/jubi.env"
+  grep -q '^JUBI_DEPLOYMENT_PROFILE=' /etc/jubi/jubi.env || echo 'JUBI_DEPLOYMENT_PROFILE=linux_vps' >>/etc/jubi/jubi.env
+  grep -q '^PYTHONNOUSERSITE=' /etc/jubi/jubi.env || echo 'PYTHONNOUSERSITE=1' >>/etc/jubi/jubi.env
   if (( WITH_HERMES )); then
     if grep -q '^JUBI_REQUIRE_HERMES=' /etc/jubi/jubi.env; then
       sed -i 's/^JUBI_REQUIRE_HERMES=.*/JUBI_REQUIRE_HERMES=1/' /etc/jubi/jubi.env
