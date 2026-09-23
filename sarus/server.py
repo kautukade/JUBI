@@ -225,6 +225,8 @@ class H(SimpleHTTPRequestHandler):
                         int(q.get('limit', ['6'])[0]),
                     )
                 )
+            if p == '/api/vps/readiness':
+                return self._json(APP.vps_readiness.run())
             if p == '/api/swarm':
                 return self._json(APP.swarm.status())
             if p == '/api/browser':
