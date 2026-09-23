@@ -17,6 +17,7 @@ from .hardware import profile_hardware
 from .hermes import HermesRuntime
 from .developer import VPSDeveloper
 from .browser import VPSBrowser
+from .voice import VPSVoice
 from .swarm import VPSSwarm
 from .vps_readiness import VPSReadiness
 from .adapters import AdapterManager
@@ -60,6 +61,7 @@ class Jubi:
         self.hermes = HermesRuntime(root, self.models)
         self.developer = VPSDeveloper(self)
         self.browser = VPSBrowser(self)
+        self.voice = VPSVoice(self)
         self.swarm = VPSSwarm(self)
         self.vps_readiness = VPSReadiness(self)
         self.registry.register_executor(CapabilitySpec(
@@ -164,6 +166,7 @@ class Jubi:
             'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
             'developer': {'mode': 'vps-bounded-developer', 'workspace': str(self.developer.workspace), 'local_model_only': True},
             'browser': self.browser.status(),
+            'voice': self.voice.status(),
             'swarm': self.swarm.status(),
             'research': {
                 'recent_runs': len(self.research.recent(20)),
