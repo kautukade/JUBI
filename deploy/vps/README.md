@@ -60,7 +60,7 @@ Or, after Ollama is already installed and reachable on loopback, use the full pr
 sudo bash deploy/vps/full-profile.sh
 ```
 
-The full profile requires Hermes, Chromium, general/coding, vision and embedding roles before verification can pass.
+The full profile requires Hermes, Chromium, general/coding, vision, embedding and offline voice roles before verification can pass. It then runs both the in-process live acceptance suite and an HTTP end-to-end certification as the non-root `jubi` service user. A PASS requires real local inference plus successful Brain routing, Council, Supervisor, Hermes delegation, RAG, browser/research, vision, offline STT/TTS, Developer, Swarm, automation/memory lifecycles, typed Linux operator, approvals/receipts, Network/Fable status and HTTP security checks. HTTP certification evidence is written to `/opt/jubi/logs/vps-live-certification.json`.
 
 The installer:
 - creates a dedicated `jubi` service account;
@@ -104,9 +104,12 @@ automations, receipts,
 passive Linux neighbour-cache support, and workspace file/Git operations.
 
 Windows-specific desktop features remain unavailable on a Linux VPS: Ring0,
-Windows service/process controls, Windows application launch, DPAPI, native SARA
-desktop control, camera/microphone desktop interaction, and the Windows EXE
-installer.
+Windows desktop application launch, DPAPI, native SARA desktop control, direct
+camera/microphone desktop interaction, and the Windows EXE installer. Linux
+process/service inventory and allowlisted service queries work through the
+typed host operator. Service start/stop and process termination are default-
+denied in the hardened profile; they require an explicit
+`JUBI_ALLOW_HOST_MUTATION=1` opt-in plus host permissions.
 
 A later split architecture can pair this VPS core with a separately authorized
 Windows worker. That worker should remain an explicit, authenticated capability
