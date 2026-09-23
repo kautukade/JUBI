@@ -7,6 +7,7 @@ they run through bubblewrap with no network and a read-only host filesystem.
 from __future__ import annotations
 
 import importlib.util
+import ctypes.util
 import json
 import os
 import re
@@ -348,10 +349,13 @@ class VPSDevelopmentAgent:
         self.models = app.models
 
     def status(self) -> dict:
+        bwrap = shutil.which("bwrap")
+        seccomp = ctypes.util.find_library("seccomp") if os.name != "nt" else None
         return {
-            "available": os.name == "nt" or bool(shutil.which("bwrap")),
+            "available": os.name == "nt" or bool(bwrap and seccomp),
             "sandbox": "bubblewrap+seccomp-no-network" if os.name != "nt" else "windows-user-process",
-            "bubblewrap": shutil.which("bwrap"),
+            "bubblewrap": bwrap,
+            "libseccomp": seccomp,
             "coding_model": self.models.choose("coding"),
         }
 
