@@ -62,4 +62,11 @@ systemctl restart jubi.service
 sleep 2
 bash "$PREFIX/deploy/vps/verify.sh"
 
+command -v runuser >/dev/null 2>&1 || {
+  echo "runuser is required for non-root live certification." >&2
+  exit 3
+}
+echo "Running live end-to-end VPS certification as $SERVICE_USER..."
+runuser -u "$SERVICE_USER" --   "$PREFIX/.venv/bin/python" "$PREFIX/deploy/vps/certify.py"   --base "http://127.0.0.1:$PORT"   --json-output "$PREFIX/logs/vps-live-certification.json"
+
 echo "Jubi full VPS profile: PASS"
