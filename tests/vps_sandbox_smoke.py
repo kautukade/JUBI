@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import sys
 import tempfile
 import unittest
@@ -10,12 +9,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from sarus.core.development import DevelopmentWorkspace
+from sarus.core.sandbox_exec import landlock_abi
 
 
 @unittest.skipUnless(sys.platform.startswith("linux"), "Linux VPS sandbox smoke")
 class VPSSandboxSmoke(unittest.TestCase):
-    def test_real_bubblewrap_no_network_test_cycle(self):
-        self.assertTrue(shutil.which("bwrap"), "bubblewrap must be installed in the VPS autonomy profile")
+    def test_real_landlock_seccomp_test_cycle(self):
+        self.assertGreaterEqual(landlock_abi(), 1, "Landlock must be enabled for VPS autonomy")
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             project = root / "workspace" / "demo"
