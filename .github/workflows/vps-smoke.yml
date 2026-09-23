@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Python compile
-        run: python -m compileall -q jubi sarus tests/vps_deployment_test.py
+        run: python -m compileall -q jubi sarus tests/vps_deployment_test.py deploy/vps/certify.py
       - name: VPS deployment contracts
         run: python tests/vps_deployment_test.py
       - name: Linux hardware and production readiness
