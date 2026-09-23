@@ -36,10 +36,10 @@ several Ollama models are retained. Monitor both EBS usage and model storage.
 Clone the branch/release you intend to test, then:
 
 ```bash
-sudo bash deploy/vps/install.sh --with-hermes --start
+sudo bash deploy/vps/install.sh --with-autonomy --start
 ```
 
-For a lighter core-only deployment, omit `--with-hermes`. The full agent test profile installs Hermes core dependencies but still does not install a model or cloud credentials.
+For a lighter core-only deployment, omit `--with-autonomy`. The full autonomy profile installs Hermes dependencies plus the Linux sandbox/test runtime, but it still does not download an AI model or configure cloud credentials.
 
 The installer:
 - creates a dedicated `jubi` service account;
@@ -97,3 +97,32 @@ the rest of `data/` plus `workspace/`. It intentionally excludes
 
 Restore should be performed into a stopped service and reviewed manually during
 this testing phase; automated destructive restore is intentionally not shipped.
+
+
+## Full live acceptance
+
+After Ollama and the models you explicitly selected are installed, run:
+
+```bash
+sudo /opt/jubi/deploy/vps/verify.sh
+sudo /opt/jubi/deploy/vps/acceptance.sh
+```
+
+`verify.sh` checks the service/security/dependency boundary. When the autonomy
+profile is enabled, it also requires `/api/vps/readiness?full=1` to report
+ready.
+
+`acceptance.sh` then runs the model-heavy live feature suite as the unprivileged
+Jubi service user. It exercises local general inference, embeddings/RAG, vision,
+Hermes, Council, Supervisor, public web fetch, memory, scheduler, signed
+receipts, Linux operator inventory, passive LAN discovery, source catalogs and
+a real autonomous code edit -> test -> diff -> verify challenge.
+
+Evidence is written under:
+
+```text
+/opt/jubi/data/evidence/vps-live-acceptance-*.json
+```
+
+A deployment should not be called fully accepted until that JSON has
+`"ok": true`.
