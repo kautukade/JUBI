@@ -36,6 +36,7 @@ class App:
         self.models = Models()
         self.hermes = Ready()
         self.browser = Ready()
+        self.voice = Ready()
         self.developer = type("D", (), {"workspace": Path(root)})()
         self.swarm = Ready()
         self.research = object()
@@ -55,6 +56,7 @@ class VPSReadinessTests(unittest.TestCase):
             "JUBI_REQUIRE_FULL_MODELS": "1",
             "JUBI_REQUIRE_HERMES": "1",
             "JUBI_REQUIRE_BROWSER": "1",
+            "JUBI_REQUIRE_VOICE": "1",
         }, clear=False):
             result = VPSReadiness(App(td)).run()
         self.assertTrue(result["ready"], result)
@@ -71,6 +73,17 @@ class VPSReadinessTests(unittest.TestCase):
             result = VPSReadiness(app).run()
         self.assertFalse(result["ready"])
         self.assertIn("Read-only JS browser", result["failed_required"])
+
+    @unittest.skipIf(os.name == "nt", "Linux VPS readiness contract")
+    def test_missing_required_voice_fails_readiness(self):
+        with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {
+            "JUBI_REQUIRE_VOICE": "1",
+        }, clear=False):
+            app = App(td)
+            app.voice = type("V", (), {"status": lambda self: {"ready": False}})()
+            result = VPSReadiness(app).run()
+        self.assertFalse(result["ready"])
+        self.assertIn("Offline clip STT/TTS", result["failed_required"])
 
 
 if __name__ == "__main__":
