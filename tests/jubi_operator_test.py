@@ -4,6 +4,8 @@ import json
 import sys
 import tempfile
 import unittest
+import os
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,6 +69,36 @@ class TypedOperatorTests(unittest.TestCase):
         launch = cfg['actions']['app.launch']
         self.assertEqual(launch['resource_group'], 'apps')
         self.assertEqual(set(cfg['resources']['apps']), {'vscode', 'notepad', 'explorer'})
+
+
+    @unittest.skipIf(os.name == 'nt', 'Linux/POSIX VPS mapping')
+    def test_linux_vps_readonly_system_actions(self):
+        calls = []
+        def fake_run(argv, timeout, cwd=None):
+            calls.append((argv, timeout, cwd))
+            return {'ok': True, 'returncode': 0, 'stdout': 'ok', 'stderr': ''}
+
+        with patch('sarus.core.windows.shutil.which', side_effect=lambda name: '/usr/bin/' + name), \
+             patch.object(self.broker, '_run', side_effect=fake_run):
+            processes = self.broker.execute_typed('system.processes.list', {}, {})
+            services = self.broker.execute_typed('system.services.list', {}, {})
+            query = self.broker.execute_typed(
+                'service.query', {}, {'linux_service_name': 'ollama.service'}
+            )
+
+        self.assertTrue(processes['ok'])
+        self.assertTrue(services['ok'])
+        self.assertTrue(query['ok'])
+        self.assertEqual(calls[0][0][0], '/usr/bin/ps')
+        self.assertIn('list-units', calls[1][0])
+        self.assertEqual(calls[2][0][-2:], ['ollama.service', '--no-pager'])
+
+        blocked = self.broker.execute_typed(
+            'service.start', {}, {'linux_service_name': 'ollama.service'}
+        )
+        self.assertFalse(blocked['ok'])
+        self.assertIn('headless Linux VPS profile', blocked['error'])
+
 
 
 if __name__ == '__main__':
