@@ -7,7 +7,6 @@ they run through bubblewrap with no network and a read-only host filesystem.
 from __future__ import annotations
 
 import importlib.util
-import ctypes.util
 import json
 import os
 import re
@@ -19,7 +18,7 @@ from pathlib import Path
 
 from .hardware import admission, memory_snapshot
 from .provider_policy import InferenceTransport, LOCAL_ONLY
-from .sandbox_exec import landlock_abi
+from .sandbox_exec import landlock_abi, seccomp_library_name
 from sarus.integrations.hermes_compact import compact_profile
 from sarus.integrations.hermes_tool_compat import promote_text_tool_call
 
@@ -344,7 +343,7 @@ class VPSDevelopmentAgent:
         self.models = app.models
 
     def status(self) -> dict:
-        seccomp = ctypes.util.find_library("seccomp") if os.name != "nt" else None
+        seccomp = seccomp_library_name() if os.name != "nt" else None
         landlock = landlock_abi() if os.name != "nt" else 0
         return {
             "available": os.name == "nt" or bool(seccomp and landlock >= 1),
