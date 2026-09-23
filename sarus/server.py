@@ -229,6 +229,9 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.privileged.status())
             if p == '/api/doctor':
                 return self._json(APP.doctor.run())
+            if p == '/api/vps/readiness':
+                full = str(q.get('full', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
+                return self._json(APP.vps_readiness.run(full=full))
             if p == '/api/events':
                 return self._json(APP.bus.recent(int(q.get('limit', ['100'])[0])))
             if p == '/api/models':
