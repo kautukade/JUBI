@@ -108,7 +108,7 @@ class VPSSwarmTests(unittest.TestCase):
 
         app.research = BadResearch()
         result = VPSSwarm(app).run("research and fix the project")
-        self.assertEqual(result["status"], "partial")
+        self.assertEqual(result["status"], "failed")
         self.assertEqual(result["results"][0]["status"], "failed")
         self.assertEqual(result["results"][1]["status"], "skipped")
         self.assertEqual(result["results"][2]["status"], "skipped")
