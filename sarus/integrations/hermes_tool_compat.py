@@ -14,7 +14,7 @@ from typing import Any
 
 
 _WORKSPACE_TOOL = 'jubi_workspace'
-_WORKSPACE_OPERATION_ALIASES = frozenset({'read', 'write', 'test', 'diff'})
+_WORKSPACE_OPERATION_ALIASES = frozenset({'list', 'read', 'write', 'test', 'diff', 'git_status', 'verify'})
 
 
 def _allowed_tool_names(tools: list[dict] | None) -> set[str]:
@@ -37,7 +37,7 @@ def _normalize_workspace_alias(name: Any, arguments: Any, allowed: set[str]) -> 
     Small local models sometimes see the phrase "read operation" and emit a
     tool named ``read`` even though the only advertised tool is
     ``jubi_workspace``.  When (and only when) that exact workspace tool is in
-    the current turn's allowlist, normalize the four operation names already
+    the current turn's allowlist, normalize the bounded operation names already
     present in its schema into ``jubi_workspace`` arguments.  This is only a
     representation repair: CapabilityRegistry and AcceptanceWorkspace still
     validate every field, path, phase, and operation before execution.
