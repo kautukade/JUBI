@@ -105,7 +105,9 @@ if (( INSTALL_PACKAGES )); then
   if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd git libseccomp2
+    apt-get install -y --no-install-recommends \
+      python3 python3-venv ca-certificates curl rsync passwd git libseccomp2 \
+      iproute2 procps nodejs npm
   else
     echo "Automatic package installation currently supports apt-based Linux." >&2
     echo "Install Python 3.11+, venv, curl, rsync and user-management tools, then re-run with --no-packages." >&2
@@ -113,7 +115,7 @@ if (( INSTALL_PACKAGES )); then
   fi
 fi
 
-for command in python3 curl rsync systemctl getent groupadd useradd install sed grep; do
+for command in python3 curl rsync systemctl getent groupadd useradd install sed grep git ip ss ps node npm; do
   command -v "$command" >/dev/null 2>&1 || {
     echo "Required command not found: $command" >&2
     exit 3
