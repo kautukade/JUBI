@@ -26,11 +26,21 @@
     },
     "linux_vps": {
       "supported": true,
-      "scope": "core server, local Ollama, research, memory, council, supervisor, bounded workspace tools",
+      "scope": "core server, local Ollama, research, memory/RAG, vision, Council, executable swarm, bounded autonomous development, read-only JS browser, automations and receipts",
       "backend_bind": "loopback-only",
       "remote_access": "SSH tunnel by default; authenticated TLS reverse proxy only when explicitly configured",
       "service": "systemd",
-      "windows_desktop_features": false
+      "windows_desktop_features": false,
+      "recommended_models": {
+        "general_and_coding": "qwen3:8b",
+        "vision": "qwen2.5vl:3b",
+        "embedding": "qwen3-embedding:0.6b"
+      },
+      "full_profile_flags": [
+        "--with-hermes",
+        "--with-browser"
+      ],
+      "full_profile_model_provisioning": "deploy/vps/provision-models.sh --recommended"
     }
   }
 }
