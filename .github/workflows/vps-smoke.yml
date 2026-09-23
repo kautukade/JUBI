@@ -39,6 +39,14 @@ jobs:
         run: python -m compileall -q jubi sarus tests/vps_deployment_test.py
       - name: VPS deployment contracts
         run: python tests/vps_deployment_test.py
+      - name: Linux hardware and production readiness
+        run: |
+          python tests/hardware_test.py
+          python tests/production_readiness_test.py
+      - name: Local-only provider boundary
+        run: python tests/provider_policy_test.py
+      - name: Real local HTTP regression
+        run: python tests/jubi_http_functional_test.py
       - name: Shell syntax
         run: |
           bash -n deploy/vps/install.sh
