@@ -22,7 +22,7 @@ class VPSBrowser:
         self.app = app
 
     def status(self) -> dict:
-        available = importlib.util.find_spec("playwright.sync_api") is not None
+        available = importlib.util.find_spec("playwright") is not None
         return {
             "ready": available,
             "mode": "read-only-public-js-browser",
