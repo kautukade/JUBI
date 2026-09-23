@@ -58,7 +58,7 @@ async function dictateVision(){
       voiceRecorder.onerror=e=>{toast('Microphone recording failed: '+(e.error?.message||e.name),'bad');};
       voiceRecorder.onstop=async()=>{
         const stream=voiceStream;voiceStream=null;stream?.getTracks().forEach(t=>t.stop());
-        const rec=voiceRecorder;voiceRecorder=null;setBusy(btn,true,'Transcribing');
+        const rec=voiceRecorder;voiceRecorder=null;btn.disabled=true;btn.innerHTML='<span class="loader"></span>Transcribing';
         try{
           const type=(rec?.mimeType||voiceChunks[0]?.type||'audio/webm').split(';')[0];
           const blob=new Blob(voiceChunks,{type});voiceChunks=[];
@@ -68,7 +68,7 @@ async function dictateVision(){
           document.getElementById('vision-prompt').value=r.text||'';
           toast(r.wake_detected?'Hey Jubi detected · local transcription complete':'Local transcription complete','ok');
         }catch(e){toast('Local transcription: '+e.message,'bad');}
-        finally{setBusy(btn,false);}
+        finally{btn.disabled=false;btn.classList.remove('primary');btn.innerHTML='🎙 Dictate';}
       };
       voiceRecorder.start();btn.dataset.old=btn.innerHTML;btn.innerHTML='■ Stop & transcribe';btn.classList.add('primary');
       return;
