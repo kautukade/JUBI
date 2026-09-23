@@ -18,6 +18,7 @@ from .hermes import HermesRuntime
 from .developer import VPSDeveloper
 from .browser import VPSBrowser
 from .swarm import VPSSwarm
+from .vps_readiness import VPSReadiness
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -60,6 +61,7 @@ class Jubi:
         self.developer = VPSDeveloper(self)
         self.browser = VPSBrowser(self)
         self.swarm = VPSSwarm(self)
+        self.vps_readiness = VPSReadiness(self)
         self.registry.register_executor(CapabilitySpec(
             id='core.hardware.profile', name='Inspect local hardware', source='jubi', version='1',
             category='system', description='Read hardware and installed software without starting services.',
