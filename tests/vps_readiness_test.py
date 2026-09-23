@@ -45,7 +45,7 @@ class App:
         self.memory = object()
         self.execution = object()
         self.scheduler = object()
-        self.privileged = object()
+        self.privileged = type("P", (), {"status": lambda self: {"approval_secret_configured": True}})()
         self.receipts = object()
 
 
