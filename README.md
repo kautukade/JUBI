@@ -111,7 +111,14 @@ Jubi learns from outcomes without modifying base model weights after every conve
 ### AI Council & Multi-Agent Supervisor
 - AI Council asks multiple eligible models independently and uses a Judge to synthesize the final result.
 - Multi-Agent Supervisor performs planner -> specialist reasoning -> reviewer workflows.
-- These are reasoning layers; they do not bypass tool policy, approval or privileged-broker boundaries.
+- On the Linux VPS profile, Agent Manager can route bounded work into real specialists: Development Agent for scoped code edits, Web Research for public-source research, or local generation for general tasks.
+- These layers do not bypass tool policy, approval or privileged-broker boundaries.
+
+### VPS Development Agent
+The Linux VPS profile includes a bounded inspect -> edit -> verify -> independent-review loop for projects under approved `workspace/`, `outputs/` or `projects/` roots. The model proposes complete text/source file replacements; Jubi validates the paths and size limits, applies the changes, performs parser/compile checks without an arbitrary shell, and asks a second reviewer pass to approve the observed diff. Failed verification or review rolls the edits back.
+
+### Headless Browser
+An optional Playwright/Chromium runtime provides read-only public-web navigation, text/link extraction and screenshots on a headless VPS. Localhost, private, link-local and reserved targets are blocked using the same public-web boundary as Jubi Research. Blind form submission and credential entry are not exposed by this runtime.
 
 ### Public Web Research
 Jubi can search/read public HTTP/HTTPS pages and synthesize source-marked research. Internet content is treated as **untrusted evidence**.
