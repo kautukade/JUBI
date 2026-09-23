@@ -1,0 +1,47 @@
+name: Jubi VPS Smoke
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
+    paths:
+      - 'deploy/vps/**'
+      - 'jubi/**'
+      - 'sarus/**'
+      - 'config/**'
+      - 'tests/vps_deployment_test.py'
+      - '.github/workflows/vps-smoke.yml'
+  pull_request:
+    paths:
+      - 'deploy/vps/**'
+      - 'jubi/**'
+      - 'sarus/**'
+      - 'config/**'
+      - 'tests/vps_deployment_test.py'
+      - '.github/workflows/vps-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vps-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python compile
+        run: python -m compileall -q jubi sarus tests/vps_deployment_test.py
+      - name: VPS deployment contracts
+        run: python tests/vps_deployment_test.py
+      - name: Shell syntax
+        run: |
+          bash -n deploy/vps/install.sh
+          bash -n deploy/vps/healthcheck.sh
+          bash -n deploy/vps/verify.sh
+          bash -n deploy/vps/backup.sh
