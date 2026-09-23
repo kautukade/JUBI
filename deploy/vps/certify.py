@@ -178,6 +178,45 @@ def main() -> int:
             return {"ok": marker in serialized, "marker": marker, "result": result}
         record("RAG semantic retrieval", rag_search)
 
+    memory_namespace = "vps-memory-cert"
+    memory_marker = "MEM-" + uuid.uuid4().hex[:12]
+    def memory_check():
+        created = _json_request(
+            base + "/api/memory", token=token,
+            body={"title": "VPS certification", "content": memory_marker, "namespace": memory_namespace},
+        )
+        memory_id = str(created.get("id") or "")
+        if memory_id:
+            cleanup.append(("memory", memory_id))
+        found = _json_request(
+            base + "/api/memory?" + urlencode({"q": memory_marker, "namespace": memory_namespace, "limit": 10})
+        )
+        return {"ok": bool(memory_id and any(memory_marker in str(x.get("content", "")) for x in found)),
+                "created": created, "matches": len(found)}
+    record("Persistent plain memory", memory_check)
+
+    experience_marker = "EXP-" + uuid.uuid4().hex[:12]
+    def experience_check():
+        created = _json_request(
+            base + "/api/experience", token=token,
+            body={
+                "request": experience_marker,
+                "outcome": "Certification success",
+                "success": True,
+                "task_type": "general",
+                "kind": "vps-certification",
+                "lesson": "Lifecycle certification record",
+            },
+            timeout=180,
+        )
+        experience_id = str(created.get("id") or "")
+        if experience_id:
+            cleanup.append(("experience", experience_id))
+        recent = _json_request(base + "/api/experience?limit=25")
+        return {"ok": bool(experience_id and any(x.get("id") == experience_id for x in recent)),
+                "created": created}
+    record("Experience learning lifecycle", experience_check)
+
     def browser_check():
         result = _json_request(
             base + "/api/browser/read", token=token,
@@ -208,6 +247,41 @@ def main() -> int:
         result["ok"] = bool(result.get("ok") and payload.get("ok"))
         return result
     record("Typed Linux Computer Operator", operator_check)
+
+    def task_check():
+        result = _json_request(
+            base + "/api/task", token=token,
+            body={"text": "Give a one-sentence greeting for VPS certification.", "source": "vps-certification"},
+            timeout=360,
+        )
+        result["ok"] = result.get("status") == "completed"
+        return result
+    record("Persistent task execution", task_check)
+
+    def capability_check():
+        result = _json_request(base + "/api/capabilities?view=executors")
+        ids = {str(x.get("id")) for x in result} if isinstance(result, list) else set()
+        return {"ok": {"core.hardware.profile", "hermes.analysis"} <= ids, "executor_ids": sorted(ids)}
+    record("Executable capability registry", capability_check)
+
+    def receipt_check():
+        result = _json_request(base + "/api/receipts?limit=20")
+        chain = result.get("chain") or {}
+        return {"ok": chain.get("ok") is True, "chain": chain, "count": len(result.get("items") or [])}
+    record("Signed receipt chain", receipt_check)
+
+    def network_check():
+        status = _json_request(base + "/api/network")
+        discovered = _json_request(base + "/api/network/discover", token=token, body={}, timeout=30)
+        return {"ok": status.get("mode") == "authorized-lan" and discovered.get("ok") is True,
+                "status": status, "discovery": discovered}
+    record("Authorized network runtime", network_check)
+
+    def fable_check():
+        result = _json_request(base + "/api/fable")
+        return {"ok": result.get("integrated") is True and result.get("source_present") is True,
+                "status": result}
+    record("Fable integration status", fable_check)
 
     tiny_png = (
         "data:image/png;base64,"
@@ -307,6 +381,10 @@ def main() -> int:
         try:
             if kind == "knowledge" and value:
                 _json_request(base + "/api/knowledge/delete", token=token, body={"id": value})
+            elif kind == "memory" and value:
+                _json_request(base + "/api/memory/delete", token=token, body={"id": value})
+            elif kind == "experience" and value:
+                _json_request(base + "/api/experience/delete", token=token, body={"id": value})
             elif kind == "automation" and value:
                 _json_request(base + "/api/automation/delete", token=token, body={"id": value})
             elif kind == "project" and not args.keep_workspace:
