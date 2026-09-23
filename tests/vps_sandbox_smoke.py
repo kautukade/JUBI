@@ -24,18 +24,24 @@ class VPSSandboxSmoke(unittest.TestCase):
                 "def add(a, b):\n    return a - b\n", encoding="utf-8"
             )
             (project / "test_calc.py").write_text(
+                "import errno\n"
+                "import socket\n"
                 "import unittest\n"
                 "from calc import add\n\n"
                 "class T(unittest.TestCase):\n"
                 "    def test_add(self):\n"
-                "        self.assertEqual(add(2, 3), 5)\n\n"
+                "        self.assertEqual(add(2, 3), 5)\n"
+                "    def test_network_is_kernel_denied(self):\n"
+                "        with self.assertRaises(OSError) as ctx:\n"
+                "            socket.socket()\n"
+                "        self.assertEqual(ctx.exception.errno, errno.EPERM)\n\n"
                 "if __name__ == '__main__': unittest.main()\n",
                 encoding="utf-8",
             )
             ws = DevelopmentWorkspace(root, "demo")
             first = ws.test("python_unittest")
             self.assertFalse(first["ok"], first)
-            self.assertEqual(first["sandbox"], "bubblewrap-no-network")
+            self.assertEqual(first["sandbox"], "bubblewrap+seccomp-no-network")
 
             ws.write("calc.py", "def add(a, b):\n    return a + b\n")
             second = ws.test("python_unittest")
