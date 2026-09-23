@@ -59,6 +59,8 @@ jobs:
         run: python tests/browser_runtime_test.py
       - name: Linux typed operator
         run: python tests/linux_operator_test.py
+      - name: Broker platform availability
+        run: python tests/broker_platform_test.py
       - name: Real local HTTP regression
         run: python tests/jubi_http_functional_test.py
       - name: Shell syntax
