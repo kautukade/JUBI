@@ -20,6 +20,7 @@ APP = Jubi(ROOT)
 SESSION_TOKEN = secrets.token_urlsafe(32)
 MAX_HTTP_BODY = 2 * 1024 * 1024
 MAX_VISION_BODY = 12 * 1024 * 1024
+MAX_AUDIO_BODY = 28 * 1024 * 1024
 
 
 def loopback_host(value):
@@ -130,7 +131,7 @@ class H(SimpleHTTPRequestHandler):
         for key in ('enabled', 'success'):
             if key in data and type(data[key]) is not bool:
                 raise ValueError(f'{key} must be a boolean')
-        for key in ('text', 'prompt', 'content', 'name', 'title', 'namespace', 'query', 'question', 'api_key', 'project', 'model', 'plan', 'url'):
+        for key in ('text', 'prompt', 'content', 'name', 'title', 'namespace', 'query', 'question', 'api_key', 'project', 'model', 'plan', 'url', 'audio', 'mime', 'language'):
             if key in data and not isinstance(data[key], str):
                 raise ValueError(f'{key} must be a string')
         return data
@@ -181,6 +182,8 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.network.recent_observations(int(q.get('limit', ['100'])[0])))
             if p == '/api/vision':
                 return self._json(APP.vision.status())
+            if p == '/api/voice':
+                return self._json(APP.voice.status())
             if p == '/api/providers':
                 validate = str(q.get('validate', ['0'])[0]).lower() in {'1', 'true', 'yes', 'on'}
                 return self._json(APP.providers.status(validate=validate))
@@ -327,7 +330,10 @@ class H(SimpleHTTPRequestHandler):
         if origin and origin not in {f'http://{host}', f'https://{host}'}:
             return self._json({'error': 'cross-origin request blocked'}, 403)
         try:
-            data = self._body(MAX_VISION_BODY if p == '/api/vision/analyze' else MAX_HTTP_BODY)
+            body_limit = MAX_VISION_BODY if p == '/api/vision/analyze' else (
+                MAX_AUDIO_BODY if p == '/api/voice/transcribe' else MAX_HTTP_BODY
+            )
+            data = self._body(body_limit)
             if p == '/api/plan':
                 return self._json({'steps': APP.orchestrator.execute_dry(str(data.get('text', '')))})
             if p == '/api/task':
@@ -436,6 +442,22 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('prompt', '')),
                         data.get('model'),
                         int(data.get('timeout', 300)),
+                    )
+                )
+            if p == '/api/voice/transcribe':
+                return self._json(
+                    APP.voice.transcribe(
+                        str(data.get('audio', '')),
+                        str(data.get('mime', '')),
+                        str(data.get('language', '')),
+                    )
+                )
+            if p == '/api/voice/synthesize':
+                return self._json(
+                    APP.voice.synthesize(
+                        str(data.get('text', '')),
+                        str(data.get('language', 'en')),
+                        int(data.get('speed', 165)),
                     )
                 )
             if p == '/api/provider/route':
