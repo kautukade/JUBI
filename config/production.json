@@ -26,11 +26,16 @@
     },
     "linux_vps": {
       "supported": true,
-      "scope": "core server, local Ollama, research, memory, council, supervisor, bounded workspace tools",
+      "scope": "core server, local Ollama, persistent chat/memory/RAG, research, Council, executable Agent Manager, bounded Development Agent, typed Linux operator, Playwright public-web browser, automations and receipts",
       "backend_bind": "loopback-only",
       "remote_access": "SSH tunnel by default; authenticated TLS reverse proxy only when explicitly configured",
       "service": "systemd",
-      "windows_desktop_features": false
+      "windows_desktop_features": false,
+      "optional_components": [
+        "hermes",
+        "playwright-browser"
+      ],
+      "full_live_certification": "deploy/vps/certify.py --full"
     }
   }
 }
