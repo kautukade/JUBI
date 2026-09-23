@@ -173,11 +173,29 @@ def _act_errno(value: int) -> int:
     return 0x00050000 | (int(value) & 0xFFFF)
 
 
+def seccomp_library_name() -> str | None:
+    candidates = [
+        ctypes.util.find_library("seccomp"),
+        "libseccomp.so.2",
+        "libseccomp.so",
+    ]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        try:
+            lib = ctypes.CDLL(candidate, use_errno=True)
+            del lib
+            return candidate
+        except OSError:
+            continue
+    return None
+
+
 def install_no_network_filter() -> None:
     if not sys.platform.startswith("linux"):
         raise RuntimeError("seccomp network sandbox is Linux-only")
 
-    library = ctypes.util.find_library("seccomp")
+    library = seccomp_library_name()
     if not library:
         raise RuntimeError("libseccomp is required for VPS autonomous test isolation")
     lib = ctypes.CDLL(library, use_errno=True)
