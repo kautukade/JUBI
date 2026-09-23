@@ -80,6 +80,34 @@ class VPSDeveloperTests(unittest.TestCase):
             self.assertIn("return a + b", result["diff"])
             self.assertTrue(result["tools_executed"])
 
+    def test_failed_review_rolls_back_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            project = root / "workspace" / "demo"
+            project.mkdir(parents=True)
+            (root / "config" / "vps-test-plans").mkdir(parents=True)
+            target = project / "calc.py"
+            original = "def add(a, b):\n    return a - b\n"
+            target.write_text(original, encoding="utf-8")
+
+            responses = [
+                json.dumps({"operation": "read", "path": "calc.py"}),
+                json.dumps({"operation": "write", "path": "calc.py",
+                            "content": "def add(a, b):\n    return a + b\n"}),
+                json.dumps({"operation": "verify"}),
+                json.dumps({"operation": "finish", "summary": "Changed implementation."}),
+                json.dumps({"approved": False, "reason": "Reviewer intentionally rejects this test change."}),
+            ]
+            result = VPSDeveloper(FakeApp(root, responses)).run(
+                "Fix add() but simulate a failed independent review", project_path="demo"
+            )
+
+            self.assertFalse(result["ok"], result)
+            self.assertTrue(result["rolled_back"], result)
+            self.assertEqual(result["changed_files"], [])
+            self.assertIn("calc.py", result["attempted_changed_files"])
+            self.assertEqual(target.read_text(encoding="utf-8"), original)
+
     def test_workspace_escape_and_hidden_write_are_blocked(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
