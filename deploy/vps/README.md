@@ -36,8 +36,10 @@ several Ollama models are retained. Monitor both EBS usage and model storage.
 Clone the branch/release you intend to test, then:
 
 ```bash
-sudo bash deploy/vps/install.sh --start
+sudo bash deploy/vps/install.sh --with-hermes --start
 ```
+
+For a lighter core-only deployment, omit `--with-hermes`. The full agent test profile installs Hermes core dependencies but still does not install a model or cloud credentials.
 
 The installer:
 - creates a dedicated `jubi` service account;
