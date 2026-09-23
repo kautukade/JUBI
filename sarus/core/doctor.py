@@ -90,7 +90,10 @@ class Doctor:
             add('Windows platform', os.name == 'nt', platform.platform(), 'required')
         elif deployment_profile == 'linux_vps':
             add('Linux VPS platform', platform.system() == 'Linux', platform.platform(), 'required')
-            hermes = self.app.hermes.status()
+            hermes_runtime = getattr(self.app, 'hermes', None)
+            hermes = hermes_runtime.status() if hermes_runtime is not None else {
+                'ready': False, 'reason': 'Hermes runtime not attached to this app fixture'
+            }
             require_hermes = os.environ.get('JUBI_REQUIRE_HERMES', '0').lower() in {'1', 'true', 'yes', 'on'}
             add(
                 'Hermes pilot dependencies',
