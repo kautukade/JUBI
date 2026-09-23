@@ -237,6 +237,9 @@ Chat conversations and complete successful turns are also persisted. The dashboa
 
 SQLite uses WAL, busy timeout, foreign keys and explicit commit/rollback transactions.
 
+### VPS offline voice
+On the Linux VPS profile, Jubi can run offline audio-clip transcription with a locally provisioned faster-whisper model and local WAV TTS via espeak-ng. Audio is supplied by an authenticated client over the existing loopback/SSH-tunnel boundary; a headless VPS does not claim direct access to the operator laptop microphone or an always-listening wake-word service.
+
 ## Linux VPS deployment
 
 Jubi now has a hardened Linux VPS **core runtime** profile under
