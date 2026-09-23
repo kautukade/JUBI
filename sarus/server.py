@@ -173,6 +173,8 @@ class H(SimpleHTTPRequestHandler):
                 return self._json(APP.supervisor.recent(int(q.get('limit', ['30'])[0])))
             if p == '/api/research':
                 return self._json(APP.research.recent(int(q.get('limit', ['30'])[0])))
+            if p == '/api/development':
+                return self._json(APP.development.recent(int(q.get('limit', ['30'])[0])))
             if p == '/api/network':
                 return self._json(APP.network.status())
             if p == '/api/network/devices':
@@ -356,6 +358,15 @@ class H(SimpleHTTPRequestHandler):
                         str(data.get('text', '')),
                         str(data.get('task_type', 'auto')),
                         str(data.get('provider', 'auto')),
+                    )
+                )
+            if p == '/api/development/run':
+                return self._json(
+                    APP.development.run(
+                        str(data.get('text', '')),
+                        str(data.get('project_path', '')),
+                        str(data.get('provider', 'ollama')),
+                        data.get('model'),
                     )
                 )
             if p == '/api/research/search':
