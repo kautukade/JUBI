@@ -105,7 +105,7 @@ if (( INSTALL_PACKAGES )); then
   if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
-    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd git bubblewrap
+    apt-get install -y --no-install-recommends       python3 python3-venv ca-certificates curl rsync passwd git bubblewrap libseccomp2
   else
     echo "Automatic package installation currently supports apt-based Linux." >&2
     echo "Install Python 3.11+, venv, curl, rsync and user-management tools, then re-run with --no-packages." >&2
@@ -187,7 +187,7 @@ if (( WITH_AUTONOMY )); then
     exit 5
   }
   "$PREFIX/.venv/bin/python" -m pip install --disable-pip-version-check "pytest>=8,<10"
-  bwrap --die-with-parent --new-session --unshare-net --ro-bind / / --tmpfs /tmp --proc /proc --dev /dev /bin/true
+  bwrap --die-with-parent --new-session --ro-bind / / --tmpfs /tmp --proc /proc --dev /dev     "$PREFIX/.venv/bin/python" "$PREFIX/sarus/core/sandbox_exec.py" -- /bin/true
 fi
 
 chown -R "$SERVICE_USER:$SERVICE_USER" "$PREFIX"
