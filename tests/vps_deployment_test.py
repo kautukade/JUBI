@@ -18,7 +18,6 @@ class VPSDeploymentTest(unittest.TestCase):
     def test_env_example_is_not_publicly_bound(self):
         text = (ROOT / "deploy" / "vps" / "jubi.env.example").read_text(encoding="utf-8")
         self.assertIn("JUBI_HOST=127.0.0.1", text)
-        self.assertIn("--with-hermes", text)
         self.assertNotIn("JUBI_HOST=0.0.0.0", text)
 
     def test_systemd_is_non_root_and_hardened(self):
@@ -41,6 +40,7 @@ class VPSDeploymentTest(unittest.TestCase):
         self.assertNotIn("ollama pull", text.lower())
         self.assertNotIn("JUBI_HOST=0.0.0.0", text)
         self.assertIn("JUBI_HOST=127.0.0.1", text)
+        self.assertIn("--with-hermes", text)
 
     def test_server_still_rejects_wildcard_binding(self):
         text = (ROOT / "sarus" / "server.py").read_text(encoding="utf-8")
