@@ -64,12 +64,34 @@ class PrivilegedBroker:
                 return value, 'protected-local-file'
         return '', 'not-configured'
 
+    @staticmethod
+    def _platform_action(action_id: str) -> tuple[bool, str]:
+        if os.name == 'nt':
+            return True, ''
+        if action_id in {'ring0.ping', 'ring0.status', 'app.launch', 'url.open'}:
+            return False, 'Windows desktop action; use VPS Browser or workspace tools on Linux'
+        if action_id in {'service.start', 'service.stop', 'process.stop'}:
+            return False, 'Hardened non-root VPS service does not expose host mutation for this action'
+        return True, ''
+
     def status(self):
         actions = self.cfg.get('actions', {})
+        configured = sorted(k for k, v in actions.items() if v.get('enabled', False))
+        available = []
+        unavailable = {}
+        for action_id in configured:
+            ok, reason = self._platform_action(action_id)
+            if ok:
+                available.append(action_id)
+            else:
+                unavailable[action_id] = reason
         return {
             'schema': self.cfg.get('schema'),
             'default': 'deny',
-            'configured_actions': sorted(k for k, v in actions.items() if v.get('enabled', False)),
+            'configured_actions': configured,
+            'available_actions': available,
+            'unavailable_actions': unavailable,
+            'platform': 'windows' if os.name == 'nt' else 'linux-vps',
             'forbidden_actions': sorted(self.cfg.get('forbidden_actions', [])),
             'approval_secret_configured': len(self._approval_secret) >= 24,
             'approval_secret_source': self._approval_secret_source,
@@ -285,6 +307,9 @@ class PrivilegedBroker:
             spec = self.cfg.get('actions', {}).get(action_id)
             if not spec or not spec.get('enabled', False):
                 raise PermissionError('action is not allowlisted')
+            platform_ok, platform_reason = self._platform_action(action_id)
+            if not platform_ok:
+                raise PermissionError(platform_reason)
 
             parameters = self._validate_parameters(spec, request.get('parameters') or {})
             audit_parameters = self._audit_parameters(parameters)
