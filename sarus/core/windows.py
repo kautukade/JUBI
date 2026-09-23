@@ -35,7 +35,9 @@ class WindowsBroker:
         return tuple((self.root / str(p)).resolve() for p in roots if str(p).strip())
 
     def available(self):
-        return os.name == 'nt'
+        if os.name == 'nt':
+            return True
+        return bool(shutil.which('ps') and shutil.which('systemctl'))
 
     def _ensure_workspace(self, p):
         path = Path(p).expanduser()
@@ -189,7 +191,37 @@ class WindowsBroker:
             return self.ring0.status()
 
         if os.name != 'nt':
-            return {'ok': False, 'error': 'Windows-only action', 'action': action_id}
+            if action_id == 'system.processes.list':
+                ps = shutil.which('ps')
+                if not ps:
+                    return {'ok': False, 'error': 'ps is unavailable', 'action': action_id}
+                return self._run([ps, '-eo', 'pid=,ppid=,user=,comm=,args=', '--sort=pid'], 15)
+
+            if action_id == 'system.services.list':
+                systemctl = shutil.which('systemctl')
+                if not systemctl:
+                    return {'ok': False, 'error': 'systemctl is unavailable', 'action': action_id}
+                return self._run(
+                    [systemctl, 'list-units', '--type=service', '--all', '--no-pager', '--no-legend'],
+                    20,
+                )
+
+            if action_id == 'service.query':
+                systemctl = shutil.which('systemctl')
+                service = str(resolved.get('linux_service_name') or '').strip()
+                if (not systemctl or not service
+                        or any(ch not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.@-' for ch in service)):
+                    raise ValueError('invalid allowlisted Linux service mapping')
+                return self._run([systemctl, 'status', service, '--no-pager'], 30)
+
+            if action_id in {'service.start', 'service.stop', 'process.stop', 'app.launch'}:
+                return {
+                    'ok': False,
+                    'error': 'This privileged/desktop action is not enabled in the headless Linux VPS profile',
+                    'action': action_id,
+                }
+
+            return {'ok': False, 'error': 'Unsupported Linux VPS action', 'action': action_id}
 
         if action_id == 'system.processes.list':
             return self._run(['tasklist', '/FO', 'CSV', '/NH'], 15)
