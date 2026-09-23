@@ -565,6 +565,8 @@ class H(SimpleHTTPRequestHandler):
                         data.get('metadata') or {},
                     )
                 )
+            if p == '/api/memory/delete':
+                return self._json(APP.memory.delete(str(data.get('id', ''))))
             if p == '/api/approval':
                 return self._json(
                     APP.execution.set_approval(
