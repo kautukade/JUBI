@@ -36,10 +36,24 @@ several Ollama models are retained. Monitor both EBS usage and model storage.
 Clone the branch/release you intend to test, then:
 
 ```bash
-sudo bash deploy/vps/install.sh --with-hermes --start
+sudo bash deploy/vps/install.sh --with-hermes --with-browser --start
 ```
 
-For a lighter core-only deployment, omit `--with-hermes`. The full agent test profile installs Hermes core dependencies but still does not install a model or cloud credentials.
+For a lighter core-only deployment, omit the optional flags. The full agent profile installs Hermes and the read-only Playwright/Chromium browser, but model acquisition remains a separate explicit action.
+
+Recommended compact model profile:
+
+```bash
+sudo /opt/jubi/deploy/vps/provision-models.sh --recommended
+```
+
+Or, after Ollama is already installed and reachable on loopback, use the full profile wrapper:
+
+```bash
+sudo bash deploy/vps/full-profile.sh
+```
+
+The full profile requires Hermes, Chromium, general/coding, vision and embedding roles before verification can pass.
 
 The installer:
 - creates a dedicated `jubi` service account;
@@ -76,9 +90,10 @@ service.
 ## What works on a VPS
 
 The Linux profile is intended for the Jubi core: dashboard, persistent chat,
-Brain routing, local Ollama, memory/RAG, research, Council/Supervisor, Hermes
-pilot processes, automations, receipts, passive Linux neighbour-cache support,
-and workspace file/Git operations that are already cross-platform.
+Brain routing, local Ollama, memory/RAG, vision, public research, AI Council,
+executable VPS swarm, bounded autonomous coding with verification/review, Hermes
+pilot processes, read-only JavaScript browser rendering, automations, receipts,
+passive Linux neighbour-cache support, and workspace file/Git operations.
 
 Windows-specific desktop features remain unavailable on a Linux VPS: Ring0,
 Windows service/process controls, Windows application launch, DPAPI, native SARA
