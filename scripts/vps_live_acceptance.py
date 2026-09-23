@@ -55,6 +55,11 @@ def main():
         rows.append(check("consolidated readiness", lambda: _assert_ready(app)))
         rows.append(check("general local inference", lambda: _infer(app, "general")))
         rows.append(check("coding local inference", lambda: _infer(app, "coding")))
+        rows.append(check("persistent chat", lambda: _chat(app)))
+        rows.append(check("knowledge RAG", lambda: _knowledge(app)))
+        rows.append(check("AI Council", lambda: _council(app)))
+        rows.append(check("Supervisor", lambda: _supervisor(app)))
+        rows.append(check("Hermes child analysis", lambda: _hermes(app)))
         rows.append(check("local embedding", lambda: _embed(app)))
         rows.append(check("local vision", lambda: _vision(app)))
         rows.append(check("offline voice STT/TTS", lambda: _voice(app)))
@@ -62,6 +67,11 @@ def main():
         rows.append(check("headless Chromium", lambda: _browser(app)))
         rows.append(check("bounded developer edit-review", lambda: _developer(app)))
         rows.append(check("swarm orchestration", lambda: _swarm(app)))
+        rows.append(check("persistent task execution", lambda: _task(app)))
+        rows.append(check("automation persistence", lambda: _automation(app)))
+        rows.append(check("Linux host operator", lambda: _operator(app)))
+        rows.append(check("approval proof round-trip", lambda: _approval(app)))
+        rows.append(check("Fable core integration", lambda: _fable(app)))
         rows.append(check("receipt chain", lambda: _receipts(app)))
     finally:
         app.shutdown()
@@ -100,6 +110,86 @@ def _infer(app, role):
     if "JUBI_OK" not in response.upper().replace(" ", "_"):
         raise RuntimeError(f"unexpected {role} response: {response[:300]}")
     return {"model": model, "response": response[:120]}
+
+
+def _chat(app):
+    first = app.conversations.send(
+        "Remember this certification token: ORBIT-731.",
+        task_type="general",
+        provider="ollama",
+    )
+    cid = first.get("conversation_id")
+    if not cid:
+        raise RuntimeError("chat did not create a conversation")
+    second = app.conversations.send(
+        "Reply with the certification token I gave you.",
+        conversation_id=cid,
+        task_type="general",
+        provider="ollama",
+    )
+    history = app.conversations.history(cid)
+    if len(history.get("messages", [])) < 4:
+        raise RuntimeError("conversation history did not persist two turns")
+    return {"conversation_id": cid, "messages": len(history["messages"]), "response": str(second.get("response", ""))[:160]}
+
+
+def _knowledge(app):
+    namespace = "vps-certification"
+    doc = app.knowledge.ingest(
+        "Project Comet uses port 4321. Its certification keyword is sapphire.",
+        title="Jubi VPS certification fact",
+        namespace=namespace,
+        source="live-acceptance",
+    )
+    try:
+        matches = app.knowledge.search("What port does Project Comet use?", namespace=namespace, limit=3)
+        if not matches:
+            raise RuntimeError("knowledge search returned no matches")
+        answer = app.knowledge.answer("Which port does Project Comet use?", namespace=namespace, limit=3, provider="ollama")
+        if not str(answer.get("answer", "")).strip():
+            raise RuntimeError("knowledge answer is empty")
+        return {"document_id": doc["id"], "matches": len(matches), "answer": str(answer["answer"])[:240]}
+    finally:
+        app.knowledge.delete_document(doc["id"])
+
+
+def _council(app):
+    result = app.council.run(
+        "Give two concise checks for a healthy local AI service.",
+        task_type="general",
+        max_members=2,
+        judge_provider="ollama",
+    )
+    if not result.get("members") or not str(result.get("final", "")).strip():
+        raise RuntimeError("Council produced no verified result")
+    return {"members": len(result["members"]), "final": str(result["final"])[:240]}
+
+
+def _supervisor(app):
+    result = app.supervisor.run(
+        "Prepare a three-point checklist for testing a Python health endpoint.",
+        task_type="planning",
+        provider="ollama",
+    )
+    final = str(result.get("final") or result.get("review") or "")
+    if not final.strip():
+        raise RuntimeError("Supervisor produced no final review")
+    return {"steps": len(result.get("results", [])), "final": final[:240]}
+
+
+def _hermes(app):
+    model = app.models.choose("general") or app.models.choose("coding")
+    result = app.hermes.analyze(
+        "Return a concise analysis of why health checks matter.",
+        model=model,
+        context="Jubi live VPS certification; no tools are required.",
+        timeout=180,
+    )
+    if result.get("status") in {"FAILED", "DEPENDENCY_MISSING"}:
+        raise RuntimeError("Hermes analysis failed: " + json.dumps(result, default=str)[-1500:])
+    if not result.get("parent_session") or not result.get("session_archive"):
+        raise RuntimeError("Hermes did not persist real session evidence")
+    return {"status": result.get("status"), "parent_session": result.get("parent_session"), "session_archive": result.get("session_archive")}
 
 
 def _embed(app):
@@ -202,6 +292,72 @@ def _swarm(app):
         "steps": len(result.get("results", [])),
         "tool_backed_steps": result.get("tool_backed_steps"),
     }
+
+
+def _task(app):
+    result = app.execution.run(
+        "Give one short sentence explaining what a health check does.",
+        source="vps-live-acceptance",
+    )
+    if result.get("status") not in {"completed", "partial"}:
+        raise RuntimeError("persistent task did not complete: " + json.dumps(result, default=str)[-1600:])
+    loaded = app.execution.get_task(result["task_id"])
+    if loaded.get("status") != result.get("status"):
+        raise RuntimeError("persisted task status does not match")
+    return {"task_id": result["task_id"], "status": result["status"], "steps": len(result.get("steps", []))}
+
+
+def _automation(app):
+    row = app.scheduler.add(
+        "VPS certification disabled automation",
+        "This automation must remain disabled during certification.",
+        3600,
+        enabled=False,
+        metadata={"certification": True},
+    )
+    items = {x["id"]: x for x in app.scheduler.list()}
+    if row["id"] not in items or items[row["id"]]["enabled"]:
+        raise RuntimeError("disabled automation did not persist correctly")
+    app.scheduler.set_enabled(row["id"], False)
+    return {"id": row["id"], "enabled": False}
+
+
+def _operator(app):
+    processes = app.windows.execute_typed("system.processes.list", {}, {})
+    services = app.windows.execute_typed("system.services.list", {}, {})
+    if not processes.get("ok"):
+        raise RuntimeError("process inventory failed: " + str(processes.get("stderr") or processes.get("error")))
+    if not services.get("ok"):
+        raise RuntimeError("service inventory failed: " + str(services.get("stderr") or services.get("error")))
+    return {"process_inventory": True, "service_inventory": True, "platform": app.windows.platform_capabilities().get("platform")}
+
+
+def _approval(app):
+    rel = "workspace/.jubi-certification/approval-delete.txt"
+    app.windows.execute_typed("workspace.file.write", {"path": rel, "content": "approval-test"}, {})
+    request = {"action_id": "workspace.file.delete", "parameters": {"path": rel}}
+    first = app.privileged.handle(request, source="vps-live-acceptance")
+    if first.get("status") != "approval_required" or not first.get("request_id"):
+        raise RuntimeError("delete did not require approval: " + str(first))
+    proof = app.privileged.create_approval_proof(first["request_id"], request["action_id"], request["parameters"])
+    approved = app.privileged.handle(
+        {"request_id": first["request_id"], **request},
+        source="vps-live-acceptance",
+        approval_proof=proof,
+    )
+    if not approved.get("ok"):
+        raise RuntimeError("approved delete failed: " + str(approved))
+    return {"approval_required": True, "approved": True, "request_id": first["request_id"]}
+
+
+def _fable(app):
+    result = app.fable.status()
+    if not result.get("integrated"):
+        raise RuntimeError("Fable core is not integrated")
+    trace = result.get("trace") or {}
+    if not trace.get("verified_receipt_chain"):
+        raise RuntimeError("Fable receipt-chain status is not verified")
+    return {"integrated": True, "learned_capabilities": result.get("learned_capabilities"), "lab_runtime_ready": (result.get("source") or {}).get("runtime_ready")}
 
 
 def _receipts(app):
