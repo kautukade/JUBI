@@ -43,6 +43,8 @@ jobs:
         run: |
           python tests/hardware_test.py
           python tests/production_readiness_test.py
+      - name: Bounded autonomous developer
+        run: python tests/vps_developer_test.py
       - name: Local-only provider boundary
         run: python tests/provider_policy_test.py
       - name: Real local HTTP regression
