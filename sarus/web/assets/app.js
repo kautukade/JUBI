@@ -16,13 +16,13 @@ const PAGE_META = {
   providers:['Provider Manager','Secure OpenRouter, NVIDIA NIM and Hugging Face routing'],
   models:['Models','Inspect and test models discovered from Ollama'],
   agents:['Agents & Capabilities','Search connected source capabilities and execute supported units'],
-  development:['Development','Run the existing development-oriented agent pipeline'],
+  development:['Development','Bounded autonomous coding and executable VPS swarm'],
   knowledge:['Knowledge','Search and save local persistent memory'],
   fable:['Fable Lab','Learned capabilities, bounded agenda and isolated research tools'],
   automation:['Automation','Create and control persisted recurring workflows'],
-  computer:['Computer','Typed allowlisted Windows and workspace operations'],
+  computer:['Computer','Typed allowlisted host and workspace operations'],
   security:['Security & Receipts','Approvals, broker posture and signed receipt evidence'],
-  health:['System Health','Run Jubi Doctor and inspect runtime readiness'],
+  health:['System Health','Run Jubi Doctor and full VPS readiness checks'],
   activity:['Activity','Inspect the persistent local event bus']
 };
 
@@ -95,7 +95,7 @@ async function initOverview(){
   byId('metric-sources').textContent=`${adapters.filter(x=>x.connected).length}/${adapters.length}`;
   byId('metric-models').textContent=(s.models?.models||[]).length;
   byId('metric-units').textContent=units.toLocaleString();byId('metric-approvals').textContent=(a||[]).length;byId('metric-files').textContent=files.toLocaleString();byId('metric-chain').textContent=s.receipt_chain?.ok?'VERIFIED':'CHECK';
-  byId('runtime-summary').innerHTML=`${badge(s.name+' '+s.version,'info')} ${badge(s.models?.online?'Ollama online':'Ollama offline',s.models?.online?'ok':'bad')} ${badge((s.providers?.mode||'local_only').replaceAll('_',' '),'info')} ${badge(s.windows_broker?'Windows broker ready':'Windows broker unavailable',s.windows_broker?'ok':'warn')} ${badge(s.receipt_chain?.ok?'Receipt chain verified':'Receipt chain issue',s.receipt_chain?.ok?'ok':'bad')}`;
+  byId('runtime-summary').innerHTML=`${badge(s.name+' '+s.version,'info')} ${badge(s.models?.online?'Ollama online':'Ollama offline',s.models?.online?'ok':'bad')} ${badge((s.providers?.mode||'local_only').replaceAll('_',' '),'info')} ${badge(s.host_operator?.available?'Host operator ready':'Host operator unavailable',s.host_operator?.available?'ok':'warn')} ${badge(s.receipt_chain?.ok?'Receipt chain verified':'Receipt chain issue',s.receipt_chain?.ok?'ok':'bad')}`;
   byId('sources-list').innerHTML=adapters.map(x=>`<div class="source-card"><div class="split between"><strong>${esc(x.details?.label||x.name)}</strong>${badge(x.connected?'Connected':'Missing',x.connected?'ok':'bad')}</div><div class="data-meta">${esc(x.details?.role||'Source adapter')}</div></div>`).join('')||renderEmpty('No source adapters found.');
   byId('recent-tasks').innerHTML=(t||[]).map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(short(x.request,100))}</div><div class="data-meta">${fmtDate(x.created_at||x.ts)} · ${esc(x.id||x.task_id||'')}</div></div>${badge(x.status,statusTone(x.status))}</div>`).join('')||renderEmpty('No tasks yet.');
   byId('recent-events').innerHTML=(e||[]).slice().reverse().map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(x.kind)}</div><div class="data-meta">${esc(short(JSON.stringify(x.payload||{}),150))}</div></div><span class="small muted nowrap">${fmtDate(x.created_at||x.ts)}</span></div>`).join('')||renderEmpty('No events yet.');
@@ -213,8 +213,30 @@ async function selectCapability(id){selectedCapability=id;const r=await API.get(
 async function runCapability(){if(!selectedCapability)return;const btn=byId('cap-run-btn');setBusy(btn,true,'Running');try{const r=await API.post('/api/capability/run',{id:selectedCapability,text:byId('cap-run-text').value||'Use this capability for its intended purpose.'});jsonBox('cap-run-output',r);}catch(e){jsonBox('cap-run-output','Error: '+e.message);}finally{setBusy(btn,false);}}
 window.selectCapability=selectCapability;
 
-async function initDevelopment(){byId('dev-plan').onclick=()=>devAction(false);byId('dev-run').onclick=()=>devAction(true);await loadDevTasks();}
+async function initDevelopment(){
+  byId('dev-plan').onclick=()=>devAction(false);
+  byId('dev-run').onclick=()=>devAction(true);
+  byId('dev-direct').onclick=()=>runBoundedDeveloper();
+  byId('dev-swarm').onclick=()=>runDevSwarm();
+  const [developer,swarm]=await Promise.all([API.get('/api/developer'),API.get('/api/swarm')]);
+  jsonBox('dev-runtime',{developer,swarm});
+  await loadDevTasks();
+}
 async function devAction(run){const text=byId('dev-input').value.trim();if(!text)return toast('Describe the development task','bad');const prompt='Development task: '+text;const btn=byId(run?'dev-run':'dev-plan');setBusy(btn,true,run?'Running':'Planning');try{const r=await API.post(run?'/api/task':'/api/plan',{text:prompt});jsonBox('dev-output',r);await loadDevTasks();}catch(e){jsonBox('dev-output','Error: '+e.message);}finally{setBusy(btn,false);}}
+async function runBoundedDeveloper(){
+  const text=byId('dev-input').value.trim(),project=byId('dev-project').value.trim()||'.';
+  if(!text)return toast('Describe the development task','bad');
+  const btn=byId('dev-direct');setBusy(btn,true,'Executing');
+  try{const r=await API.post('/api/developer/run',{text,project,max_iterations:10});jsonBox('dev-output',r);toast(r.ok?'Developer verification passed':'Developer did not pass verification',r.ok?'ok':'bad');}
+  catch(e){jsonBox('dev-output','Error: '+e.message);}finally{setBusy(btn,false);}
+}
+async function runDevSwarm(){
+  const text=byId('dev-input').value.trim(),project=byId('dev-project').value.trim()||'.';
+  if(!text)return toast('Describe the development task','bad');
+  const btn=byId('dev-swarm');setBusy(btn,true,'Coordinating');
+  try{const r=await API.post('/api/swarm/run',{text,project,max_sources:4});jsonBox('dev-output',r);toast('Swarm: '+r.status,statusTone(r.status)==='ok'?'ok':'warn');}
+  catch(e){jsonBox('dev-output','Error: '+e.message);}finally{setBusy(btn,false);}
+}
 async function loadDevTasks(){const t=await API.get('/api/tasks?limit=30');const rows=(t||[]).filter(x=>String(x.request||'').toLowerCase().startsWith('development task:')).slice(0,12);byId('dev-history').innerHTML=rows.map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(short(x.request,130))}</div><div class="data-meta">${fmtDate(x.created_at||x.ts)}</div></div>${badge(x.status,statusTone(x.status))}</div>`).join('')||renderEmpty('No development tasks yet.');}
 
 async function initKnowledge(){byId('memory-search-btn').onclick=searchMemory;byId('memory-save').onclick=saveMemory;await searchMemory();}
@@ -222,10 +244,11 @@ async function searchMemory(){const q=byId('memory-q').value,ns=byId('memory-fil
 async function saveMemory(){const content=byId('memory-content').value.trim();if(!content)return toast('Memory content is required','bad');const btn=byId('memory-save');setBusy(btn,true,'Saving');try{const r=await API.post('/api/memory',{title:byId('memory-title').value,namespace:byId('memory-ns').value||'general',content});toast('Memory saved: '+(r.id||''),'ok');byId('memory-content').value='';await searchMemory();}catch(e){toast(e.message,'bad');}finally{setBusy(btn,false);}}
 
 async function initAutomation(){byId('automation-create').onclick=createAutomation;byId('automation-refresh').onclick=loadAutomations;await loadAutomations();}
-async function loadAutomations(){const a=await API.get('/api/automations');byId('automation-list').innerHTML=(a||[]).map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(x.name)}</div><div class="data-meta">Every ${esc(x.interval_seconds)} sec · last: ${fmtDate(x.last_run)}<br>${esc(short(x.prompt,160))}<br>Last result: ${esc(x.metadata?.last_status||'Not run')}${x.metadata?.last_error?' · '+esc(x.metadata.last_error):''}</div></div><div class="data-actions">${badge(x.enabled?'Enabled':'Paused',x.enabled?'ok':'warn')}<button class="btn small" onclick="toggleAutomation('${esc(x.id)}',${!x.enabled})">${x.enabled?'Pause':'Enable'}</button></div></div>`).join('')||renderEmpty('No automations configured.');}
+async function loadAutomations(){const a=await API.get('/api/automations');byId('automation-list').innerHTML=(a||[]).map(x=>`<div class="data-row"><div class="data-main"><div class="data-title">${esc(x.name)}</div><div class="data-meta">Every ${esc(x.interval_seconds)} sec · last: ${fmtDate(x.last_run)}<br>${esc(short(x.prompt,160))}<br>Last result: ${esc(x.metadata?.last_status||'Not run')}${x.metadata?.last_error?' · '+esc(x.metadata.last_error):''}</div></div><div class="data-actions">${badge(x.enabled?'Enabled':'Paused',x.enabled?'ok':'warn')}<button class="btn small" onclick="toggleAutomation('${esc(x.id)}',${!x.enabled})">${x.enabled?'Pause':'Enable'}</button><button class="btn small danger" onclick="deleteAutomation('${esc(x.id)}')">Delete</button></div></div>`).join('')||renderEmpty('No automations configured.');}
 async function createAutomation(){const name=byId('automation-name').value.trim(),prompt=byId('automation-prompt').value.trim();if(!name||!prompt)return toast('Name and task are required','bad');const btn=byId('automation-create');setBusy(btn,true,'Creating');try{await API.post('/api/automation',{name,prompt,interval_seconds:Number(byId('automation-interval').value||3600),enabled:true});toast('Automation created','ok');await loadAutomations();}catch(e){toast(e.message,'bad');}finally{setBusy(btn,false);}}
 async function toggleAutomation(id,enabled){try{await API.post('/api/automation/toggle',{id,enabled});await loadAutomations();}catch(e){toast(e.message,'bad');}}
-window.toggleAutomation=toggleAutomation;
+async function deleteAutomation(id){if(!confirm('Delete this automation?'))return;try{await API.post('/api/automation/delete',{id});toast('Automation deleted','ok');await loadAutomations();}catch(e){toast(e.message,'bad');}}
+window.toggleAutomation=toggleAutomation;window.deleteAutomation=deleteAutomation;
 
 async function initComputer(){byId('proc-btn').onclick=()=>computerAction('system.processes.list',{},'computer-output');byId('svc-btn').onclick=()=>computerAction('system.services.list',{},'computer-output');byId('ring-ping').onclick=()=>computerAction('ring0.ping',{},'ring-output');byId('ring-status').onclick=()=>computerAction('ring0.status',{},'ring-output');byId('service-query').onclick=()=>computerAction('service.query',{resource_id:'ollama'},'service-output');byId('file-read').onclick=()=>computerAction('workspace.file.read',{path:byId('file-path').value},'file-output');byId('file-write').onclick=()=>computerAction('workspace.file.write',{path:byId('file-path').value,content:byId('file-content').value},'file-output');byId('url-open').onclick=()=>computerAction('url.open',{url:byId('url-value').value},'url-output');const b=await API.get('/api/broker');byId('broker-actions').innerHTML=(b.configured_actions||[]).map(x=>badge(x,'info')).join(' ');byId('broker-secret').textContent=b.approval_secret_configured?'Configured':'Not configured';}
 async function computerAction(action_id,parameters,target){return typedOperator(action_id,parameters,target);}
@@ -235,11 +258,19 @@ async function loadSecurity(){const [a,r,b]=await Promise.all([API.get('/api/app
 async function resolveApproval(id,status){try{const r=await API.post('/api/approval',{id,status});toast(`Approval ${status}`,'ok');jsonBox('approval-result',r);await loadSecurity();}catch(e){toast(e.message,'bad');}}
 window.resolveApproval=resolveApproval;
 
-async function initHealth(){byId('doctor-run').onclick=loadDoctor;await loadDoctor();}
+async function initHealth(){byId('doctor-run').onclick=loadDoctor;byId('vps-readiness-run').onclick=loadVPSReadiness;await Promise.all([loadDoctor(),loadVPSReadiness()]);}
 async function loadDoctor(){
  const btn=byId('doctor-run');setBusy(btn,true,'Checking');
  try{const r=await API.get('/api/doctor');byId('doctor-grid').innerHTML=(r.checks||[]).map(c=>`<div class="card metric-card span-3"><div class="metric-label">${esc(c.name)}</div><div style="margin-top:9px">${badge(c.ok?'Ready':'Needs setup',c.ok?'ok':c.level==='required'?'bad':'warn')}</div><div class="metric-note">${esc(c.detail)} · ${esc(c.level)}</div></div>`).join('');jsonBox('doctor-raw',r);}
  catch(e){jsonBox('doctor-raw','Error: '+e.message);}finally{setBusy(btn,false);}
+}
+async function loadVPSReadiness(){
+ const btn=byId('vps-readiness-run');setBusy(btn,true,'Checking');
+ try{
+   const r=await API.get('/api/vps/readiness');
+   byId('vps-ready-summary').innerHTML=`${badge(r.ready?'FULL PROFILE READY':'VPS SETUP INCOMPLETE',r.ready?'ok':'bad')} ${r.failed_required?.length?'Missing required: '+esc(r.failed_required.join(', ')):'All required gates passed.'}`;
+   byId('vps-ready-grid').innerHTML=(r.checks||[]).map(x=>`<div class="card metric-card span-3"><div class="metric-label">${esc(x.name)}</div><div style="margin-top:9px">${badge(x.ok?'Ready':'Missing',x.ok?'ok':x.required?'bad':'warn')}</div><div class="metric-note">${esc(short(x.detail,180))} · ${x.required?'required':'optional'}</div></div>`).join('');
+ }catch(e){byId('vps-ready-summary').textContent='Error: '+e.message;}finally{setBusy(btn,false);}
 }
 
 async function initActivity(){byId('activity-refresh').onclick=loadActivity;byId('activity-filter').addEventListener('input',loadActivity);await loadActivity();}

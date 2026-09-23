@@ -1,0 +1,9 @@
+test_chunk_ingest_search_and_delete (__main__.KnowledgeTests.test_chunk_ingest_search_and_delete) ... ok
+test_experience_record_stats_and_similarity (__main__.KnowledgeTests.test_experience_record_stats_and_similarity) ... ok
+test_rag_answer_returns_visible_sources (__main__.KnowledgeTests.test_rag_answer_returns_visible_sources) ... ok
+test_record_chat_keeps_provider_route (__main__.KnowledgeTests.test_record_chat_keeps_provider_route) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.171s
+
+OK

@@ -1,0 +1,359 @@
+{
+  "fixture_root": "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp",
+  "python": "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+  "suites": [
+    {
+      "suite": "acceptance_workspace_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\acceptance_workspace_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 2.19,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "broker_security_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\broker_security_test.py"
+      ],
+      "exit_code": 1,
+      "seconds": 2.66,
+      "tests": 18,
+      "passed": 17,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "suite": "dashboard_ui_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\dashboard_ui_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.02,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "fable_integration_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\fable_integration_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 2.64,
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "hardware_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\hardware_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.34,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "hermes_policy_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\hermes_policy_test.py"
+      ],
+      "exit_code": 1,
+      "seconds": 8.7,
+      "tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "suite": "integration_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\integration_test.py"
+      ],
+      "exit_code": 1,
+      "seconds": 16.25,
+      "tests": 24,
+      "passed": 22,
+      "failed": 2,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_brain_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_brain_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.5,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_council_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_council_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.31,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_functional_regression_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_functional_regression_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.75,
+      "tests": 26,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_http_functional_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_http_functional_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 5.28,
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_installer_lifecycle_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_installer_lifecycle_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.52,
+      "tests": 15,
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_knowledge_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_knowledge_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.36,
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_network_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_network_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.31,
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_network_vision_ui_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_network_vision_ui_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.16,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_operator_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_operator_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.34,
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_phase0_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_phase0_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.78,
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_provider_manager_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_provider_manager_test.py"
+      ],
+      "exit_code": 1,
+      "seconds": 1.27,
+      "tests": 11,
+      "passed": 10,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_research_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_research_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.36,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_research_ui_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_research_ui_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.25,
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "jubi_vision_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\jubi_vision_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.27,
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "production_readiness_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\production_readiness_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.89,
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "provider_paths_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\provider_paths_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 4.2,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "provider_policy_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\provider_policy_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 4.78,
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "ring0_bridge_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\ring0_bridge_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.34,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "trust_foundation_test.py",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\trust_foundation_test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.47,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dashboard_runtime_test.cjs",
+      "command": [
+        "C:\\Users\\hp\\.codex\\worktrees\\89f1\\JUBI\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\hp\\AppData\\Local\\Temp\\jubi-regression-jsm9slgp\\tests\\run_dashboard_runtime.py"
+      ],
+      "exit_code": 0,
+      "seconds": 17.41
+    }
+  ],
+  "counts": {
+    "passed": 210,
+    "failed": 5,
+    "skipped": 0,
+    "suite_errors": 0
+  }
+}

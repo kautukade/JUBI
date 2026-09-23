@@ -18,8 +18,8 @@ class T(unittest.TestCase):
   summary=self.app.registry.summary(); manifest=json.loads((ROOT/'BUILD_MANIFEST.json').read_text()); self.assertEqual(sum(x['files'] for x in summary.values()),manifest['indexed_original_files']); self.assertEqual(len(summary),manifest['source_repositories']); self.assertEqual(set(summary),set(json.loads((ROOT/'config/sources.json').read_text())))
  def test_03_orchestrator_cross_repo_pipeline(self):
   steps=self.app.orchestrator.execute_dry('research leads, build website, inspect screen, remember client SOP, security audit and benchmark improvement'); src={s['source'] for s in steps}; self.assertTrue({'hermes','awesome_llm_apps','agency_agents','ecc','superpowers','sara','second_brain','cai','autoresearch','fable_os'}.issubset(src))
- def test_04_real_execution_engine_all_10_adapters(self):
-  r=self.app.execution.run('research leads, build website, inspect screen, remember client SOP, security audit and benchmark improvement',source='test'); self.assertEqual(r['status'],'completed'); src={x['source'] for x in r['steps']}; self.assertTrue(set(json.loads((ROOT/'config/sources.json').read_text())).issubset(src)); self.assertTrue(all(x['result'].get('ok') for x in r['steps']))
+ def test_04_execution_cannot_complete_through_unattested_sara_relay(self):
+  r=self.app.execution.run('research leads, build website, inspect screen, remember client SOP, security audit and benchmark improvement',source='test'); self.assertNotEqual(r['status'],'completed'); failed=[x for x in r['steps'] if x['source']=='sara' and not x['result'].get('ok')]; self.assertTrue(failed); self.assertTrue(all(x['result'].get('tools_executed') is False for x in failed))
  def test_05_cai_isolation(self): self.assertEqual(self.app.policy.evaluate('active_test',2,'cai')['decision'],'isolated')
  def test_06_high_risk_approval(self): self.assertEqual(self.app.policy.evaluate('send_external_message',4,'core')['decision'],'approval')
  def test_07_never_auto_kernel(self): self.assertEqual(self.app.policy.evaluate('unbounded_kernel_access',5,'core')['decision'],'deny')

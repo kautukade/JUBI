@@ -10,6 +10,7 @@ import uuid
 from pathlib import Path
 
 from .database import read_connection, transaction
+from .provider_policy import LOCAL_ONLY
 
 
 @dataclass
@@ -263,6 +264,9 @@ class BrainRouter:
         return round(score, 3), reasons
 
     def route(self, text: str, task_type: str | None = 'auto', requested_model: str | None = None) -> dict:
+        explicit = str(requested_model or '').strip()
+        if explicit:
+            LOCAL_ONLY.check_model_name(explicit)
         classification = self.classify(text, task_type)
         status = self.models.list_models()
         if not status.get('online'):
@@ -270,8 +274,6 @@ class BrainRouter:
 
         items = [x for x in status.get('items', []) if isinstance(x, dict) and x.get('name')]
         installed = {x['name']: x for x in items}
-        explicit = str(requested_model or '').strip()
-
         if explicit:
             if explicit not in installed:
                 raise RuntimeError(f'The selected Ollama model {explicit!r} is not installed or currently available.')
@@ -287,12 +289,11 @@ class BrainRouter:
         else:
             performance = self._performance_rows()
             ranked = []
-            allow_cloud = bool(self.cfg.get('allow_cloud_through_ollama_by_default', False))
             for item in items:
                 kind = item.get('kind', 'unknown')
                 if kind == 'embedding':
                     continue
-                if kind == 'cloud-through-ollama' and not allow_cloud:
+                if kind == 'cloud-through-ollama':
                     continue
                 score, reasons = self._score_model(item, classification['task_type'], performance)
                 if score <= -9999:

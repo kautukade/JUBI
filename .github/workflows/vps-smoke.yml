@@ -1,0 +1,109 @@
+name: Jubi VPS Smoke
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
+    paths:
+      - 'deploy/vps/**'
+      - 'jubi/**'
+      - 'sarus/**'
+      - 'config/**'
+      - 'tests/vps_deployment_test.py'
+      - 'tests/vps_developer_test.py'
+      - 'tests/vps_browser_test.py'
+      - 'tests/vps_swarm_test.py'
+      - 'tests/vps_readiness_test.py'
+      - 'tests/vps_operator_test.py'
+      - 'tests/vps_voice_test.py'
+      - 'sarus/core/voice.py'
+      - 'deploy/vps/provision-voice.sh'
+      - 'deploy/vps/certify.py'
+      - 'tests/vps_live_acceptance_contract_test.py'
+      - 'scripts/vps_live_acceptance.py'
+      - '.github/workflows/vps-smoke.yml'
+  pull_request:
+    paths:
+      - 'deploy/vps/**'
+      - 'jubi/**'
+      - 'sarus/**'
+      - 'config/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - '.github/workflows/vps-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jubi-vps-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  vps-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Python compile
+        run: python -m compileall -q jubi sarus tests scripts deploy/vps/certify.py
+      - name: VPS deployment contracts
+        run: python tests/vps_deployment_test.py
+      - name: Linux hardware and production readiness
+        run: |
+          python tests/hardware_test.py
+          python tests/production_readiness_test.py
+      - name: Bounded autonomous developer
+        run: python tests/vps_developer_test.py
+      - name: Executable VPS swarm
+        run: python tests/vps_swarm_test.py
+      - name: Typed Linux Computer Operator
+        run: python tests/vps_operator_test.py
+      - name: Consolidated VPS readiness
+        run: python tests/vps_readiness_test.py
+      - name: Automation lifecycle
+        run: python tests/vps_automation_test.py
+      - name: Memory lifecycle
+        run: python tests/vps_memory_test.py
+      - name: Offline VPS voice
+        run: python tests/vps_voice_test.py
+      - name: Live acceptance contract
+        run: python tests/vps_live_acceptance_contract_test.py
+      - name: Local-only provider boundary
+        run: python tests/provider_policy_test.py
+      - name: Real local HTTP regression
+        run: python tests/jubi_http_functional_test.py
+      - name: Shell syntax
+        run: |
+          bash -n deploy/vps/install.sh
+          bash -n deploy/vps/healthcheck.sh
+          bash -n deploy/vps/verify.sh
+          bash -n deploy/vps/backup.sh
+          bash -n deploy/vps/provision-models.sh
+          bash -n deploy/vps/full-profile.sh
+          bash -n deploy/vps/provision-voice.sh
+
+  browser-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Browser policy tests
+        run: python tests/vps_browser_test.py
+      - name: Install Playwright Chromium
+        run: |
+          python -m pip install --disable-pip-version-check "playwright==1.63.0"
+          python -m playwright install --with-deps chromium
+      - name: Live public Chromium read
+        env:
+          JUBI_BROWSER_LIVE: '1'
+        run: python tests/vps_browser_test.py

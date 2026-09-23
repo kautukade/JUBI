@@ -1,0 +1,27 @@
+{
+  "status": "ready_for_user_mapping_review",
+  "product_implementation_started": false,
+  "broken_local_links": [],
+  "final_review_corrections": [
+    "Paid/subscription inference permanently excluded, optional services require verified free access and explicit consent without recurring/manual key rotation.",
+    "Minimal real-tool Hermes slice includes protected common dispatch/completion before broad migration."
+  ],
+  "first_party_python": {
+    "passed": 70,
+    "failed": 0
+  },
+  "existing_python_cases_latest_runs": {
+    "passed": 180,
+    "total": 184,
+    "suites_passed": 17,
+    "suites_total": 20
+  },
+  "remaining_test_limits": [
+    "Broker tasklist denied by sandbox",
+    "Provider DPAPI round trip fails under sandbox identity",
+    "Integration source-count mismatch from two unavailable CAI files",
+    "Integration /api/status timeout with unavailable runtime probes",
+    "DOM runtime blocked by missing jsdom",
+    "Native/live hardware/model/voice/UI workflows not certified"
+  ]
+}

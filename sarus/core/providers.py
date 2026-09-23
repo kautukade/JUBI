@@ -11,10 +11,11 @@ from pathlib import Path
 
 from .credentials import CredentialStore
 from .database import read_connection, transaction
+from .provider_policy import InferenceTransport, LOCAL_ONLY
 
 
 PROVIDER_NAMES = ('openrouter', 'nvidia', 'huggingface')
-PROVIDER_MODES = ('local_only', 'hybrid_auto', 'cloud_boost')
+PROVIDER_MODES = ('local_only',)
 
 
 class OpenAICompatibleProvider:
@@ -34,6 +35,9 @@ class OpenAICompatibleProvider:
         return value, source
 
     def _json(self, path: str, body=None, timeout: int = 20) -> dict:
+        # Deny before even reading a credential. Legacy direct calls, metadata
+        # refresh and health probes use exactly the same transport authority.
+        LOCAL_ONLY.authorize(self.provider_id, self.base_url + path)
         token, _ = self._credential()
         data = None if body is None else json.dumps(body).encode('utf-8')
         headers = {
@@ -45,9 +49,8 @@ class OpenAICompatibleProvider:
             headers['Content-Type'] = 'application/json'
         req = urllib.request.Request(self.base_url + path, data=data, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as response:
-                raw = response.read()
-                return json.loads(raw.decode('utf-8')) if raw else {}
+            return InferenceTransport(self.base_url, self.provider_id).json(
+                path, body, timeout, headers)
         except urllib.error.HTTPError as exc:
             detail = ''
             try:
@@ -338,8 +341,8 @@ class ProviderManager:
             )
 
     def mode(self) -> str:
-        value = str(self._get_setting('mode', self.cfg.get('mode', 'local_only')))
-        return value if value in PROVIDER_MODES else 'local_only'
+        # Saved settings are preferences, never authority to release prompts.
+        return LOCAL_ONLY.mode
 
     def set_mode(self, mode: str) -> dict:
         value = str(mode or '').strip().lower()
@@ -384,7 +387,7 @@ class ProviderManager:
         return result
 
     def _enabled(self, provider: str) -> bool:
-        return bool((self.cfg.get('providers') or {}).get(provider, {}).get('enabled', True))
+        return False  # No external-inference consent grant exists in this release.
 
     def models(self, provider: str, force: bool = False) -> dict:
         provider = self._provider_id(provider)
@@ -649,11 +652,25 @@ class ProviderManager:
 
     def _local(self, prompt: str, task_type: str, model: str | None, system: str, timeout: int,
                mode: str, classification: dict, prior_errors: list[dict] | None = None) -> dict:
-        result = self.brain.generate(prompt, task_type, model=model, system=system, timeout=timeout)
+        request_id = str(uuid.uuid4())
+        started = time.perf_counter()
+        try:
+            result = self.brain.generate(prompt, task_type, model=model, system=system, timeout=timeout)
+        except Exception as exc:
+            elapsed = (time.perf_counter() - started) * 1000.0
+            self._record_request(request_id, prompt, classification, mode, 'ollama', model or '', 'failed', elapsed, str(exc))
+            raise
         local_route = result.get('jubi_route') or {}
+        selected = local_route.get('selected_model') or result.get('model')
+        elapsed = (time.perf_counter() - started) * 1000.0
+        self._record_outcome('ollama', selected, classification['task_type'], True, elapsed)
+        self._record_request(request_id, prompt, classification, mode, 'ollama', selected, 'success', elapsed)
         result['jubi_provider_route'] = {
+            'request_id': request_id,
             'provider': 'ollama',
-            'selected_model': local_route.get('selected_model') or result.get('model'),
+            'selected_model': selected,
+            'latency_ms': round(elapsed, 2),
+            'policy_revision': LOCAL_ONLY.revision,
             'mode': mode,
             'task_type': classification['task_type'],
             'intent': classification['intent'],
@@ -684,7 +701,7 @@ class ProviderManager:
         if explicit_cloud:
             requested_provider = self._provider_id(requested_provider)
             if mode == 'local_only':
-                raise PermissionError('Local Only mode disables cloud generation. Select Hybrid Auto or Cloud Boost in Providers first.')
+                raise PermissionError('Local Only disables cloud generation. Optional network inference is not enabled in this release.')
             if classification['privacy'] == 'high' and not bool(self.cfg.get('allow_high_privacy_cloud', False)):
                 raise PermissionError(
                     'This request is classified as high privacy. Jubi blocks cloud transmission by default. '
@@ -744,12 +761,10 @@ class ProviderManager:
                 'label': self.providers[provider].label,
                 'configured': cred['configured'],
                 'credential_source': cred['source'],
-                'enabled': self._enabled(provider),
+                'enabled': False,
                 'online': None,
-                'status': 'configured' if cred['configured'] else 'unconfigured',
+                'status': 'disabled_by_policy',
             }
-            if validate and cred['configured']:
-                item.update(self.providers[provider].health())
             cloud.append(item)
         return {
             'mode': self.mode(),
@@ -761,7 +776,8 @@ class ProviderManager:
             },
             'cloud': cloud,
             'hybrid_cloud_complexity_threshold': int(self.cfg.get('hybrid_cloud_complexity_threshold', 4)),
-            'high_privacy_cloud_allowed': bool(self.cfg.get('allow_high_privacy_cloud', False)),
+            'high_privacy_cloud_allowed': False,
+            'policy_revision': LOCAL_ONLY.revision,
             'credential_storage': {
                 'windows_dpapi': self.credentials.status('openrouter')['persistent_dashboard_storage'],
                 'path': str(self.credentials.path),

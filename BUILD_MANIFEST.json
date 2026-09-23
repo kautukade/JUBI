@@ -4,16 +4,30 @@
   "foundation": "SARUS 1.3.1",
   "created": "2026-08-25",
   "source_repositories": 10,
-  "indexed_original_files": 17129,
-  "indexed_original_files_scope": "clean GitHub checkout of configured source trees",
+  "indexed_original_files": 17127,
+  "upstream_indexed_original_files": 17129,
+  "indexed_original_files_scope": "clean GitHub checkout of configured source trees after explicit source exclusions",
+  "excluded_source_files": [
+    {
+      "source": "cai",
+      "path": "src/cai/caibench/cyber_ranges/CobaltGroupRansomware/c2/payload.py",
+      "reason": "security-sensitive sample unavailable in the validated checkout; tracked explicitly instead of silently restoring or weakening endpoint protection"
+    },
+    {
+      "source": "cai",
+      "path": "src/cai/tools/web/webshell_suit.py",
+      "reason": "security-sensitive sample unavailable in the validated checkout; tracked explicitly instead of silently restoring or weakening endpoint protection"
+    }
+  ],
   "discovered_capability_like_files": 4803,
   "fable_integration": "native intelligence layer plus isolated QEMU research lab",
   "fable_pin": "1cfe17c4baa77fac128008621721823913a1335c",
   "production_profile": "config/production.json",
   "notes": [
     "Jubi v0.1.0 evolves the SARUS v1.3.1 foundation without discarding its tested source integrations, broker, receipts, Fable layer or controlled Ring0 compatibility bridge.",
-    "The source-file count is measured from the clean tracked repository checkout rather than legacy local/generated files.",
+    "The active source-file count is measured from the validated tracked checkout after explicit source exclusions; upstream_indexed_original_files preserves the original upstream total.",
     "All 10 configured source families must be present and indexed.",
+    "Security-sensitive source exclusions must remain explicit in excluded_source_files and must not be silently restored or hidden by changing endpoint protection settings.",
     "Acceptance reads this manifest instead of relying on a stale hard-coded source count.",
     "Windows hardware, signed kernel-driver activation, public Authenticode release signing and optional Fable QEMU runtime still require target-machine or certificate-backed certification."
   ]

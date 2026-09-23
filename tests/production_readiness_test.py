@@ -3,9 +3,15 @@ from __future__ import annotations
 import json
 import re
 import unittest
+import sys
+from types import SimpleNamespace
+from unittest.mock import Mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from sarus.core.doctor import Doctor
+from sarus.integrations.hermes_compact import compact_profile
 
 
 class ProductionReadinessTest(unittest.TestCase):
@@ -33,16 +39,44 @@ class ProductionReadinessTest(unittest.TestCase):
         self.assertIn("production.get('required_models'", text)
         self.assertNotIn('17356', text)
 
-    def test_required_models_are_local_configured_models(self):
+    def test_installed_model_discovery_requires_a_local_chat_candidate(self):
         prod = json.loads((ROOT / 'config/production.json').read_text(encoding='utf-8'))
-        models = json.loads((ROOT / 'config/models.json').read_text(encoding='utf-8'))
-        local = set()
-        for role, names in models.items():
-            if role != 'cloud_disabled':
-                local.update(names)
-        self.assertTrue(prod['required_models'])
-        self.assertTrue(set(prod['required_models']).issubset(local))
-        self.assertTrue(set(prod['required_models']).isdisjoint(set(models['cloud_disabled'])))
+        self.assertEqual(prod['model_selection'], 'installed-local-role-discovery')
+        self.assertEqual(prod['model_acquisition'], 'explicit-user-consent')
+        self.assertEqual(prod['required_models'], [])
+        app = SimpleNamespace(root=ROOT, models=Mock(), adapters=Mock(), native=Mock())
+        app.adapters.connect.return_value = []
+        app.native.status.return_value = {}
+        cases = [([], False), ([{'name': 'qwen:cloud', 'kind': 'cloud-through-ollama'}], False),
+                 ([{'name': 'embed', 'kind': 'embedding'}], False),
+                 ([{'name': 'installed-custom', 'kind': 'general'}], True)]
+        for items, expected in cases:
+            with self.subTest(items=items):
+                app.models.list_models.return_value = {'online': True, 'models': [x['name'] for x in items], 'items': items}
+                check = next(c for c in Doctor(app).run()['checks'] if c['name'] == 'Installed local chat candidate')
+                self.assertEqual(check['ok'], expected)
+
+    def test_hermes_compact_mode_accepts_32k_tool_model_without_allocating_full_context(self):
+        profile = compact_profile({
+            'capabilities': ['completion', 'tools'],
+            'model_info': {'qwen2.context_length': 32768},
+        })
+        self.assertTrue(profile['eligible'])
+        self.assertEqual(profile['capacity'], 32768)
+        self.assertEqual(profile['runtime_context'], 8192)
+        self.assertTrue(profile['native_tools'])
+        self.assertFalse(compact_profile({
+            'capabilities': ['completion'],
+            'model_info': {'qwen2.context_length': 32768},
+        })['eligible'])
+        self.assertFalse(compact_profile({
+            'capabilities': ['completion', 'tools'],
+            'model_info': {'qwen2.context_length': 4096},
+        })['eligible'])
+        source = (ROOT / 'sarus/integrations/development_acceptance.py').read_text(encoding='utf-8')
+        self.assertNotIn('capacity < 64000', source)
+        self.assertIn('compact_profile', source)
+        self.assertIn('observed fail-edit-pass evidence', source)
 
     def test_installer_has_production_certification_model_provisioning_and_jubi_launcher(self):
         exe = (ROOT / 'installer/EXE-INSTALL.ps1').read_text(encoding='utf-8')

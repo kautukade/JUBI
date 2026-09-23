@@ -44,6 +44,18 @@ class Doctor:
         )
         add('Writable data directory', os.access(self.app.root / 'data', os.W_OK), self.app.root / 'data')
         add('Ollama service', models.get('online', False), models.get('error', 'online'))
+        local_chat = [item['name'] for item in models.get('items', [])
+                      if item.get('kind') in {'general', 'coding'}]
+        add('Installed local chat candidate', bool(local_chat), ', '.join(local_chat) or 'User-approved model setup required')
+        if os.environ.get('JUBI_REQUIRE_FULL_MODELS', '0').lower() in {'1', 'true', 'yes', 'on'}:
+            for role in ('general', 'coding', 'vision', 'embedding'):
+                selected = self.app.models.choose(role)
+                add(
+                    'Full VPS model role ' + role,
+                    bool(selected),
+                    selected or 'missing compatible installed model',
+                    'required',
+                )
         for model in required:
             add('Ollama model ' + model, model in installed, 'installed' if model in installed else 'missing')
 
@@ -69,10 +81,47 @@ class Doctor:
                 'recommended' if name in {'sara', 'hermes', 'ecc'} else 'optional',
             )
 
-        if os.name == 'nt':
-            add('Windows platform', True, platform.platform(), 'required')
+        profiles = prod.get('deployment_profiles', {})
+        default_profile = 'windows_desktop' if os.name == 'nt' else (
+            'linux_vps' if platform.system() == 'Linux' else 'development'
+        )
+        deployment_profile = os.environ.get('JUBI_DEPLOYMENT_PROFILE', default_profile).strip() or default_profile
+        deployment = profiles.get(deployment_profile, {})
+        if deployment_profile in profiles:
+            add(
+                'Deployment profile ' + deployment_profile,
+                deployment.get('supported') is True,
+                deployment.get('scope') or deployment.get('ui') or '',
+                'required',
+            )
+
+        if deployment_profile == 'windows_desktop':
+            add('Windows platform', os.name == 'nt', platform.platform(), 'required')
+        elif deployment_profile == 'linux_vps':
+            add('Linux VPS platform', platform.system() == 'Linux', platform.platform(), 'required')
+            hermes_runtime = getattr(self.app, 'hermes', None)
+            hermes = hermes_runtime.status() if hermes_runtime is not None else {
+                'ready': False, 'reason': 'Hermes runtime not attached to this app fixture'
+            }
+            require_hermes = os.environ.get('JUBI_REQUIRE_HERMES', '0').lower() in {'1', 'true', 'yes', 'on'}
+            add(
+                'Hermes pilot dependencies',
+                hermes.get('ready', False),
+                json.dumps(hermes, sort_keys=True),
+                'required' if require_hermes else 'recommended',
+            )
+            browser = self.app.browser.status() if getattr(self.app, 'browser', None) else {
+                'ready': False, 'reason': 'Browser runtime not attached'
+            }
+            require_browser = os.environ.get('JUBI_REQUIRE_BROWSER', '0').lower() in {'1', 'true', 'yes', 'on'}
+            add(
+                'VPS browser runtime',
+                browser.get('ready', False),
+                json.dumps(browser, sort_keys=True),
+                'required' if require_browser else 'recommended',
+            )
         else:
-            add('Windows platform', False, platform.platform(), 'target-only')
+            add('Development platform', True, platform.platform(), 'optional')
 
         core = [c for c in checks if c['level'] == 'required']
         return {
@@ -82,4 +131,6 @@ class Doctor:
             'models': models,
             'required_models': required,
             'minimum_python': '.'.join(map(str, minimum_python)),
+            'deployment_profile': deployment_profile,
+            'deployment': deployment,
         }

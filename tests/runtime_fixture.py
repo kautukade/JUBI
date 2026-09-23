@@ -29,6 +29,7 @@ class RuntimeFixture:
                 self.reply({'models':[{'name':m} for m in ['qwen2.5:7b','qwen2.5-coder:7b','qwen2.5vl:3b','nomic-embed-text-v2-moe:latest']]})
             def do_POST(self):
                 body=json.loads(self.rfile.read(int(self.headers.get('Content-Length',0))));owner.model_requests.append((self.path,body))
+                if self.path=='/api/show': return self.reply({'details':{'format':'gguf'},'model_info':{'test.model':True}})
                 if self.path=='/api/embed': return self.reply({'embeddings':[[1.0,0.5,0.1]]})
                 prompt=body.get('prompt','')
                 response='Controlled test inference response. This is not a live model quality test.'

@@ -5,7 +5,7 @@
 <div class="grid">
 <div class="card metric-card span-3"><div class="metric-label">Vision runtime</div><div id="vision-online" class="metric-value" style="font-size:17px">—</div><div class="metric-note">Local Ollama only</div></div>
 <div class="card metric-card span-5"><div class="metric-label">Selected model</div><div id="vision-model-name" class="metric-value" style="font-size:16px">—</div><div class="metric-note">No image cloud upload in this feature</div></div>
-<div class="card metric-card span-4"><div class="metric-label">Browser speech</div><div id="voice-status" class="metric-value" style="font-size:17px">—</div><div class="metric-note">Availability depends on your browser/OS</div></div>
+<div class="card metric-card span-4"><div class="metric-label">Voice runtime</div><div id="voice-status" class="metric-value" style="font-size:17px">—</div><div class="metric-note">Prefers VPS-local STT/TTS; browser fallback remains optional</div></div>
 </div>
 <div class="grid" style="margin-top:16px">
 <div class="card span-6"><div class="card-head"><div><div class="card-title">Local image analysis</div><div class="card-sub">PNG, JPEG or WebP · maximum 8 MiB</div></div></div><div class="card-body stack">
@@ -17,5 +17,5 @@
 </div></div>
 <div class="card span-6"><div class="card-head"><div><div class="card-title">Analysis result</div><div class="card-sub">Response comes from local Ollama vision inference</div></div><button id="voice-read" class="btn small">🔊 Read aloud</button></div><div class="card-body stack"><div id="vision-answer" style="white-space:pre-wrap;min-height:220px">Waiting for an image.</div><pre id="vision-details" class="codebox">No analysis yet.</pre></div></div>
 </div>
-<div class="notice" style="margin-top:16px"><b>Voice boundary:</b> this page uses browser speech APIs when available. It is click-to-talk/read-aloud, not a background wake-word service, and offline speech recognition is not guaranteed by Jubi. A native “Hey Jubi” voice service remains a separate production feature.</div>
+<div class="notice" style="margin-top:16px"><b>Voice boundary:</b> when the VPS offline voice profile is installed, Dictate records a short clip in this browser and sends it through the authenticated Jubi API for local faster-whisper transcription; Read aloud uses local espeak-ng TTS. The VPS does not directly capture your laptop microphone and is not an always-listening background mic service.</div>
 </main><script src="/assets/app.js"></script><script src="/assets/shell-extension.js"></script><script src="/assets/vision.js"></script></body></html>

@@ -4,7 +4,11 @@
   "max_request_bytes": 65536,
   "replay_window_seconds": 300,
   "path_scopes": {
-    "user_workspace": ["workspace", "outputs", "projects"]
+    "user_workspace": [
+      "workspace",
+      "outputs",
+      "projects"
+    ]
   },
   "forbidden_actions": [
     "powershell",
@@ -21,15 +25,33 @@
   ],
   "resources": {
     "services": {
-      "ollama": {"service_name": "Ollama"}
+      "ollama": {
+        "service_name": "Ollama",
+        "linux_unit": "ollama.service"
+      }
     },
     "processes": {
-      "ollama": {"image_name": "ollama.exe"}
+      "ollama": {
+        "image_name": "ollama.exe",
+        "linux_name": "ollama"
+      }
     },
     "apps": {
-      "vscode": {"argv": ["code"]},
-      "notepad": {"argv": ["notepad.exe"]},
-      "explorer": {"argv": ["explorer.exe"]}
+      "vscode": {
+        "argv": [
+          "code"
+        ]
+      },
+      "notepad": {
+        "argv": [
+          "notepad.exe"
+        ]
+      },
+      "explorer": {
+        "argv": [
+          "explorer.exe"
+        ]
+      }
     }
   },
   "actions": {
@@ -51,7 +73,11 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        }
       }
     },
     "workspace.file.write": {
@@ -60,8 +86,16 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096},
-        "content": {"type": "string", "required": true, "max_length": 200000}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "content": {
+          "type": "string",
+          "required": true,
+          "max_length": 200000
+        }
       }
     },
     "workspace.path.stat": {
@@ -70,7 +104,11 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        }
       }
     },
     "workspace.directory.list": {
@@ -79,7 +117,11 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        }
       }
     },
     "workspace.directory.create": {
@@ -88,8 +130,15 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096},
-        "parents": {"type": "boolean", "required": false}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "parents": {
+          "type": "boolean",
+          "required": false
+        }
       }
     },
     "workspace.file.copy": {
@@ -98,9 +147,20 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "source_path": {"type": "string", "required": true, "max_length": 4096},
-        "destination_path": {"type": "string", "required": true, "max_length": 4096},
-        "overwrite": {"type": "boolean", "required": false}
+        "source_path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "destination_path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "overwrite": {
+          "type": "boolean",
+          "required": false
+        }
       }
     },
     "workspace.file.move": {
@@ -109,9 +169,20 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "source_path": {"type": "string", "required": true, "max_length": 4096},
-        "destination_path": {"type": "string", "required": true, "max_length": 4096},
-        "overwrite": {"type": "boolean", "required": false}
+        "source_path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "destination_path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "overwrite": {
+          "type": "boolean",
+          "required": false
+        }
       }
     },
     "workspace.file.delete": {
@@ -120,7 +191,11 @@
       "requires_approval": true,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        }
       }
     },
     "development.git.status": {
@@ -129,7 +204,11 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        }
       }
     },
     "development.git.log": {
@@ -138,8 +217,15 @@
       "requires_approval": false,
       "path_scope": "user_workspace",
       "parameters": {
-        "path": {"type": "string", "required": true, "max_length": 4096},
-        "limit": {"type": "integer", "required": false}
+        "path": {
+          "type": "string",
+          "required": true,
+          "max_length": 4096
+        },
+        "limit": {
+          "type": "integer",
+          "required": false
+        }
       }
     },
     "app.launch": {
@@ -148,8 +234,16 @@
       "requires_approval": false,
       "resource_group": "apps",
       "parameters": {
-        "resource_id": {"type": "resource_id", "required": true, "max_length": 128},
-        "workspace_path": {"type": "string", "required": false, "max_length": 4096}
+        "resource_id": {
+          "type": "resource_id",
+          "required": true,
+          "max_length": 128
+        },
+        "workspace_path": {
+          "type": "string",
+          "required": false,
+          "max_length": 4096
+        }
       }
     },
     "url.open": {
@@ -157,7 +251,11 @@
       "risk": 1,
       "requires_approval": false,
       "parameters": {
-        "url": {"type": "url", "required": true, "max_length": 4096}
+        "url": {
+          "type": "url",
+          "required": true,
+          "max_length": 4096
+        }
       }
     },
     "ring0.ping": {
@@ -178,7 +276,11 @@
       "requires_approval": false,
       "resource_group": "services",
       "parameters": {
-        "resource_id": {"type": "resource_id", "required": true, "max_length": 128}
+        "resource_id": {
+          "type": "resource_id",
+          "required": true,
+          "max_length": 128
+        }
       }
     },
     "service.start": {
@@ -187,7 +289,11 @@
       "requires_approval": true,
       "resource_group": "services",
       "parameters": {
-        "resource_id": {"type": "resource_id", "required": true, "max_length": 128}
+        "resource_id": {
+          "type": "resource_id",
+          "required": true,
+          "max_length": 128
+        }
       }
     },
     "service.stop": {
@@ -196,7 +302,11 @@
       "requires_approval": true,
       "resource_group": "services",
       "parameters": {
-        "resource_id": {"type": "resource_id", "required": true, "max_length": 128}
+        "resource_id": {
+          "type": "resource_id",
+          "required": true,
+          "max_length": 128
+        }
       }
     },
     "process.stop": {
@@ -205,8 +315,15 @@
       "requires_approval": true,
       "resource_group": "processes",
       "parameters": {
-        "resource_id": {"type": "resource_id", "required": true, "max_length": 128},
-        "force": {"type": "boolean", "required": false}
+        "resource_id": {
+          "type": "resource_id",
+          "required": true,
+          "max_length": 128
+        },
+        "force": {
+          "type": "boolean",
+          "required": false
+        }
       }
     }
   }

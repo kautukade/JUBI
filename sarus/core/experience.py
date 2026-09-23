@@ -47,19 +47,22 @@ class ExperienceEngine:
                 return None, ''
             vector = self.models.embed(text, model=model)
             if isinstance(vector, list) and vector:
-                return [float(x) for x in vector], model
+                values = [float(x) for x in vector]
+                if all(math.isfinite(x) for x in values):
+                    return values, model
         except Exception:
             pass
         return None, ''
 
     @staticmethod
     def _cosine(a: list[float], b: list[float]) -> float:
-        if not a or not b or len(a) != len(b):
+        if not a or not b or len(a) != len(b) or not all(math.isfinite(x) for x in a + b):
             return 0.0
         dot = sum(x * y for x, y in zip(a, b))
         na = math.sqrt(sum(x * x for x in a))
         nb = math.sqrt(sum(y * y for y in b))
-        return dot / (na * nb) if na and nb else 0.0
+        value = dot / (na * nb) if na and nb else 0.0
+        return value if math.isfinite(value) else 0.0
 
     def record(self, request: str, outcome: str, success: bool, task_type: str = 'general',
                kind: str = 'task', provider: str = '', model: str = '', tool: str = '',
@@ -134,11 +137,11 @@ class ExperienceEngine:
         if not query:
             raise ValueError('experience query is required')
         limit = max(1, min(int(limit), 20))
-        qvec, _ = self._embed_best_effort(query)
+        qvec, qmodel = self._embed_best_effort(query)
         qterms = {x for x in re.findall(r'\w+', query.lower()) if len(x) > 2}
         with read_connection(self.db) as c:
             sql = (
-                "SELECT id,ts,kind,task_type,request,outcome,success,provider,model,tool,latency_ms,lesson,embedding,metadata "
+                "SELECT id,ts,kind,task_type,request,outcome,success,provider,model,tool,latency_ms,lesson,embedding,metadata,embedding_model "
                 "FROM experiences"
             )
             args: list[object] = []
@@ -150,7 +153,7 @@ class ExperienceEngine:
         scored = []
         for r in rows:
             semantic = 0.0
-            if qvec and r[12]:
+            if qvec and r[12] and qmodel == r[14]:
                 try:
                     semantic = self._cosine(qvec, [float(x) for x in json.loads(r[12])])
                 except Exception:

@@ -1,0 +1,144 @@
+{
+  "checkpoint": "checkpoint-files.json",
+  "scope": "First-party files; sources and documentation excluded by the recorded checkpoint",
+  "files": [
+    {
+      "path": "sarus/adapters/sara.py",
+      "change": "modified",
+      "before_sha256": "ba1382b78c51c0acf83b5c53616f339a9eda30b073491f66c074479df0598af3",
+      "after_sha256": "1fef53dec0106613d5b076efd0f32ff1168efb716bfa70edc180e022933e0dbf"
+    },
+    {
+      "path": "sarus/core/brain.py",
+      "change": "modified",
+      "before_sha256": "bf13f4921a4beaedaf66fe2ca3a452dfc576e8604bca0f49edac9de02d6cfe1c",
+      "after_sha256": "21a8ce0c80be0bc8e07b3a3fce58ba6f4088f1ddeb565ddf218d1ad330d49304"
+    },
+    {
+      "path": "sarus/core/capabilities.py",
+      "change": "modified",
+      "before_sha256": "54beb11743f481cdf4885d9410cbd99f6532e7d53f56bea30033e268d994b751",
+      "after_sha256": "6cecc8796a556312295c1abe69b589edca98b211b980b6a9a34cd3f329a048fb"
+    },
+    {
+      "path": "sarus/core/hardware.py",
+      "change": "modified",
+      "before_sha256": "642ac5581da547fc8a79627521de5952ce45be776af143e6f64307a3bf1534b1",
+      "after_sha256": "d7be801f6a70c1f8f8f6f11a7c9931c66c0a7f3da86532ab54c80b12087752c6"
+    },
+    {
+      "path": "sarus/core/hermes.py",
+      "change": "modified",
+      "before_sha256": "405f2652d55abce86968874e9dc3091508fc2006a838ccc59bcddc0a71539b5f",
+      "after_sha256": "72a7562faa5dedc050b5d17563dc783e86d0ba5901b829c3d2680b3fefc9617b"
+    },
+    {
+      "path": "sarus/core/models.py",
+      "change": "modified",
+      "before_sha256": "b187bc75bccad1a8032b9c5201c5243cc1a2a887914bb8e3ae597f1def1d09a9",
+      "after_sha256": "fdd6ed2f685552a64aa0972b46d1265766088eed5d9e62bc4712160f624d433b"
+    },
+    {
+      "path": "sarus/core/provider_policy.py",
+      "change": "modified",
+      "before_sha256": "f93acbed8fc79d9d4d352fc6f6802a1150386d21f000c1c61c83ef8990c56c94",
+      "after_sha256": "f09876f79d3672e072d6ce2898ea5b224cba3bf5116f81e70d75ea5c5e432221"
+    },
+    {
+      "path": "sarus/integrations/acceptance_workspace.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "1b5b7e3774646958243b95dfaadfa3099e286cd3ddbc7d2c371ec4653f5bdbe2"
+    },
+    {
+      "path": "sarus/integrations/development_acceptance.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "8a3151cfc69fa7e029497e9aa3b52e801e00096636cb6134acf147698f81c3d8"
+    },
+    {
+      "path": "sarus/integrations/hermes_transport.py",
+      "change": "modified",
+      "before_sha256": "1310eb4171fe3c4d5a6a6f24ae8f1b5877142f091aa028feb71661dbda35d6da",
+      "after_sha256": "0e7de1b0510fafc2d62c902a188f0e324346f89e14ce30d3669617faeeb15f9e"
+    },
+    {
+      "path": "sarus/integrations/hermes_worker.py",
+      "change": "modified",
+      "before_sha256": "84a1d0ff2f49222cfa21720ac6dd0e22985654e8214f440c13e0f96a3eb03704",
+      "after_sha256": "1748e29f8675089189eeddeeb4f13e34d67d035e9d3c82d95af7baae70b2a8ae"
+    },
+    {
+      "path": "scripts/run_core_regressions.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "8165575608368379fff8b6644395b2bd2429552da9d9401c10b6d48b1186a8a3"
+    },
+    {
+      "path": "scripts/run_development_acceptance.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "3bfdbbf7f04086201ea7bd7092723e343142399390c276cbba9cacf82ab0a3e1"
+    },
+    {
+      "path": "tests/acceptance_workspace_test.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "eabe957a35f3111dddd87c183132dd4236e10f4403a2c2dfd2cc5da6923a4ca2"
+    },
+    {
+      "path": "tests/hardware_test.py",
+      "change": "modified",
+      "before_sha256": "ed2b65029cc2e2d39342a3b9f813cc7d3af1fcbd3c71c18c203a0f98fc584ba6",
+      "after_sha256": "4ba67795f454c6fdfa614e1a178d401a5287aca2b4921d25d91bdd3edc74ba57"
+    },
+    {
+      "path": "tests/hermes_policy_probe.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "5810d41066d3334f5a40d9531a5a22cbd8f169c64ca492e7ed442016f62a452d"
+    },
+    {
+      "path": "tests/hermes_policy_test.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "20ec6a6bc37cd3cbef2811525585d1a02511562c89417b9d992071b2860aef4f"
+    },
+    {
+      "path": "tests/integration_test.py",
+      "change": "modified",
+      "before_sha256": "e070d2be591b9525603452ce477630d29be17391c7246832eb44eb4da6a51e80",
+      "after_sha256": "63932c6b8bdaec9645a38fd6d6b8c654eb24773963ef4f9499cd9161862ccd40"
+    },
+    {
+      "path": "tests/jubi_functional_regression_test.py",
+      "change": "modified",
+      "before_sha256": "ed8d983dfca08fe9b6ebe555b8fbeed772086ef3908c2d6f020ba820c4910dd9",
+      "after_sha256": "57edcdb9bb886efe9e5ddf43babbbbd3b442539e7ea2813b23d41f6adddbc357"
+    },
+    {
+      "path": "tests/jubi_http_functional_test.py",
+      "change": "modified",
+      "before_sha256": "cb44a86af8dd4b7860c3835faafc21d63bcf7a4e0426f9c0e3826964456e7835",
+      "after_sha256": "1f8ca99571275fb314d5b359d02bfe1a57550daa3dae33fe066aa765bcae5acd"
+    },
+    {
+      "path": "tests/production_readiness_test.py",
+      "change": "modified",
+      "before_sha256": "83a8f1568e71e7de18cfd4c43b5d09f9b01535880be41a5f5dd737971c887304",
+      "after_sha256": "858469c1a7d719148823b5ccf250ea7a4648e4c677b12e51bde5aca6a641861b"
+    },
+    {
+      "path": "tests/provider_paths_test.py",
+      "change": "added",
+      "before_sha256": null,
+      "after_sha256": "cfe613421eca3467f263b279050f7024f1a99c39c059e1e8830053d00dd2d3e5"
+    },
+    {
+      "path": "tests/trust_foundation_test.py",
+      "change": "modified",
+      "before_sha256": "5eab1465e25d3db5963f694e20747d63a6221c92b972cc7a490523467284ad4d",
+      "after_sha256": "a01eacf41fa3ed0d62ce44db44fc5e3845b3d7ed624a89e887ac9d7c0f940afe"
+    }
+  ]
+}

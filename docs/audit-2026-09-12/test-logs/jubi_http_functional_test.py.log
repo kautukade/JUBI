@@ -1,0 +1,22 @@
+setUpClass (__main__.HttpFunctionalTests) ... ERROR
+C:\Users\hp\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py:940: ResourceWarning: Implicitly cleaning up <TemporaryDirectory 'C:\\Users\\hp\\AppData\\Local\\Temp\\tmpk15g43bb'>
+  _warnings.warn(warn_message, ResourceWarning)
+
+======================================================================
+ERROR: setUpClass (__main__.HttpFunctionalTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\hp\AppData\Local\Temp\jubi-audit-afbt7s99\tests\jubi_http_functional_test.py", line 15, in setUpClass
+    def setUpClass(cls): cls.fixture=RuntimeFixture().__enter__()
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\AppData\Local\Temp\jubi-audit-afbt7s99\tests\runtime_fixture.py", line 20, in __enter__
+    folder=self.root/'sources'/source;folder.mkdir(parents=True)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py", line 1311, in mkdir
+    os.mkdir(self, mode)
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: 'C:\\Users\\hp\\Desktop\\JUBI\\sources\\SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK(4)\\SARA-AI-Assistant-Local-AI-OS-v7.1.1-ROBUST-ONE-CLICK'
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.035s
+
+FAILED (errors=1)

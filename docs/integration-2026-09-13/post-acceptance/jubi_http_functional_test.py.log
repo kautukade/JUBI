@@ -1,0 +1,15 @@
+test_actual_workspace_lifecycle_and_signed_delete (__main__.HttpFunctionalTests.test_actual_workspace_lifecycle_and_signed_delete) ... ok
+test_all_dashboard_pages_and_assets_load (__main__.HttpFunctionalTests.test_all_dashboard_pages_and_assets_load) ... ok
+test_all_read_only_feature_endpoints (__main__.HttpFunctionalTests.test_all_read_only_feature_endpoints) ... ok
+test_bind_only_loopback (__main__.HttpFunctionalTests.test_bind_only_loopback) ... ok
+test_chat_round_trip_persists_and_passes_context_to_ollama (__main__.HttpFunctionalTests.test_chat_round_trip_persists_and_passes_context_to_ollama) ... ok
+test_core_certification_does_not_weaken_full_native_requirements (__main__.HttpFunctionalTests.test_core_certification_does_not_weaken_full_native_requirements) ... ok
+test_host_origin_and_session_checks (__main__.HttpFunctionalTests.test_host_origin_and_session_checks) ... ok
+test_knowledge_memory_and_task_details (__main__.HttpFunctionalTests.test_knowledge_memory_and_task_details) ... ok
+test_malformed_bodies_are_client_errors (__main__.HttpFunctionalTests.test_malformed_bodies_are_client_errors) ... ok
+test_missing_file_has_failure_receipt (__main__.HttpFunctionalTests.test_missing_file_has_failure_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 9.837s
+
+OK

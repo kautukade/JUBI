@@ -1,0 +1,8 @@
+test_concurrency_is_bounded_by_ram_and_product_cap (__main__.HardwareTests.test_concurrency_is_bounded_by_ram_and_product_cap) ... ok
+test_live_memory_snapshot_is_consistent_when_available (__main__.HardwareTests.test_live_memory_snapshot_is_consistent_when_available) ... ok
+test_unknown_or_pressure_denies_admission (__main__.HardwareTests.test_unknown_or_pressure_denies_admission) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+OK
