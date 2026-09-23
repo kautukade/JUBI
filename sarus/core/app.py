@@ -17,6 +17,7 @@ from .hardware import profile_hardware
 from .hermes import HermesRuntime
 from .developer import VPSDeveloper
 from .browser import VPSBrowser
+from .swarm import VPSSwarm
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -58,6 +59,7 @@ class Jubi:
         self.hermes = HermesRuntime(root, self.models)
         self.developer = VPSDeveloper(self)
         self.browser = VPSBrowser(self)
+        self.swarm = VPSSwarm(self)
         self.registry.register_executor(CapabilitySpec(
             id='core.hardware.profile', name='Inspect local hardware', source='jubi', version='1',
             category='system', description='Read hardware and installed software without starting services.',
@@ -160,6 +162,7 @@ class Jubi:
             'supervisor': {'recent_runs': len(self.supervisor.recent(20)), 'tool_execution': False},
             'developer': {'mode': 'vps-bounded-developer', 'workspace': str(self.developer.workspace), 'local_model_only': True},
             'browser': self.browser.status(),
+            'swarm': self.swarm.status(),
             'research': {
                 'recent_runs': len(self.research.recent(20)),
                 'network_scope': 'public-http-https-only',
