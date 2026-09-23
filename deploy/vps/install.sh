@@ -107,7 +107,7 @@ if (( INSTALL_PACKAGES )); then
     apt-get update
     apt-get install -y --no-install-recommends \
       python3 python3-venv ca-certificates curl rsync passwd git libseccomp2 \
-      iproute2 procps nodejs npm
+      iproute2 procps nodejs npm util-linux
   else
     echo "Automatic package installation currently supports apt-based Linux." >&2
     echo "Install Python 3.11+, venv, curl, rsync and user-management tools, then re-run with --no-packages." >&2
@@ -199,6 +199,7 @@ JUBI_OLLAMA_URL=$OLLAMA_URL
 JUBI_DEBUG=0
 JUBI_HTTP_LOG=1
 JUBI_DEPLOYMENT_PROFILE=linux_vps
+JUBI_SERVICE_USER=$SERVICE_USER
 JUBI_REQUIRE_HERMES=$WITH_HERMES
 JUBI_REQUIRE_AUTONOMY=$WITH_AUTONOMY
 PYTHONUNBUFFERED=1
@@ -216,6 +217,11 @@ else
     sed -i 's/^JUBI_DEPLOYMENT_PROFILE=.*/JUBI_DEPLOYMENT_PROFILE=linux_vps/' /etc/jubi/jubi.env
   else
     echo 'JUBI_DEPLOYMENT_PROFILE=linux_vps' >>/etc/jubi/jubi.env
+  fi
+  if grep -q '^JUBI_SERVICE_USER=' /etc/jubi/jubi.env; then
+    sed -i "s/^JUBI_SERVICE_USER=.*/JUBI_SERVICE_USER=$SERVICE_USER/" /etc/jubi/jubi.env
+  else
+    echo "JUBI_SERVICE_USER=$SERVICE_USER" >>/etc/jubi/jubi.env
   fi
   grep -q '^PYTHONNOUSERSITE=' /etc/jubi/jubi.env || echo 'PYTHONNOUSERSITE=1' >>/etc/jubi/jubi.env
   if (( WITH_HERMES )); then
