@@ -53,7 +53,15 @@ if [[ ! "$SERVICE_USER" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]]; then
   echo "Invalid service user name." >&2
   exit 2
 fi
-if [[ "$PREFIX" != /* || "$PREFIX" == *
+if [[ "$PREFIX" != /* ]]; then
+  echo "Install prefix must be an absolute path." >&2
+  exit 2
+fi
+if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
+  echo "Port must be numeric." >&2
+  exit 2
+fi
+if (( PORT < 1024 || PORT > 65535 )); then
   echo "Port must be an unprivileged TCP port between 1024 and 65535." >&2
   exit 2
 fi
