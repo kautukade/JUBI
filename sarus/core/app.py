@@ -16,6 +16,7 @@ from .capabilities import CapabilityRegistry, CapabilitySpec
 from .hardware import profile_hardware
 from .hermes import HermesRuntime
 from .development import VPSDevelopmentAgent
+from .vps_readiness import VPSReadiness
 from .adapters import AdapterManager
 from .orchestrator import Orchestrator
 from .memory import MemoryStore
@@ -106,6 +107,7 @@ class Jubi:
         self.doctor = Doctor(self)
         self.scheduler = WorkflowScheduler(self.db_path, self.execution.run, event_bus=self.bus)
         self.scheduler.start()
+        self.vps_readiness = VPSReadiness(self)
         self.bus.emit(
             'JUBI_STARTED',
             {
@@ -186,6 +188,7 @@ class Jubi:
             'fable': self.fable.status(),
             'native_runtimes': self.native.status(),
             'development': self.development.status(),
+            'vps_readiness': self.vps_readiness.run(full=False),
         }
 
 
