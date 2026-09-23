@@ -200,6 +200,7 @@ Then open:
 
 Do not open TCP $PORT in the AWS Security Group.
 Ollama/model installation is intentionally separate and requires your explicit action.
+Hermes dependencies: $([[ "$WITH_HERMES" -eq 1 ]] && echo installed || echo optional/not-installed)
 EOF
 \n'* ]]; then
   echo "Install prefix must be an absolute path without newlines." >&2
