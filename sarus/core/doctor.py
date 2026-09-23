@@ -72,10 +72,34 @@ class Doctor:
                 'recommended' if name in {'sara', 'hermes', 'ecc'} else 'optional',
             )
 
-        if os.name == 'nt':
-            add('Windows platform', True, platform.platform(), 'required')
+        profiles = prod.get('deployment_profiles', {})
+        default_profile = 'windows_desktop' if os.name == 'nt' else (
+            'linux_vps' if platform.system() == 'Linux' else 'development'
+        )
+        deployment_profile = os.environ.get('JUBI_DEPLOYMENT_PROFILE', default_profile).strip() or default_profile
+        deployment = profiles.get(deployment_profile, {})
+        if deployment_profile in profiles:
+            add(
+                'Deployment profile ' + deployment_profile,
+                deployment.get('supported') is True,
+                deployment.get('scope') or deployment.get('ui') or '',
+                'required',
+            )
+
+        if deployment_profile == 'windows_desktop':
+            add('Windows platform', os.name == 'nt', platform.platform(), 'required')
+        elif deployment_profile == 'linux_vps':
+            add('Linux VPS platform', platform.system() == 'Linux', platform.platform(), 'required')
+            hermes = self.app.hermes.status()
+            require_hermes = os.environ.get('JUBI_REQUIRE_HERMES', '0').lower() in {'1', 'true', 'yes', 'on'}
+            add(
+                'Hermes pilot dependencies',
+                hermes.get('ready', False),
+                json.dumps(hermes, sort_keys=True),
+                'required' if require_hermes else 'recommended',
+            )
         else:
-            add('Windows platform', False, platform.platform(), 'target-only')
+            add('Development platform', True, platform.platform(), 'optional')
 
         core = [c for c in checks if c['level'] == 'required']
         return {
@@ -85,4 +109,6 @@ class Doctor:
             'models': models,
             'required_models': required,
             'minimum_python': '.'.join(map(str, minimum_python)),
+            'deployment_profile': deployment_profile,
+            'deployment': deployment,
         }
