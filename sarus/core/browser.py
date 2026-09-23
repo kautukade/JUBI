@@ -8,7 +8,9 @@ network access.
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
+from pathlib import Path
 from urllib.parse import urljoin
 
 from .research import PublicWebResearch
@@ -22,11 +24,30 @@ class VPSBrowser:
         self.app = app
 
     def status(self) -> dict:
-        available = importlib.util.find_spec("playwright") is not None
+        package_ready = importlib.util.find_spec("playwright") is not None
+        configured = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
+        roots = []
+        if configured:
+            roots.append(Path(configured).expanduser())
+        roots.append(Path.home() / ".cache" / "ms-playwright")
+        browser_paths = []
+        for root in roots:
+            if not root.exists():
+                continue
+            for pattern in (
+                "chromium-*/chrome-linux*/chrome",
+                "chromium_headless_shell-*/chrome-headless-shell-linux*/headless_shell",
+                "chromium_headless_shell-*/chrome-linux*/headless_shell",
+            ):
+                browser_paths.extend(str(x) for x in root.glob(pattern) if x.is_file())
+        browser_ready = bool(browser_paths)
         return {
-            "ready": available,
+            "ready": bool(package_ready and browser_ready),
+            "package_ready": package_ready,
+            "browser_binary_ready": browser_ready,
+            "browser_paths": browser_paths[:4],
             "mode": "read-only-public-js-browser",
-            "engine": "playwright-chromium" if available else None,
+            "engine": "playwright-chromium" if package_ready and browser_ready else None,
             "network": "public-http-https-only",
             "external_actions": False,
             "downloads": False,
