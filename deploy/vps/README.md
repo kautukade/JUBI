@@ -112,3 +112,16 @@ the rest of `data/` plus `workspace/`. It intentionally excludes
 
 Restore should be performed into a stopped service and reviewed manually during
 this testing phase; automated destructive restore is intentionally not shipped.
+
+## Optional research-only components
+
+The normal Fable intelligence layer, learned capabilities, agenda and verified
+traces run in the VPS core. The original Fable bare-metal QEMU lab is separate:
+its upstream Makefile expects QEMU plus an x86_64-elf cross-toolchain. It is not
+a full-profile readiness requirement and Jubi does not pretend it is available
+when that toolchain is absent.
+
+Browser voice controls run in the operator's browser over the localhost SSH
+tunnel. They are not a microphone service on the VPS. Native always-listening
+wake-word/desktop voice remains a workstation feature, not a headless-server
+feature.
